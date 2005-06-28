@@ -1,0 +1,13 @@
+$VAR1 = {
+          'area' => 'listings',
+          'username' => 'rlpowell',
+          'brief' => 'FEATURE: I *still* want an all-words list.',
+          'type' => 'featurerequest',
+          'report' => 'I would like a way to get a list of all words, please.  Maybe have an intermediate page that says, "Are you really really really really sure?".
+
+If you\'re worried about bandwidth, let *me* host the thing.
+
+-Robin',
+response => 'I\'ll get around to enabling it for people who are logged in.',
+          'time' => 1030385975
+        };

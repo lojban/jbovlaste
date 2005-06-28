@@ -1,0 +1,355 @@
+<%perl>
+ my $query = $m->dhandler_arg;
+ my ($lang, $word) = split /\//, $query, 2;
+ my $langs = $dbh->selectall_arrayref("SELECT tag,realname FROM languages WHERE langid>0 ORDER BY tag");
+ my @langs = map { $_->[0] } @{ $langs };
+ my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
+
+ my $natlangwordquery;
+    # If using bestguesses
+    if( $bg )
+    {
+	$natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
+	WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
+	AND wordid=$wordidarg
+	ORDER BY meaning, wordid");
+    } else {
+	$natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
+	WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
+	ORDER BY meaning, wordid");
+    }
+ $natlangwordquery->execute($word,$lang);
+
+ my @natlangwords;
+ for(my $i=0; $i<$natlangwordquery->rows; $i++) {
+   push @natlangwords, $natlangwordquery->fetchrow_hashref;
+ }
+ $titlestr = $word;
+</%perl>
+
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <tr>
+    <td valign="top" align="left">
+	<font size="+3">Record For Natural Language Word "<% $word %>"
+	In Language <% $mapping{$lang} %></font>
+    </td>
+    <td valign="top" align="right">
+   	Back to <a
+   	href="listing.html?lang=<% $lang %>">the main
+   	<% $mapping{$lang} %> page</a>.
+    </td>
+    </tr>
+</table>
+
+% if(defined($session{'userid'}))
+% {
+%    if( ! $bg )
+%    {
+    <p>
+	For an explanation of the voting process here, see <a
+	href="../../help/voting.html">the voting help</a>.
+    </p>
+%    }
+% }
+
+% if( $bg )
+% {
+<p>
+    This is a "best guess" listing, meaning that only the valsi and
+    place which is currently considered the best guess as to what
+    corresponds to this natural language word will be shown.  The best
+    guess is determined by compiling user votes.
+    <a href="<% $word %>">The full listing</a> is also available.
+</p>
+% }
+
+<hr />
+
+% my $defaultpresent=0;
+% foreach my $natlangword (@natlangwords) {
+%   if(length($natlangword->{'meaning'})>0) {
+%     if($defaultpresent > 0) {
+<h2>Database Error!</h2>
+<p>Some database corruption has slipped past the consistency checks,
+please <a href="mailto:rt-jvs@lojban.org">inform the administrator</a>
+of the word you're trying to retrieve data for.</p>
+%        $titlestr = "DATABASE CORRUPTION";
+%     }
+%   $defaultpresent=-1;
+<font size="+1"><% $natlangword->{'word'} %> Meaning #<%
+$natlangword->{'meaningnum'} %></font><br />
+"<% $natlangword->{'word'} %>", in the sense of "<%
+$natlangword->{'meaning'} %>".
+%   } else {
+%     if($defaultpresent<0) {
+<h2>Database Error!</h2>
+<p>Some database corruption has slipped past the consistency checks,
+please <a href="mailto:rt-jvs@lojban.org">inform the administrator</a>
+of the word you're trying to retrieve data for.</p>
+%        $titlestr = "DATABASE CORRUPTION";
+%     }
+"<% $natlangword->{'word'} %>", in the default sense.
+%     $defaultpresent=1;
+%   }
+<br />
+% my $username = $dbh->selectrow_array("SELECT username FROM users WHERE
+% userid=$natlangword->{'userid'}\n");
+Entered by <a href="../../personal/<% $username %>"><% $username %></a>.
+<br />
+<%perl>
+    my $notes = Wiki::mini($natlangword->{'notes'});
+    # Since we're an extra step down, add dots.
+    $notes =~ s/\.\./..\/../; #/
+</%perl>
+
+<b>Notes</b>: <% $notes %>
+
+
+% if(defined($session{'userid'}) &&
+%    $natlangword->{'userid'}==$session{'userid'}) {
+    <br /><a href="../edit.html?wordid=<% $natlangword->{'wordid'} %>"><font size="-1">[edit]</font></a>
+% }
+
+
+<%perl>
+ # Check for comments, generate post new comment message
+ my $commentquery = $dbh->prepare("SELECT * FROM threads WHERE natlangwordid=?");
+ $commentquery->execute($natlangword->{'wordid'});
+</%perl>
+
+<%perl>
+ my @optionbar;
+ if(defined($session{'username'})) {
+   push @optionbar, sprintf("<a href=\"../../post.html?new=1;natlangword=%s\">[Post New Comment]</a>", $natlangword->{'wordid'});
+ }
+ if($commentquery->rows) {
+   push @optionbar, sprintf("<a href=\"../../comments.html?natlangword=%s\">[View Comments]</a><br />",$natlangword->{'wordid'});
+ }
+ $commentquery->finish;
+
+ $m->out("<br />") if scalar @optionbar;
+ $m->out(join(" | ",@optionbar));
+</%perl>
+
+<hr />
+
+<%perl>
+   $mappingquery->execute($natlangword->{'wordid'});
+   my %usedbyword;
+   for(my $i=0; $i<$mappingquery->rows; $i++) {
+      my $row = $mappingquery->fetchrow_hashref;
+      push @{ $usedbyword{$row->{'word'}} }, $row;
+   }
+</%perl>
+
+<dl>
+% foreach my $word (keys %usedbyword) {
+% my @tmp = @{ $usedbyword{$word} };
+ <dd>
+   <table width="100%" cellpadding="0" cellspacing="0"><tr>
+     <td valign="top" align="left">
+%	if( $bg )
+%	{
+	    <a href="../../dict/<% $word %>?bg=1;langidarg=<%
+	    $usedbyword{$word}[0]{'langid'} %>"><% $word %> def
+	    #<% $usedbyword{$word}[0]{'definitionnum'} %> in language <%
+	    $dbh->selectrow_array( "SELECT realname from languages WHERE
+	    langid=$usedbyword{$word}[0]{'langid'}") %></a>
+%	} else {
+       <a href="../../dict/<% $word %>"><% $word %></a>
+%	}
+     </td>
+   </tr></table>
+   <hr />
+    <dl><dd>
+
+<%perl>
+  my %usedbydefs = map { $_->{'definitionid'} => $_->{'definition'} } @tmp;
+  my $usedbydefscount = scalar keys %usedbydefs;
+</%perl>
+
+<p>Used in <% $usedbydefscount %> definitions.</p>
+ <ul>
+% foreach my $mydefinitionid (sort keys %usedbydefs) {
+  <li><% SimpleLaTeX::interpret($usedbydefs{$mydefinitionid}) %>
+
+<%perl>
+    my @usedinplaces = map { "$_->{'definitionid'}:$_->{'place'}" } @tmp;
+    my $word = (1==scalar @usedinplaces)?"place":"places";
+
+if(defined($session{'userid'}) && (scalar @usedinplaces) && !$bg )
+{
+    foreach my $entry (@usedinplaces)
+    {
+	my ($definitionid, $place) = split( /:/, $entry);
+	if( $definitionid == $mydefinitionid )
+	{
+	    if( $place == 0 )
+	    {
+</%perl>
+    <p>
+<%perl>
+        # Check to see if this is the user's vote
+	if( $dbh->selectrow_array( "SELECT value FROM natlangwordvotes
+	    WHERE userid=? AND definitionid=? AND place=? AND natlangwordid=?", undef,
+	    $session{'userid'}, $definitionid, $place, $natlangword->{'wordid'} ) )
+        {
+</%perl>
+	You Have Voted For Gloss Word In This Definition
+%       } else {
+	<a href="../vote.html?nlw=<%
+	    $natlangword->{'wordid'} %>;definitionid=<%
+	    $definitionid %>;place=<% $place %>">
+	    Vote For Gloss Word In This Definition</a>
+%	}
+    </p>
+<%perl>
+	    } else {
+</%perl>
+    <p>
+<%perl>
+        # Check to see if this is the user's vote
+	if( $dbh->selectrow_array( "SELECT value FROM natlangwordvotes
+	    WHERE userid=? AND definitionid=? AND place=? AND natlangwordid=?", undef,
+	    $session{'userid'}, $definitionid, $place, $natlangword->{'wordid'} ) )
+        {
+</%perl>
+	You Have Voted For Place <% $place %> In This Definition
+%       } else {
+	<a href="../vote.html?nlw=<%
+	    $natlangword->{'wordid'} %>;definitionid=<%
+	    $definitionid %>;place=<% $place %>">
+	    Vote For Place <% $place %> In This Definition</a>
+%	}
+    </p>
+<%perl>
+	    }
+	}
+    }
+
+} else {  # If not logged in *or* if using best guesses.
+
+if(scalar @usedinplaces)
+{
+    my $output1="";
+    my $output2="";
+    my @places;
+
+    foreach my $entry (@usedinplaces)
+    {
+	my ($definitionid, $place) = split( /:/, $entry);
+
+	if( $definitionid == $mydefinitionid )
+	{
+	    if( $place == 0 )
+	    {
+		$output2="It acts as a gloss word.\n";
+	    } else {
+		push @places, $place;
+	    }
+	}
+    }
+
+    if( scalar @places )
+    {
+	$output1 .= "It appears in $word: ";
+	$output1 .= join(", ", @places);
+	$output1 .= ".\n";
+
+	$output2 =~ s/It acts/It also acts/;
+    }
+
+</%perl>
+
+<p><% $output1 %><% $output2 %>
+
+% }
+
+% } # if logged in (and hence voting)
+
+%} # for each definitionid
+ </ul>
+</p>
+    </dd></dl>
+ </dd>
+% }
+
+% if(0==scalar keys %usedbyword) {
+<dd>Unused by any definitions.
+% if( $bg )
+% {
+<p>It is possible that the word is used but no-one has voted for it.
+You can <a href="../<% $lang %>/<% $word %>">look at the
+non-best-guesses listing</a> and vote for the word there if it exists.
+Note that it may take up to half an hour for the vote to percolate
+through the system.
+% }
+</dd>
+% }
+</dl>
+
+% }
+
+% if(0==scalar @natlangwords) {
+<p>That word isn't present in the database.</p>
+<p>Consider <a href="../add.html?lang=<% $lang %>;word=<% $word
+%>">adding it</a>.</p>
+%    $titlestr = "Word Not Found: $word";
+% if( $bg )
+% {
+<p>It is possible that the word is present but no-one has voted for it.
+You can <a href="../<% $lang %>/<% $word %>">look at the
+non-best-guesses listing</a> and vote for the word there if it exists.
+Note that it may take up to half an hour for the vote to percolate
+through the system.
+% }
+% }
+
+<%once>
+ use utils;
+ use SimpleLaTeX;
+</%once>
+
+<%init>
+ our($dbh,%session);
+ use Wiki;
+ $r->content_type("text/html; charset=utf-8");
+
+ my $mappingquery;
+ 
+ if( $bg )
+ {
+ $mappingquery =
+   $dbh->prepare("
+    SELECT d.definitionid, m.place, m.natlangwordid,
+	d.definitionid, d.valsiid, d.word, d.definition,
+	d.definitionnum, d.langid
+    FROM keywordmapping m, convenientdefinitions d,
+    natlangwordbestguesses b
+    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+    AND b.place=m.place AND b.definitionid=d.definitionid
+    AND b.natlangwordid=m.natlangwordid AND b.natlangwordid=$wordidarg
+    ");
+ } else {
+ $mappingquery =
+   $dbh->prepare("
+    SELECT d.definitionid, m.place, m.natlangwordid,
+	d.definitionid, d.valsiid, d.word, d.definition, d.definitionnum
+    FROM keywordmapping m, convenientdefinitions d
+    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+    ");
+ }
+</%init>
+
+<%shared>
+our $titlestr;
+</%shared>
+
+<%args>
+$bg => undef
+$wordidarg => undef
+</%args>
+
+<%method title>
+Natural language word: <% $titlestr %>
+</%method>

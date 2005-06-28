@@ -1,0 +1,157 @@
+<%once>
+ use utils;
+</%once>
+
+<%perl>
+ our(%session,$dbh);
+ $lang = $m->comp('/bits/decidelanguage', lang => $lang);
+ $pagename = $page;
+</%perl>
+
+% if(!(defined($content) && defined($lang) && defined($version))) {
+% # print out the editing page
+%  if(defined($session{'username'})) {
+
+<%perl>
+# request the latest, greatest and most appropriate version of the page:
+
+my $langarray = $dbh->selectall_arrayref("SELECT * FROM languages WHERE tag = ?", { }, $lang);
+my $langid = $langarray->[0]->[0];
+
+my $pagequery = $dbh->prepare("SELECT p.version, p.content, p.compressed FROM pages p WHERE p.langId = ? AND p.pagename = ? AND p.latest = 'true'");
+$pagequery->execute($langid,$page);
+
+my $result = $pagequery->fetchrow_hashref();
+</%perl>
+
+<table width="100%"><tr>
+ <td>
+ <font size="+3">
+Editing <% $page %>
+ </font>
+ </td>
+ <td><% $langarray->[0]->[4] %></td>
+</tr></table>
+<hr />
+
+<form method="post" action="edit.html">
+ <input type="hidden" name="page" value="<% $page %>" />
+ <input type="hidden" name="version" value="<% $result->{'version'}+1 %>" />
+ <input type="hidden" name="lang" value="<% $langarray->[0]->[1] %>" />
+ <table>
+  <tr><td><input type="submit" name="Save" /></td></tr>
+  <tr><td>
+<textarea cols="80" rows="20" name="content"><% $result->{'compressed'}?uncompress(decode_base64($result->{'content'})):$result->{'content'} %></textarea></td></tr>
+  <tr><td><input type="submit" name="Save" /></td></tr>
+ </table>
+</form>
+
+<p>
+The Wiki text you enter is rendered by a jbovlaste-modified version of
+John Cowan's Wiki.pm. In addition to supporting linking to jbovlaste
+definitions, it also handles tables, and can deal with inline LaTeX.
+</p>
+
+
+<p>See <a href="../help/wikitext.html">the Wiki text help
+page</a> for more information on the formatting commands available to
+you.</p>
+
+%  } else {
+
+<font size="+3">Cannot edit <% $page %></font>
+
+<p>Sorry, but you'll have to <a href="../login.html">log in</a> before I can let you edit this
+page.</p>
+
+<p>There ought to be a link to the login page down in the very bottom
+right hand corner of this page.</p>
+
+%  }
+% } else {
+% # process an editing submission
+
+<font size="+3">Saving <% $page %></font><hr />
+
+<%perl>
+$dbh->begin_work;
+$dbh->do("LOCK TABLE pages IN EXCLUSIVE MODE");
+
+my $langref =
+  $dbh->selectall_arrayref("SELECT * FROM languages WHERE tag = ?", { }, $lang);
+my $langid = $langref->[0]->[0];
+
+if(!defined($langid) || $langid<=0) {
+  $m->out("You tried to submit a page for a non-existant language. You ought not encounter this error in practice, unless you were trying to be tricky and evil.");
+  return;
+}
+
+my $resultref =
+  $dbh->selectall_arrayref("SELECT * FROM pages p WHERE p.pagename = ? AND p.version >= ? AND p.langId = ?", { }, $page, $version, $langid);
+
+</%perl>
+
+% if($#{$resultref}>=0) {
+% # new version(s) have been submitted to the database already, we're out
+% # of date, so disallow submission.
+
+Whoa there, there is already a version newer than the one you've
+submitted.  So I'm going to have to reject your submission, sorry. Go
+back to the <a href="edit.html?page=<% utils::armorurl($page)
+%>&lang=<% $lang %>">edit page</a> and try again. (A little quicker
+this time! :)
+
+% } else {
+
+<%perl>
+$content =~ s/\r//g;
+
+my $insertpage =
+  $dbh->prepare("INSERT INTO pages ".
+                       "(pagename, version, time, userId, langId, content) ".
+                       "VALUES (?,?,?,?,?,?)");
+
+my @insertargs =
+  ($page, $version, time(), $session{'userid'}, $langid, $content);
+
+</%perl>
+
+%   if(!$insertpage->execute(@insertargs)) {
+
+<pre><% join(", ",@insertargs) %></pre>
+
+<p>Uhoh. There has been an internal error with the database. I'm
+rolling back the transaction and trying to log an error. Please report
+this to <a href="mailto:<% $m->base_comp->attr('admin_email') %>">the admins</a>.</p>
+
+%   } else {
+
+% $dbh->commit;
+
+<p>I'm pretty sure I saved the page, woohoo!</p>
+
+<p>Return to <a href="<% sprintf("%s?lang=%s", utils::armorurl($page),
+$lang) %>">the page</a>.</p>
+
+%   }
+
+% }
+
+% $dbh->rollback;
+
+% }
+
+<%shared>
+our $pagename;
+</%shared>
+
+<%method title>
+Wiki: Editing: <% $pagename %>
+</%method>
+
+<%args>
+$page
+$lang
+$version => undef
+$content => undef
+</%args>

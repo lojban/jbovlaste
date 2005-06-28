@@ -1,0 +1,60 @@
+<%perl>
+ if (!defined($session{'userid'})) {
+  $m->out("<p>You need to be logged in for this.</p>");
+  return;
+ }
+
+ my $query = $dbh->prepare("SELECT * FROM users
+ WHERE userid=?");
+ $query->execute($session{'userid'});
+ my $result = $query->fetchrow_hashref;
+</%perl>
+
+% if (defined($email)) {
+
+<p>Updating your user information.</p>
+
+<%perl>
+  $dbh->do("UPDATE users SET url=?,
+  email=?, personal=?
+  WHERE userid=?", undef, $url, $email, $personal, $session{'userid'});
+</%perl>
+
+<p>You can go back to <a href="<% $session{'username'} %>">your page</a></p>
+
+% } else {
+<%perl>
+ my $query = $dbh->prepare("SELECT * FROM users
+ WHERE userid=?");
+ $query->execute($session{'userid'});
+ my $result = $query->fetchrow_hashref;
+</%perl>
+
+<p>Edit data for <% $result->{'username'} %>.</p>
+
+<form method="post" action="edit.html">
+  Email Address:
+  <input type="text" name="email" value="<% $result->{'email'} %>"><br />
+  Url:
+  <input type="text" name="url" value="<% $result->{'url'} %>"><br />
+  Personal:<br />
+  <textarea rows="4" cols="60" name="personal"><% $result->{'personal'} %></textarea>
+  <input type="submit"/>
+</form>
+
+% }
+
+<%init>
+ our($dbh,%session);
+ $r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%method title>
+Edit User Data
+</%method>
+
+<%args>
+$url => undef
+$email => undef
+$personal => undef
+</%args>

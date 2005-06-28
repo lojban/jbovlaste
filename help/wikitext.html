@@ -1,0 +1,247 @@
+<p>
+I've put up a <a
+href="http://jbovlaste.lojban.org/wiki/wiki%20demonstration?lang=en">little
+demonstration</a> of these features.
+</p>
+
+<h3>General Wiki Formatting Issues</h3>
+
+<p>Many of these, such as =, #, *, !, ;, | and ---, must start at the beginning
+of the line.</p>
+
+<dl>
+    <dt>
+	''string''
+    </dt>
+    <dd>
+	Renders string italicized.
+    </dd>
+    <dt>
+	__string__
+    </dt>
+    <dd>
+	Renders string bold faced.
+    </dd>
+    <dt>
+	'''string'''
+    </dt>
+    <dd>
+	Renders string bold faced and italicized.
+    </dd>
+    <dt>
+	=string
+    </dt>
+    <dd>
+	Renders the string without changing the amount of spacing.
+    </dd>
+    <dt>
+	* item, ** item, ...
+    </dt>
+    <dd>
+	Itemizes the item to one level.  Additinial * characters
+	increase the level of itemization.
+    </dd>
+    <dt>
+	# item, ## item, ...
+    </dt>
+    <dd>
+	Enumerates the item to one level.  Additinial # characters
+	increase the level of enumeration.
+    </dd>
+    <dt>
+	--- (or more)
+    </dt>
+    <dd>
+	Forces a horizontal rule.
+    </dd>
+    <dt>
+	!heading, !!heading, ...
+    </dt>
+    <dd>
+	Turns heading into a heading of the given level.  A single ! is
+	the biggest, six ! characters is the smallest.
+    </dd>
+    <dt>
+	;definition term:definition description
+    </dt>
+    <dd>
+	Creates a definitional list.  Note the colon between the first
+	and second parts.
+    </dd>
+    <dt>
+	| a | b | c ...
+    </dt>
+    <dd>
+	Creates a table with columns seperated by | characters.
+    </dd>
+</dl>
+
+<h3>Inline Mathematics And Subscripts</h3>
+
+<p>
+Subscripts and other inline math are handled in the fashion described in
+<a href="http://jbovlaste.lojban.org/help/definitions.html">the
+definitions help file</a>.  Look in the "Definition Special Formatting"
+section.
+</p>
+
+
+<h3>Internal Word Link Format ({} links)</h3>
+
+<dl>
+    <dt>
+	{valsi}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the valsi in
+	question in the current language.
+    </dd>
+    <dt>
+	{valsi:w}
+    </dt>
+    <dd>
+	Makes a link to the general listing for the valsi in question.
+    </dd>
+    <dt>
+	{valsi:d}
+    </dt>
+    <dd>
+	Presents the best guess definition line in the current language.
+    </dd>
+    <dt>
+	{valsi:g}
+    </dt>
+    <dd>
+	Makes a link to the best guess gloss word listing for the valsi
+	in question in the current language.
+    </dd>
+    <dt>
+	{valsi:p}
+    </dt>
+    <dd>
+	Makes a set of links to the best guess listings for the place
+	keywords for the valsi in question in the current language.
+    </dd>
+    <dt>
+	{valsi:n}, where n is a single-digit number
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the place keyword
+	number n for the valsi in question in the current language.
+    </dd>
+    <dt>
+	{valsi:args||lang}
+    </dt>
+    <dd>
+	Presents various forms of information as for the options above, but in
+	the given language.
+    </dd>
+    <dt>
+	{valsi|alt}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the valsi in question
+	in the current language, but presents alt as the link name
+	instead of valsi.
+    </dd>
+    <dt>
+	{valsi|alt|lang}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the valsi in question
+	for the given language, but presents alt as the link name instead of
+	valsi.
+    </dd>
+    <dt>
+	{valsi||lang}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the valsi in question
+	for the given language.
+    </dd>
+    <dt>
+	{word!}
+    </dt>
+    <dd>
+	Makes a link to the general listing for the natural language
+	word given in the language of the current page.
+    </dd>
+    <dt>
+	{word!lang}
+    </dt>
+    <dd>
+	Makes a link to the general listing for the natural language
+	word given in the language given.
+    </dd>
+    <dt>
+	{word!meaning!}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the natural language
+	word and meaning given in the language of the current page.  If
+	the meaning is not present (i.e. {word!!} ), finds the word with
+	the 'default' meaning, if one exists.
+    </dd>
+    <dt>
+	{word!meaning!lang}
+    </dt>
+    <dd>
+	Makes a link to the best guess listing for the natural language
+	word and meaning given in the language given.  If the meaning is
+	not present (i.e. {word!!} ), finds the word with the 'default'
+	meaning, if one exists.
+    </dd>
+</dl>
+
+<h3>Wiki Link Format ([] links)</h3>
+
+<dl>
+    <dt>
+	[page]
+    </dt>
+    <dd>
+	Makes a link to the wiki page name given.
+    </dd>
+    <dt>
+	[page|alt]
+    </dt>
+    <dd>
+	Makes a link to the wiki page name given, but names the link
+	alt.
+    </dd>
+    <dt>
+	[page||lang]
+    </dt>
+    <dd>
+	Makes a link to the wiki page name given in the language given.
+    </dd>
+    <dt>
+	[page|alt|lang]
+    </dt>
+    <dd>
+	Makes a link to the wiki page name given in the language given,
+	but names the link alt.
+    </dd>
+    <dt>
+	[page|alt||lang]
+    </dt>
+    <dd>
+	Alias for [page|alt|lang].
+    </dd>
+    <dt>
+	[url!]
+    </dt>
+    <dd>
+	Makes a link to the url given.
+    </dd>
+    <dt>
+	[url!alt]
+    </dt>
+    <dd>
+	Makes a link to the url given, but names the link alt.
+    </dd>
+</dl>
+
+<%method title>
+Wiki Text Help
+</%method>

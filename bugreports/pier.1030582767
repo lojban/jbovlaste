@@ -1,0 +1,9 @@
+$VAR1 = {
+          'area' => 'valsi',
+          'username' => 'pier',
+          'brief' => 'Lujvo made from experimental gismu or rafsi fu\'ivla aren\'t recognized as such.',
+          'type' => 'featurerequest',
+          'report' => 'I tried adding {sarvanxu\'u}, {spe\'atybau}, and {sprantybau}. It recognized the first as a lujvo, but didn\'t notice that one of the rafsi is nonstandard, and rejected the other words, even though {spe\'ato} and {spranto} both have rafsi. Can it be taught to recognize such words?',
+response => 'It uses Richard Curnow\'s vlatai (from the jbofi\'e suite) to recognize and decide on the type of words. The non-recognition of lujvo including cultural rafsi is a bug on the part of my code, however.',
+          'time' => 1030582767
+        };

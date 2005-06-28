@@ -1,0 +1,12 @@
+<%perl>
+ our($dbh);
+ my $users = $dbh->selectrow_array("SELECT count(*)-1 FROM users");
+</%perl>
+
+<font size="+3">jbovlaste</font><br />database and system status
+<hr />
+There are <% $users %> users.
+
+<%method title>
+System "status"
+</%method>

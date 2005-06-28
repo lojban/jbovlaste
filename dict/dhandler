@@ -1,0 +1,559 @@
+<%perl>
+ my @result;
+ my $valsiquery = $dbh->prepare("SELECT * FROM convenientvalsi WHERE word=?");
+ $valsiquery->execute($m->dhandler_arg());
+ my $row = $valsiquery->fetchrow_hashref;
+
+ if(defined($valsiquery->fetchrow_hashref)) {
+   $m->out("Integrity of the relational database has been ".
+           "violated, constraints have failed. Logging the error ".
+           "and halting the database.");
+ }
+</%perl>
+
+<%method title>
+Dictionary Record: <% $m->dhandler_arg %>
+</%method>
+
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <tr>
+    <td valign="top" align="left">
+	<font size="+3">Dictionary record</font>
+% if( $bg )
+% {
+<p>
+    This is a "best guess" listing for the word "<% $m->dhandler_arg %>" in
+    language <% $dbh->selectrow_array( "SELECT realname from
+    languages where langid=$langidarg") %>, meaning that only one of
+    the definitions for this word will be shown (the one with the
+    highest total votes).
+    See <a href="../dict/<% $m->dhandler_arg %>">all the definitions for
+    <% $m->dhandler_arg %></a>.
+</p>
+% }
+	<hr />
+    </td>
+    <td valign="top" align="right">
+	Back to <a
+	href="listing.html">the main
+	valsi listing</a>.
+    </td>
+    </tr>
+</table>
+
+% unless(defined($row)) {
+<font size="+3">Word not found!</font>
+<hr />
+
+The valsi "<% $m->dhandler_arg %>" isn't in the database. Please consider
+<a href="addvalsi.html?valsi=<% $m->dhandler_arg %>">adding it</a>. <br />
+% if( $bg )
+% {
+<p>It is possible that the word is used but no-one has voted for it.
+You can <a href="<% $m->dhandler_arg %>">look at the
+non-best-guesses listing</a> and vote for the word there if it exists.
+Note that it may take up to half an hour for the vote to percolate
+through the system.
+% }
+%   if(defined($r->header_in('Referer'))) {
+Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
+%   }
+%   return;
+% }
+
+% if(defined($row)) {
+
+<table>
+ <tr>
+  <td>valsi</td>
+  <td><% $row->{'word'} %></td>
+ </tr>
+ <tr>
+  <td>type</td>
+  <td><% $row->{'type'} %></td>
+ </tr>
+% if( $row->{'rafsi'} )
+% {
+     <tr>
+      <td>rafsi</td>
+      <td><% $row->{'rafsi'} %></td>
+     </tr>
+% }
+ <tr>
+  <td>creator</td>
+  <td><% &userlink($row->{'username'}) %></td>
+ </tr>
+ <tr>
+  <td>time entered</td>
+  <td><% scalar gmtime $row->{'time'} %></td>
+ </tr>
+</table>
+
+<%perl>
+ # Check for comments, generate post new comment message
+ my $commentquery = $dbh->prepare("SELECT * FROM threads WHERE valsiid=? AND definitionID=0");
+ $commentquery->execute($row->{'valsiid'});
+</%perl>
+
+<%perl>
+ my @optionbar;
+ if(defined($session{'username'})) {
+   push @optionbar, sprintf("<a
+   href=\"../post.html?new=1;valsi=%s\">[Post New Comment For This Word]</a>", $row->{'valsiid'});
+ }
+ if(defined($commentquery->fetchrow_hashref)) {
+   push @optionbar, sprintf("<a href=\"../comments.html?valsi=%s\">[View
+   Comments For This Word]</a><br />",$row->{'valsiid'});
+ }
+
+ $m->out(join(" | ",@optionbar));
+
+  my $examplequery = $dbh->prepare("SELECT * FROM
+  convenientexamples WHERE valsiid=? AND definitionid=? ORDER BY
+  exampleNum");
+  $examplequery->execute($row->{'valsiid'}, 0);
+  my $examplerow = $examplequery->fetchrow_hashref;
+</%perl>
+
+<br /><font size="+2">Examples</font>
+% if(defined($session{'username'})) {
+<font size="-1"><a href="addexample.html?valsi=<% $row->{'valsiid'} %>">[add example]</a></font>
+% }
+<hr />
+<dl>
+% if(defined($examplerow)) {
+%  do {
+ <dd>
+  <table width="100%"><tr>
+    <td valign="top" align="left" width="10%">
+	<p>Example #<% $examplerow->{'examplenum'} %>:</p>
+    </td>
+   <td valign="top" align="left">
+ <& /bits/wikirender,
+    wikitext => $examplerow->{'content'} &>
+   </td>
+   <td valign="top" align="right">
+    (by <% userlink($examplerow->{'username'}) %>)
+   </td>
+% if(defined($session{'userid'}) &&
+%    $examplerow->{'userid'}==$session{'userid'})
+% {
+   <td valign="top" align="right">
+    <a href="editexample.html?example=<% $examplerow->{'exampleid'} %>"><font size="-1">[edit]</font></a>
+   </td>
+% }
+
+  </tr></table>
+ </dd>
+%  } while(defined($examplerow=$examplequery->fetchrow_hashref));
+% }
+</dl>
+
+% if(defined($session{'username'})) {
+% # Display the add new definition box.
+<table><tr><td valign="top">New definition:</td><td valign="top">
+<form method="post" action="adddef.html">
+ <input type="hidden" name="valsi" value="<% $row->{'valsiid'} %>">
+ <select name="lang">
+<%perl>
+  my $langquery =
+    $dbh->prepare("SELECT langid,realname,tag FROM languages ".
+                         "WHERE langid>0 ORDER BY realname");
+  $langquery->execute;
+  while(defined(my $langrow=$langquery->fetchrow_hashref)) {
+    my $selected="";
+    if($langrow->{'tag'} eq 'en') {
+       $selected = "selected ";
+    }
+</%perl>
+    <option <% $selected %>value="<%$langrow->{'langid'}%>"><% $langrow->{'realname'} %></option><%perl>
+ }
+</%perl>
+ </select>
+ <input type="submit" value="Go">
+</form>
+</td></tr></table>
+% }
+
+<%perl>
+ my(@definitionsquery, @definitionsbylang, $definitionsbylang, $langid, $i);
+ $langid=undef; $i=-1;
+ my $definitionsquery;
+
+ # If we've been handed a specific langid to pull up the best guess for:
+ if( $langidarg )
+ {
+    $definitionsquery = $dbh->prepare("SELECT * FROM
+    convenientdefinitions WHERE valsiid=?
+    AND definitionid=(
+	SELECT definitionid
+	FROM valsibestguesses
+	WHERE langid=?
+	AND valsiid=?
+	)
+    ORDER BY langrealname,
+    username");
+    $definitionsquery->execute($row->{'valsiid'}, $langidarg, $row->{'valsiid'});
+ } else {
+    $definitionsquery = $dbh->prepare("SELECT * FROM
+    convenientdefinitions WHERE valsiid=? ORDER BY langrealname,
+    username");
+    $definitionsquery->execute($row->{'valsiid'});
+ }
+
+ my %defscores;
+ while(defined(my $defrow=$definitionsquery->fetchrow_hashref))
+ {
+   my $voteq = $dbh->prepare("SELECT value FROM definitionvotes WHERE definitionid=$defrow->{'definitionid'}");
+   $voteq->execute();
+   my $totval = 0;
+   while (defined(my $voterow = $voteq->fetchrow_hashref)) 
+   {
+     $totval += $voterow->{'value'};
+   }
+   $defscores{$defrow->{'definitionid'}} = $totval;
+   push @definitionsquery, $defrow;
+ }
+
+ foreach my $defrow (@definitionsquery) 
+ {
+   if($langid ne $defrow->{'langid'}) {
+     $langid = $defrow->{'langid'};
+     $i++;
+   }
+   push @{ $definitionsbylang[$i] }, $defrow;
+ }
+
+    # If there are any definitions for this language.
+    if( scalar( @definitionsquery ) > 0 )
+    {
+
+</%perl>
+<table width="100%">
+  <tr>
+   <td width="5%">&nbsp;</td>
+   <td width="95%">&nbsp;</td>
+  </tr>
+% foreach my $langgroup (@definitionsbylang) {
+%   # sort things so higher votes are higher up.
+%   my @sorted = sort
+%   	{ $defscores{$b->{'definitionid'}} <=> $defscores{$a->{'definitionid'}} }
+%   	@{ $langgroup };
+
+  <tr>
+   <td colspan="2">
+    <font size="+2"><% $langgroup->[0]->{'langrealname'} %></font>
+    <hr />
+   </td>
+  </tr>
+%   foreach my $defrow (@sorted) {
+  <tr>
+   <td></td>
+   <td>
+    <table width="100%">
+    <tr>
+	<font size="+2">
+	    Definition #<% $defrow->{'definitionnum'} %>
+	</font>
+    </tr>
+      <tr>
+        <td width="10%">&nbsp;</td>
+	<td width="90%">&nbsp;</td>
+     </tr>
+     <tr>
+      <td>created by</td>
+      <td><% &userlink($defrow->{'username'}) %></td>
+%     if(defined($session{'userid'})) 
+%     {
+      <td align="right" valign="top">
+       <font size="-1">
+<%perl>
+	# Check to see if this is the user's vote
+	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
+	    WHERE userid=? AND definitionid=?", undef,
+	    $session{'userid'}, $defrow->{'definitionid'} ) )
+	{
+</%perl>
+	[your current vote]
+%       } else {
+         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>">[vote]</a>
+%      }
+%        if($session{'userid'}==$defrow->{'userid'})
+%        {
+           <br /><a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
+%        }
+       </font>
+      </td>
+%     }
+     </tr>
+     <tr>
+      <td>time</td>
+      <td><% scalar localtime $defrow->{'time'} %></td>
+     </tr>
+% if( $defrow->{'selmaho'} )
+% {
+     <tr>
+      <td>selma'o</td>
+      <td><% $defrow->{'selmaho'} %></td>
+     </tr>
+% }
+     <tr>
+      <td>definition</td>
+      <td><% SimpleLaTeX::interpret($defrow->{'definition'}) %></td>
+     </tr>
+% if(defined($defrow->{'notes'}) && length($defrow->{'notes'})) {
+     <tr>
+      <td>notes</td>
+	<td><% Wiki::mini($defrow->{'notes'}, $defrow->{'tag'}) %></td>
+     </tr>
+% }
+<%perl>
+    my $glosswordsref = $dbh->selectall_arrayref(
+                            "SELECT nlw.word, nlw.meaning, nlw.wordid ".
+                            "FROM keywordmapping g, natlangwords nlw ".
+                            "WHERE g.definitionid=? AND ".
+			    "g.natlangwordid=nlw.wordid AND g.place = 0".
+                            "ORDER BY nlw.word, nlw.meaning", { },
+                            $defrow->{'definitionid'});
+    my @glosswords = @{$glosswordsref};
+
+</%perl>
+
+% if(0<scalar @glosswords) {
+       <tr>
+         <td>gloss words</td>
+         <td>
+           <ul>
+% my $i=0;
+%   foreach my $glossword (@glosswords) {
+             <li><% &utils::generatenatlangwordlink($defrow->{'tag'},
+		$glossword, $glosswordsref->[$i][2], $bg) %></li>
+% $i++;
+%   }
+           </ul>
+         </td>
+       </tr>
+% }
+
+<%perl>
+    my $placesref = $dbh->selectall_arrayref(
+                            "SELECT nlw.word, nlw.meaning, nlw.wordid, p.place ".
+                            "FROM keywordmapping p, natlangwords nlw ".
+                            "WHERE p.definitionid=? AND p.natlangwordid=nlw.wordid AND p.place > 0".
+                            "ORDER BY p.place", { }, $defrow->{'definitionid'});
+    my @places = @{$placesref};
+</%perl>
+
+%     if( (scalar @places)>0 ) {
+       <tr>
+        <td valign="top">place keywords</td>
+        <td>
+% my $i=0;
+%      foreach my $placerow (@places) {
+	<% $placesref->[$i][3] %>.
+          <% &utils::generatenatlangwordlink($defrow->{'tag'},
+	    $placerow, $placesref->[$i][2], $bg) %></li>
+	<br />
+% $i++;
+%      } 
+        </td>
+       </tr>
+%     }
+
+    <tr>
+        <td></td>
+	<td>
+<%perl>
+    my @commentschoice;
+    if(defined($session{'username'})) {
+    push @commentschoice, sprintf("<a
+	href=\"../post.html?new=1;valsi=%s;definition=%s\">[Post New
+	Comment For This Definition]</a>", $row->{'valsiid'},
+	$defrow->{'definitionid'});
+    }
+    my $commentquery2 = $dbh->prepare("SELECT * FROM threads
+    WHERE valsiid=? AND definitionId=$defrow->{'definitionid'}");
+    $commentquery2->execute($row->{'valsiid'});
+    my $commentout=$commentquery2->fetchrow_hashref;
+    if(defined($commentout)) {
+	push @commentschoice, sprintf("<a
+	    href=\"../comments.html?valsi=%s;definition=%s\">[View
+	    Comments For This Definition]</a>", $row->{'valsiid'},
+	    $defrow->{'definitionid'});
+    }
+    $m->out(join(" | ",@commentschoice));
+</%perl>
+	</td>
+    </tr>
+
+    <tr>
+        <td></td>
+	<td>
+    <br /><font size="+1">Examples</font>
+% if(defined($session{'username'})) {
+    <font size="-1"><a href="addexample.html?valsi=<% $row->{'valsiid'} %>;definition=<% $defrow->{'definitionid'} %>">[add example]</a></font>
+% }
+    <hr />
+    <dl>
+%  $examplequery->execute($row->{'valsiid'}, $defrow->{'definitionid'});
+%  my $examplerow = $examplequery->fetchrow_hashref;
+% if(defined($examplerow)) {
+%  do {
+	<dd>
+	    <table width="100%"><tr>
+		<td valign="top" align="left" width="10%">
+		    <p>Example #<% $examplerow->{'examplenum'} %>:</p>
+		</td>
+		<td valign="top" align="left">
+		    <& /bits/wikirender,
+		    wikitext => $examplerow->{'content'} &>
+		</td>
+		<td valign="top" align="right">
+		    (by <% userlink($examplerow->{'username'}) %>)
+		</td>
+% if(defined($session{'userid'}) &&
+%    $examplerow->{'userid'}==$session{'userid'}) {
+		<td valign="top" align="right">
+		    <a href="editexample.html?example=<% $examplerow->{'exampleid'} %>;definition=<% $defrow->{'definitionid'} %>"><font size="-1">[edit]</font></a>
+		</td>
+% }
+	    </table>
+	</dd>
+%  } while(defined($examplerow=$examplequery->fetchrow_hashref));
+% }
+    </dl>
+    </td>
+    </tr>
+
+    </table>
+    <%perl>
+	$m->out("<br />") if $defrow != $langgroup->[$#{$langgroup}];
+    </%perl>
+   </td>
+  </tr>
+%  }
+% &listetymology($row->{'valsiid'}, $langgroup->[0]->{'langid'});
+% }
+</table>
+
+<%perl>
+
+    # If there are no definitions...
+    } else {
+	
+</%perl>
+<!--
+Makes no sense; no default language for valsi, so we can't give them an
+'add' link.
+
+	<p>
+	    There are no definitions for the valsi
+	    "<% $m->dhandler_arg %>" in the language
+	    <% $dbh->selectrow_array( "SELECT realname from languages where langid=$langidarg") %>.
+	    Please consider <a href="adddef.html?valsi=<% $dbh->selectrow_array( "SELECT valsiid FROM valsi WHERE word=?", undef, $m->dhandler_arg ) %>;lang=<% $langidarg %>">adding one</a>.
+	</p>		    
+-->
+<%perl>
+	if( $bg )
+	{
+</%perl>
+	    <p>
+		It is possible that the word is defined but no-one has
+		voted for it. You can <a href="<% $m->dhandler_arg %>">look at the non-best-guesses listing</a> and vote
+		for the word there if it exists. Note that it may take
+		up to half an hour for the vote to percolate through the
+		system.
+	    </p>
+<%perl>
+	}
+    }
+
+} else {
+
+</%perl>
+
+ <p>Unfortunately, I can&sbquo;t say I know what that word is!</p>
+
+% }
+
+<%perl>
+sub listetymology {
+  my($valsiid,$langid) = @_;
+
+  my $etymologyquery = $dbh->prepare("SELECT * FROM convenientetymology WHERE valsiid=? AND langid=?");
+  $etymologyquery->execute($valsiid, $langid);
+
+  my $output = '<tr><td></td><td>';
+  $output .= '<table width="100%"><tr><td><font size="+1">Etymology</font></td>';
+
+  if(defined($session{'username'})) {
+    $output .= sprintf('<td valign="top" align="right"><font size="-1"><a href="addetymology.html?valsi=%i;langid=%s">[add etymology]</a></font></td>',$valsiid, $langid);
+  }
+
+  $output .= '</tr></table><hr /><dl>';
+
+  my @etymology;
+  for(my $i=0; $i<$etymologyquery->rows; $i++) {
+    push @etymology, $etymologyquery->fetchrow_hashref;
+  }
+
+  foreach my $etymology (@etymology) {
+     $output .=
+       '<dd><table width="100%"><tr>';
+
+     my @parts = (['left',&userlink($etymology->{'username'})],
+                  ['left',SimpleLaTeX::interpret($etymology->{'content'})]);
+
+     if(defined($session{'userid'}) &&
+        $etymology->{'userid'}==$session{'userid'})
+     {
+        push @parts, ['right',sprintf('<a href="editetymology?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
+     }
+
+     my @wrappedparts =
+        map { sprintf('<td valign="top" align="%s">%s</td>', @{$_}) }
+            @parts;
+
+     $output .= join('',@wrappedparts);
+
+     $output .= '</tr></table></dd>';
+  }
+
+  $m->out($output);
+
+  $m->out('</dl></td></tr>');
+}
+
+sub natlangwordlink {
+ my($langtag, $word, $wordid, $bg) = @_;
+ print Dumper( @_ );
+    if( $bg )
+    {
+	return sprintf("<a href=\"../natlang/$langtag/%s?bg=1;wordidarg=%s\">%s</a>",
+                utils::armorurl($word), $word, $wordid);
+    } else {
+	return sprintf("<a href=\"../natlang/$langtag/%s\">%s</a>",
+                utils::armorurl($word), $word);
+    }
+}
+
+sub userlink {
+ my $username = shift;
+ return sprintf("<a href=\"../personal/%s\">%s</a>",
+                ($username) x 2);
+}
+</%perl>
+
+<%args>
+$langidarg => undef
+$bg => undef
+</%args>
+
+<%init>
+ $r->content_type("text/html; charset=utf-8");
+ use utils;
+ use SimpleLaTeX;
+ use Data::Dumper;
+ use Wiki;
+ our(%session,$dbh);
+</%init>

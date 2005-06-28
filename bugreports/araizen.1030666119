@@ -1,0 +1,16 @@
+$VAR1 = {
+          'area' => 'natlang',
+          'username' => 'araizen',
+          'brief' => 'better voting system',
+          'type' => 'featurerequest',
+          'report' => 'I would like to request a more finely grained voting system, so that you can vote against something in addition to which is best. That way, it would be possible to say \'this is a bad lujvo, and should never be used with any definition\'. Also, it would be nice to be able to vote for definitions separately from notes/keywords/etc., since one definition may have a good definition, and another a good set of notes. And while I\'m at it, maybe the different parts of the definitions could be kept separate, so that one person could come up with a quick definition, and then someone else could fill in detailed notes about the word later.',
+response => 'All lujvo are valid, and they all have a meaning. I reject the notion that a lujvo can be "bad". It can certainly be bad for a certain meaning. But you should then just vote against or not vote for definitions which assume that bad meaning. After all, if lujvo are uniquely decomposable as you\'d like them to be, you ought to be able to decompose and produce a meaning for arbitrary lujvo, right?
+
+As far as voting against parts of a definition... If you like their definition, and like someone else\'s notes, then enter your own definition entry with the definition you like, and the notes you like, and vote for that. All the data is public domain, after all.
+
+I am likely to allow for voting against words, or maybe allowing you to rank them.',
+          'time' => 1030666119
+        };
+
+
+

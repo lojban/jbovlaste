@@ -1,0 +1,221 @@
+#!/usr/bin/perl
+
+use DBI;
+use strict;
+use Data::Dumper;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my $time = time();
+
+my $lang = 2;	# English
+
+my $userid = 1;	# officialdata
+
+my $typeid = 4;	# lujvo
+
+open( CRAP, ">/tmp/noralujv.crap" );
+
+open(GISMU,$ARGV[0]);
+while(<GISMU>) {
+    if(
+	/^.{13}(.{24})(.{52}).{124}\s{39}(\S.+)$/ ||
+	/^.{13}(.{24})(.{1,52}).{0,124}(\S?.*)$/
+    )
+    {
+	my($lujvo,$notglossword,$definition) = ($1,$2,$3);
+	# Clean out spaces.
+	$lujvo =~ s/\s+$//;
+	$notglossword =~ s/\s+$//;
+	$definition =~ s/\s+$//;
+
+	if( ! $definition )
+	{
+	    print CRAP "No definition: $lujvo, $notglossword.\n";
+	    next;
+	}
+
+	if( $lujvo =~ /\s/ || $notglossword =~ /\s/ )
+	{
+	    print CRAP "Not a lujvo: $lujvo, $notglossword.\n";
+	    next;
+	}
+
+	# Turn x1 into LaTex format $x_{1}$.  The HTML output engine
+	# should turn that LaTeX pattern into nice HTML.
+	$definition =~ s/x(\d)/\$x_{$1}\$/g;
+
+	$lujvo =~ s/^\.//g;
+	$lujvo =~ s/^\s+//g;
+
+	next if $lujvo =~ /\d/;
+
+	$definition =~ s/^([^:]+):\s*([^:]+):\s*//;
+
+	my $glossword = $2;
+	my $notes = "$notglossword; $1";
+
+	#print "$lujvo#!#!#!#$glossword#!#!#!#$notes#!#!#!#$definition#!#!#!#\n\n\n";
+	print "lujvo: $lujvo\n";
+
+	my ($def1, $def2) = ($definition =~ /^(.*\))\s+([\(\[].+)$/);
+
+	if( ! $def1 )
+	{
+	    $def1 = $definition
+	}
+
+	#print "def1: $def1\n";
+	#$def2 && print "def2: $def2\n\n";
+
+	# If it looks OK
+	if( $def1 =~ /=\s*\w* \(/ )
+	{
+	    my @segments;
+	    my $i=0;
+	    foreach my $segment (split( /,\s*/, $def1))
+	    {
+		$segment =~ s/^\s*([^=\s]+)\s*=\s*//;
+		my $x = $1;
+
+		my @parts;
+		my $j=0;
+		foreach my $part (split( /\s*=\s*/, $segment))
+		{
+		    $part =~ s/.*\(//;
+		    $part =~ s/\).*//;
+		    $parts[$j] = $part;
+		    $j++;
+		}
+
+		my $parts = join( "-", @parts);
+
+		if( $i == 0 )
+		{
+		    $segment = "$x is ";
+
+		    # Test for a/an
+		    if( substr( $parts, 0, 1 ) =~ /[aeiouAEIOU]/ )
+		    {
+			$segment .= "an ";
+		    } else {
+			$segment .= "a ";
+		    }
+
+		    $segment .= "$parts";
+		} else {
+		    $segment = " with $parts $x";
+		} 
+
+		#print $segment."\n";
+
+		$segments[$i] = $segment;
+		$i++;
+	    }
+
+	    $definition = join( "", @segments );
+	    $definition .= ".";
+	} else {
+	    print "!!!BAD DEF: $lujvo, $def1.\n";
+	}
+
+	if( $def2 )
+	{
+	    $def2 =~ y/[]/()/;
+	    $definition .= " ".$def2;
+	}
+
+	print "def: $definition\n";
+	print "$lujvo#!#!#!#$glossword#!#!#!#$notes#!#!#!#$definition#!#!#!#\n\n\n";
+	
+	####
+	# Delete old versions
+	####
+
+	my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=? AND typeid=$typeid\n", undef, $lujvo);
+	my $wordid = $dbh->selectrow_array("SELECT wordId FROM natlangwords where langid=$lang AND word=?", undef, $glossword);
+
+	if( $valsiid )
+	{
+	    $dbh->begin_work;
+	    print "\nValsi id $valsiid found, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+	    if( $wordid )
+	    {
+		$dbh->do("DELETE FROM keywordmapping WHERE natlangwordId=?", undef, $wordid );
+		$dbh->do("DELETE FROM natlangwords WHERE word=? AND langid=?", undef, $glossword, $lang );
+	    }
+	    $dbh->do("DELETE FROM definitions WHERE langid=? AND valsiid=? AND userid=?", undef, $lang, $valsiid, $userid);
+	    $dbh->do("DELETE FROM valsi WHERE word=? AND userid=?", undef, $lujvo, $userid);
+	    $dbh->commit;
+	}
+
+	####
+	# Enter the basic valsi information.
+	####
+
+	$dbh->begin_work;
+	
+	$dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, ?, ?, ?)", { }, $lujvo, $typeid, $userid, $time);
+	$valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $lujvo);
+	print "done.\n";
+
+	$dbh->commit;
+
+	####
+	# Enter the definition information.
+	####
+	$dbh->begin_work;
+
+	$dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, userid, time) VALUES
+	    (?, ?, ?, ?, ?, ?)",
+	    undef, $lang, $valsiid, 1, $definition, $userid, $time );
+
+	$dbh->commit;
+	print "done.\n";
+
+	# Retrieve the DefinitionID that got generated above.
+	my $defid = $dbh->selectrow_array("SELECT max(definitionid) FROM
+	definitions WHERE valsiid=? AND langid=?", undef, $valsiid, $lang );
+	print "defid: $defid.\n";
+
+
+	####
+	# Enter the basic natlang word information for the gloss word.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+                undef,
+		$lang, $glossword, 1, $userid, $time );
+	$dbh->commit;
+	print "done.\n";
+
+	####
+	# Retrieve the WordID that got generated above.
+	####
+	my $wordid = $dbh->selectrow_array("SELECT wordid FROM natlangwords
+	WHERE word=? AND langid=? AND time=?", undef, $glossword, $lang, $time );
+
+	## print("SELECT wordId FROM natlangwords where langid=$lang AND word='$pglossword'\n");
+	## print "WORDID: $wordid\n";
+	## print "$valsiid, $defid, $wordid\n";
+
+	####
+	# Enter the mapping from the gloss word to the definition.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
+		(
+		?,
+		?,
+		0
+		)",
+                undef,
+		$defid, $wordid );
+	print "done.\n";
+	$dbh->commit;
+    }
+}
+
+close( CRAP );
+
+$dbh->disconnect;

@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'session',
+          'username' => 'jkominek',
+          'brief' => 'bad passwords not caught',
+          'type' => 'general',
+          'report' => 'when you log in, and provide a bad password, the response page doesn\'t tell you that you didn\'t successfully log in.',
+          'time' => 1030391912
+        };

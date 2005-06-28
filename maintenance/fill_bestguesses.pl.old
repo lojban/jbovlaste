@@ -1,0 +1,53 @@
+#!/usr/bin/perl -w
+
+use strict;
+use DBI;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste",
+			"jbovlaste", "makfa");
+
+$dbh->begin_work;
+
+# clean old crud
+print "Dropping current best guess values\n";
+$dbh->do("delete from valsibestguesses");
+
+my $valsiq = $dbh->prepare("select * from valsi");
+$valsiq->execute();
+while (defined(my $valsirow = $valsiq->fetchrow_hashref)) {
+	print "processing valsi: $valsirow->{'word'}\n";
+
+	my $defq = $dbh->prepare("select * from natlangdefs ".
+		"where valsiid=$valsirow->{'valsiid'}");
+	$defq->execute();
+	my (%deflang, %defscore);
+	while (defined(my $defr = $defq->fetchrow_hashref)) {
+		my $voteq = $dbh->prepare("select value from definitionvotes ".
+			"where definitionid=$defr->{'definitionid'}");
+		$voteq->execute();
+		my $totval = 0;
+		while (defined(my $voter = $voteq->fetchrow_hashref)) {
+			$totval += $voter->{'value'};
+		}
+		$defscore{$defr->{'definitionid'}} = $totval;
+		push @{ $deflang{$defr->{'langid'}} }, $defr;
+	}
+
+	foreach my $lid (keys %deflang) {
+		my @sorted;
+		my $bestrow;
+
+		@sorted = sort { $defscore{$b->{'definitionid'}} <=>
+			$defscore{$a->{'definitionid'}} } @{ $deflang{$lid} };
+		$bestrow = $sorted[0];
+
+		# insert the highest one as the best guess for the word.
+		print "\tadding best guess $bestrow->{'definitionid'}\n";
+		$dbh->do("insert into valsibestguesses (valsiid, langid, ".
+			"defbestguessid) values ($valsirow->{'valsiid'}, ".
+			"$lid, $bestrow->{'definitionid'})");
+	}
+}
+
+print "Done...\n";
+$dbh->commit;

@@ -1,0 +1,8 @@
+$VAR1 = {
+          'report' => 'The Hebrew definition for \'dunda\' is correct, though it doesn\'t contain place keywords. When I edit it, if my editing includes adding place keywords, the result of the editing is not saved. I have tried to add place keywords several times, and I and now using a different computer, so it is not simply a matter of reloading the page.',
+          'area' => 'natlang',
+          'time' => 1030718545,
+          'type' => 'general',
+          'brief' => 'more on definition swallowed',
+          'username' => 'araizen'
+        };

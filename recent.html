@@ -1,0 +1,184 @@
+% use POSIX qw(strftime);
+% my $now = time();
+% my $back_time = $now - (60 * 60 * 24 * $days);
+
+<p>Changes to jbovlaste in the last <% $days %> days.  Note, recent
+changes to the wiki are at the wiki's
+own <a href="wiki/RecentChanges">RecentChanges page</a>.</p>
+
+<form method="get" action="recent.html">
+You may change the number of days viewed to
+<input type="text" name="days" value="<% $days %>" />
+<input type="submit" />
+</form>
+
+%# type, word, valsiid, natlangwordid, id0, id1, username, time
+
+<%perl>
+my @queries = (
+"SELECT 'comment' AS type,
+ c.subject AS word,
+ t.valsiid AS valsiid,
+ d.langid AS langid,
+ t.natlangwordid AS natlangwordid,
+ c.commentid AS id0,
+ t.definitionid AS id1,
+ u.username,
+ c.time
+ FROM comments c, threads t, users u, definitions d
+ WHERE c.time > ? AND c.threadid=t.threadid AND c.userid=u.userid
+ AND d.definitionid = t.definitionid
+ "
+,
+"SELECT 'etymology' AS type,
+ v.word AS word,
+ e.valsiid AS valsiid,
+ e.langid AS langid,
+ 0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ u.username,
+ e.time
+ FROM etymology e, valsi v, users u
+ WHERE e.time > ? AND e.valsiid=v.valsiid AND e.userid=u.userid"
+,
+"SELECT 'example' AS type,
+ v.word AS word,
+ e.valsiid AS valsiid,
+ d.langid AS langid,
+ 0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ u.username,
+ e.time 
+ FROM example e, valsi v, users u, definitions d
+ WHERE e.time > ? AND e.valsiid=v.valsiid AND e.userid=u.userid
+ AND d.definitionid = e.definitionid
+ "
+,
+"SELECT 'definition' AS type,
+ v.word AS word,
+ d.valsiid AS valsiid,
+ d.langid AS langid,
+ 0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ u.username,
+ d.time 
+ FROM definitions d, valsi v, users u
+ WHERE d.time > ? AND d.valsiid=v.valsiid AND d.userid=u.userid"
+ ,
+ "SELECT 'valsi' AS type,
+ v.word AS word,
+ v.valsiid AS valsiid,
+ 0 AS langid,
+ 0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ u.username,
+ v.time 
+ FROM valsi v, users u
+ WHERE v.time > ? AND v.userid=u.userid"
+);
+
+my $vq = $dbh->prepare("select word from valsi where valsiid=?");
+my $nlwq = $dbh->prepare("select word,tag from natlangwords nlw, languages l where wordid=? and l.langid=nlw.langid");
+
+my(@completeq,$completeq);
+foreach my $q (@queries) {
+    $q =~ s/\s+/ /g;
+    # /having format problems./
+    push @completeq, $q;
+}
+$completeq = join("\nUNION\n", @completeq);
+$completeq .= "\nORDER BY time DESC";
+
+my $query = $dbh->prepare($completeq);
+$query->execute( ($back_time) x (scalar @queries) );
+my $last_day = 0;
+
+while(defined(my $row = $query->fetchrow_hashref))
+{
+    next if $row->{'username'} eq 'officialdata';
+
+    my @expandedtime = gmtime $row->{'time'};
+    if($expandedtime[3] != $last_day)
+    {
+	$m->out("<hr \/>");
+	$last_day = $expandedtime[3];
+    } 
+
+    my $timestr = strftime("%d-%b-%Y %T", @expandedtime);
+SWITCH: 
+    {
+	my $langreal;
+	if( $row->{'langid'} )
+	{
+	    $langreal = " in language " .
+		$dbh->selectrow_array("SELECT realname from languages where langid=?", undef, $row->{'langid'});
+	} else {
+	    $langreal = "";
+	}
+
+	if($row->{'type'} eq 'valsi' ||
+		$row->{'type'} eq 'definition' ||
+		$row->{'type'} eq 'etymology')
+	{
+	    $m->out(sprintf('%s - %s update by <a href="personal/%s">%s</a>; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
+			$row->{'username'}, $row->{'username'},
+			$row->{'word'}, $row->{'word'}, $langreal
+			));
+	    last SWITCH;
+	}
+	if($row->{'type'} eq 'comment') {
+	    $m->out(sprintf('%s - new comment <a href="%s">%s</a> by <a
+			href="personal/%s">%s</a>; see <a
+			href="%s/%s">%s</a>%s<br
+			/>'."\n", $timestr,
+			&commentlink($row), $row->{'word'},
+			$row->{'username'}, $row->{'username'},
+			&wordlink($row,$vq,$nlwq), $langreal
+			));
+	    last SWITCH;
+	}
+	if(1) {
+# default
+	}
+    }
+}
+
+$query->finish;
+
+sub commentlink {
+    my $row = shift;
+    my $str = "comments.html?";
+    $str .= "valsi=$row->{'valsiid'};" if $row->{'valsiid'};
+    $str .= "natlangword=$row->{'natlangwordid'};" if $row->{'natlangwordid'};
+    $str .= sprintf('commentid=%i;definition=%i', $row->{'id0'}, $row->{'id1'});;
+    return $str;
+}
+
+sub wordlink
+{
+    my $row = shift;
+    my($vq,$nlwq) = @_;
+    if($row->{'valsiid'})
+    {
+	$vq->execute($row->{'valsiid'});
+	my $word = $vq->fetchrow_array;
+	$vq->finish;
+	return("dict", $word, $word);
+    } else {
+	$nlwq->execute($row->{'natlangwordid'});
+	my($word,$lang) = $nlwq->fetchrow_array;
+	$nlwq->finish;
+	return("natlang/$lang",$word,$word);
+    }
+}
+
+</%perl>
+
+<%init>
+our($dbh);
+use Wiki;
+</%init>
+
+<%method title>
+Recent Changes
+</%method>
+
+<%args>
+$days => 7
+</%args>

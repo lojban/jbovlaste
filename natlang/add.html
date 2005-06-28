@@ -1,0 +1,274 @@
+% unless(defined($session{'username'})) {
+<font size="+3">Not logged in</font>
+<hr />
+Sorry, you've got to be logged in to add words.
+%   $titlestr = "Not logged in";
+%   return;
+% }
+
+% unless(defined($lang)) {
+<font size="+3">Must specify a language</font>
+<hr />
+A language hasn't been specified.
+%   $titlestr = "Must specify a language";
+%   return;
+% }
+
+<font size="+3">
+Adding natural language word to language
+<% $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang) %>
+</font>
+<hr />
+
+% unless(defined($valid)) {
+
+<%perl>
+$titlestr = "Adding natural language word";
+
+ my($realword,$realmeaning);
+ if(defined $word) {
+   $word =~ s/^\s+//g;
+   $word =~ s/\s+$//g;
+   $realword = $word;
+   $word =~ s/(")/sprintf("&#%i;",ord($1))/ge;
+ }
+ if(defined $meaning) {
+   $meaning =~ s/^\s+//g;
+   $meaning =~ s/\s+$//g;
+   $realmeaning = $meaning;
+   $meaning =~ s/(")/sprintf("&#%i;",ord($1))/ge;
+ }
+</%perl>
+
+<p><strong>Important:</strong> Make sure you understand what sort of
+data should be fed into this by reading the help section on <a
+href="../help/natlangwords.html">natural language
+words</a>.</p>
+
+<p><strong>PLEASE</strong> remember to vote for your new word,
+otherwise wiki links and Best Guesses listings will be guaranteed to
+*not* include it.</p>
+
+<form method="post" action="add.html">
+<table>
+ <tr>
+  <td>"Word"</td>
+  <td>
+    <input size="50" name="word" value="<% $word %>" />
+  </td>
+ </tr>
+ <tr>
+  <td>Meaning</td>
+  <td><input size="100" name="meaning" value="<% $meaning %>" /></td>
+ </tr>
+ <tr>
+ <tr>
+  <td>Notes</td>
+  <td><input size="100" name="notes" value="<% $notes %>"></td>
+  <td>May include links to lojban valsi using {}.</td>
+ </tr>
+  <td>
+   <input type="hidden" name="lang" value="<% $lang %>" />
+% if(length($word) && !defined($oncethrough)) {
+   <input type="hidden" name="oncethrough" value="<% $word %>!#!@!<% $meaning %>!#!@!<% $notes %>" />
+% }
+
+% my @tmp = split("!#!@!", $oncethrough, 3);
+% if(length($word) && defined($meaning) && defined($notes) &&
+%    ($realword eq $tmp[0]) && ($realmeaning eq $tmp[1]) && ($notes eq
+%    $tmp[2]) ) {
+   <input type="hidden" name="valid" value="<% $word %>!#!@!<% $meaning %>!#!@!<% $notes %>" />
+% }
+  </td>
+  <td><input type="submit" /></td>
+ </tr>
+</table>
+</form>
+
+% if(defined($oncethrough)) {
+
+<p>Submitting once more without changing the form content <strong>will
+add the word to the database</strong>! Are you <strong>sure</strong> you
+want to do that?</p>
+
+<%perl>
+my $langid = $dbh->selectrow_array("SELECT langid FROM languages WHERE
+tag=?", undef, $lang);
+
+my $words = $dbh->selectall_arrayref( "SELECT word, wordid FROM natlangwords
+WHERE wordid > 0 AND langid = $langid
+AND length(?)-2<=length(word) AND length(?)+2>=length(word)
+", undef, $word, $word );
+
+if( $words )
+{
+    my @mywords = map { $_->[0].":".$_->[1] } @{ $words };
+
+    my @matches;
+
+    # If lang has any words at all...
+    if( $#mywords > 0 )
+    {
+	@matches = amatch( $word, [ "20%" ], @mywords );
+    }
+
+    if( scalar( @matches ) )
+    {
+</%perl>
+<h3><font color="red">Check These Words!</font></h3>
+
+<p>
+    <strong>The following words seem similar to the one you
+    entered.</strong>
+    Please check that none of them will work for you:
+</p>
+<ul>
+<%perl>
+
+	foreach my $match ( @matches )
+	{
+	    # The valsi is pretty much guaranteed not to have : in it.
+	    my $matchWord = $match;
+	    $matchWord =~ s/:.*//;
+
+	    my $matchWordId = $match;
+	    $matchWordId =~ s/[^:]*://;
+
+	    my $meaning = $dbh->selectrow_array( "SELECT meaning FROM
+	    natlangwords WHERE wordid = ?", undef, $matchWordId);
+
+</%perl>
+    <li><a href="<% $lang %>/<% $matchWord %>"><% $matchWord %>
+<%perl>
+	    if( $meaning )
+	    {
+</%perl>
+, in the sense of "<% $meaning %>"
+%	    }
+    </a>
+<%perl>
+	}
+    }
+}
+
+</%perl>
+</ul>
+
+% }
+
+<p>You have to repeatedly (two to four times, depending on whether or
+not you followed a link to this page, or pulled it up and hand entered
+the data) submit this form without changing the values in
+it. You'll be notified when the word has actually been added.</p>
+
+<p>Yes, the excessive amount of submission is rather ridiculous. Something
+doesn't work quite right. I'm going to get around to fixing it sooner or
+later.</p>
+
+% } else {
+
+% $titlestr = "Storing new natural language word";
+
+<p>Here we go...</p>
+
+<%perl>
+my $ok = 1;
+my $langid = $dbh->selectrow_array("SELECT langid FROM languages WHERE
+tag=?", undef, $lang);
+my $query = $dbh->prepare("SELECT * FROM natlangwords WHERE word=? AND
+langid=$langid");
+$query->execute($word);
+$meaning =~ s/^\s+//g;
+$meaning =~ s/\s+$//g;
+while (defined(my $row = $query->fetchrow_hashref) && $ok )
+{
+    if (length($meaning) == 0)
+    {
+</%perl>
+<h2>Please Read!</h2>
+
+<p>This word is already defined, but you are trying to add a definition
+with a default meaning (i.e. you put nothing in the "in the sense of"
+box).</p>
+
+<p>The problem here is that the existence of a default meaning implies
+that no differentiation from that meaning is reasonable.  Since another
+definition exists, this is patently false. </p>
+
+<p>Please go look at <a href="<% $lang %>/<% $word %>">other
+definitions for this word</a>, and see if any of them work for you.</p>
+
+<p>If not, you're just going to have to go back and narrow the sense of
+the word.</p>
+<%perl>
+    $ok = 0;
+  } elsif ($row->{'meaning'} eq $meaning )
+  {
+    $m->out("<p>This word already exists with this same meaning...</p>");
+    $ok = 0;
+  }
+}
+
+if($ok) {
+    my $meaningNum = $dbh->selectrow_array("SELECT max(meaningNum) + 1
+	    FROM natlangwords WHERE word=?\n", undef, $word);
+
+    if (! defined($meaningNum))
+    {
+	$meaningNum=1
+    }
+
+    if(length($meaning)) {
+	$dbh->do("INSERT INTO natlangwords
+		(langid, word, meaning, notes, meaningNum, userid, time )
+		VALUES ((SELECT langid FROM languages WHERE tag=?), ?,
+		?, ?, ?, ?, ?)",
+		undef,
+		$lang, $word, $meaning, $notes, $meaningNum, $session{'userid'}, time() ); 
+    } else {
+	$dbh->do("INSERT INTO natlangwords
+		(langid, word, meaning, notes, meaningNum, userid, time )
+		VALUES ((SELECT langid FROM languages WHERE tag=?), ?,
+		    null, ?, ?, ?, ?)",
+		undef,
+		$lang, $word, $notes, $meaningNum, $session{'userid'}, time() );
+    }
+}
+
+</%perl>
+
+% if ($ok) {
+
+<p>No errors? Excellent.</p>
+
+<p>Go to <a href="<% $lang %>/<% utils::armorurl($word) %>">the page for the word you added</a>.</p>
+
+% } else {
+
+<p>We were unable to add the new word.</p>
+
+% }
+
+% }
+
+<%init>
+ our(%session,$dbh);
+ use String::Approx 'amatch';
+</%init>
+
+<%shared>
+ our $titlestr;
+</%shared>
+
+<%method title>
+<% $titlestr %>
+</%method>
+
+<%args>
+$lang => undef
+$word => undef
+$notes => undef
+$meaning => undef
+$oncethrough => undef
+$valid => undef
+</%args>

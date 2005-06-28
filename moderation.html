@@ -1,0 +1,80 @@
+% unless(defined($request_type)) {
+
+<font size="+3">
+Writing A Moderation Request
+</font>
+
+<hr />
+
+<form method="post" action="moderation.html">
+ <table>
+  <tr>
+   <td>Request Type</td>
+   <td>
+	<select name="request_type">  
+	<option value="New Account Request">New Account Request
+	<option value="valsi Change">valsi Change
+	<option value="valsi Deletion">valsi Deletion
+	<option value="Natlang Word Change">Natlang Word Change
+	<option value="Natlang Word Deletion">Natlang Word Deletion
+	<option value="Definition Change">Definition Change
+	<option value="Definition Deletion">Definition Deletion
+	<option value="Other">Other
+	</select>
+   </td>
+  </tr>
+  <tr>
+   <td>Details</td>
+   <td>
+    <textarea rows="4" cols="60" name="details"></textarea>
+   </td>
+  </tr>
+  </tr>
+   <td><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+% } else {
+
+<font size="+3">
+Thank you for submitting your request.
+</font>
+
+<%perl>
+my $mailprog = '/usr/bin/mailx';
+
+# put a comma between multiple recipients
+my $recipient = "$m->base_comp->attr('admin_email')";
+
+#Now send mail to $recipient
+open (MAIL, "|$mailprog -s \"jbovlaste Moderation Request\" $recipient") || die "Can't open $mailprog!\n";
+
+print MAIL "\n-----------------------------\n";
+print MAIL "Request Type: ", $request_type, "\n\n";
+print MAIL "Remote IP address: $ENV{'REMOTE_ADDR'}\n\n";
+print MAIL "Details: ", $details,"\n\n";
+
+close (MAIL);
+
+
+</%perl>
+
+% }
+
+<%method title>
+Sending A Moderation Request
+</%method>
+
+
+<%init>
+  our($dbh,%session);
+  use utils;
+  use Unicode::String;
+  $r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%args>
+$request_type => undef
+$details => undef
+</%args>

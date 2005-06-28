@@ -1,0 +1,10 @@
+$VAR1 = {
+          'report' => 'I added {ctelr zei kemxasybakni} to the wiki, then attempted to add it to the vlaste. The URL contained spaces, instead of encoding them as plus signs, and resulted in a "bad request" error.
+
+Until rafsi fu\'ivla lujvo work, this would be the only way to enter them, and some lujvo, such as the above one which contains a cmene, can be made only with {zei}.',
+          'area' => 'general',
+          'time' => 1030763507,
+          'type' => 'general',
+          'brief' => 'Can\'t add lujvo formed with {zei}',
+          'username' => 'pier'
+        };

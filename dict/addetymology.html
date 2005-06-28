@@ -1,0 +1,90 @@
+% unless(defined($session{'username'})) {
+<font size="+3">Not logged in</font>
+<hr />
+You ought not have been able to view this page, as you aren't logged in!
+%    $titlestr = "Not logged in";
+%    return;
+% }
+
+% unless(defined($valsi) && defined($langid)) {
+<font size="+3">Must specify word and language</font>
+<hr />
+You'll need to specify a valsi to add etymological information. How
+about you go to the right page and follow the link instead of playing around?
+%    $titlestr = "Must specify word and language";
+%    return;
+% }
+
+% unless(defined($content)) {
+
+<%perl>
+ $pulldescquery->execute($valsi,$langid);
+ my $resultrow = $pulldescquery->fetchrow_arrayref;
+ $titlestr = sprintf('"%s" in "%s"',@{ $resultrow });
+</%perl>
+
+<font size="+3">
+ Adding etymological information for
+ "<% $resultrow->[0] %>" in <% $resultrow->[1] %></font>
+<hr />
+
+<form method="post" action="addetymology.html">
+ <table>
+  <tr>
+   <td valign="top">Etymological Data</td>
+   <td><textarea rows="6" cols="60" name="content"></textarea></td>
+   <td valign="top" align="left">Try to ensure that all text remains on
+       a single line. Also try to keep it as short as possible. See
+       <a href="../help/etymology.html">the etymology help</a> for
+       a description of all the relevant notation, etc.</td>
+  </tr>
+  <tr>
+   <td>
+     <input type="hidden" name="valsi" value="<% $valsi %>">
+     <input type="hidden" name="langid" value="<% $langid %>">
+   </td>
+   <td><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+% } else {
+
+<font size="+3">Storing etymological information.</font>
+<hr />
+
+<%perl>
+ $dbh->do("INSERT INTO etymology (valsiid, langid, content, time, userid) VALUES (?, ?, ?, ?, ?)", { }, $valsi, $langid, $content, time(), $session{'userid'});
+</%perl>
+
+<p>Etymological information added.</p>
+
+<%perl>
+ $pulldescquery->execute($valsi,$langid);
+ my $resultrow = $pulldescquery->fetchrow_arrayref;
+ $titlestr = sprintf('Storing for "%s" in "%s"',@{ $resultrow });
+</%perl>
+
+<p>Return to the <a href="<% $resultrow->[0] %>">
+<% $resultrow->[0] %> record</a>.</p>
+
+% }
+
+<%shared>
+our $titlestr;
+</%shared>
+
+<%method title>
+Adding etymology: <% $titlestr %>
+</%method>
+
+<%init>
+ our(%session,$dbh);
+ my $pulldescquery = $dbh->prepare("SELECT (SELECT word FROM valsi WHERE valsiid=?), (SELECT realname FROM languages WHERE langid=?)");
+</%init>
+
+<%args>
+$valsi => undef
+$langid => undef
+$content => undef
+</%args>

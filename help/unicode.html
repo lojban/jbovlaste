@@ -1,0 +1,63 @@
+<font size="+3">jbovlaste</font><br />
+and Unicode
+<hr />
+<table width="100%"><tr>
+<td width="80%">
+<p>Unicode is Nice. This page is in Unicode. For example, if your web
+browser is working properly and you have a good set of Unicode fonts,
+then:</p>
+
+<table>
+ <tr>
+  <td>This is a couple of Tibetian characters:</td>
+  <td>༃༻བྷ༒</td>
+ </tr>
+ <tr>
+  <td>This is the "Om" character, from the Devanagari script:</td>
+  <td>ॐ</td>
+ </tr>
+ <tr>
+   <td>And here is a bit of Hiragana, with a Bengali character tossed right in the middle:</td>
+   <td>ふるআぱい</td>
+ </tr>
+</table>
+
+<p>If you didn't see a whole lot of weird squiggles, then there is a good
+chance that either your web browser doesn't understand UTF-8, or you're
+missing some fonts.</p>
+
+<p>Christoph Singer has a page of
+<a href="http://www.ccss.de/slovo/unifonts.htm">TrueType Unicode Fonts</a>
+which you can download and install. If that doesn't help, consider trying the
+<a href="http://www.opera.com/">Opera</a> web browser, which is what is
+being used to test this site during development. Mozilla and Internet
+Explorer 6 also seem to work. More or less.</p>
+
+<p>If you use Unix, or some variant thereof, and you'd like to edit Unicode
+text on your computer, consider trying
+<a href="http://www.yudit.org/">Yudit</a>, which has been used extensively
+in the development of this site. If you know of a good Unicode text editor
+for other platforms, please let
+<a href="mailto:<% $m->base_comp->attr('admin_email') %>">the admins</a> know, so that
+they can add it to this web page.</p>
+
+<p>The Unicode Consortium provides
+ <a href="http://www.unicode.org/unicode/onlinedat/products.html">a list
+ of Unicode-enabled software</a> which you may find helpful.</p>
+
+<p>jbovlaste recognizes the allocations of the
+<a href="http://www.evertype.com/standards/csur/">ConScript Unicode
+Registry</a> within the Unicode Private Use Areas. It further encourages
+the Unicode Consortium to act swiftly in approving ConScripts which
+demonstrate an existing language community, such as the Tengwar and
+Klingon scripts.</p>
+</td>
+</tr></table>
+
+<%method title>
+About Unicode
+</%method>
+
+<%attr>
+menu => [ undef, ['Unicode Consortium', 'http://www.unicode.org'], ['Yudit', 'http://www.yudit.org'], ['ConScript Unicode Registry', 'http://www.evertype.com/standards/csur/'] ]
+</%attr>

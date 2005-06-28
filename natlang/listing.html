@@ -1,0 +1,97 @@
+<%perl>
+ my $langs = $dbh->selectall_arrayref("SELECT tag,realname FROM languages WHERE langid>0 ORDER BY tag");
+ my @langs = map { $_->[0] } @{ $langs };
+ my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
+ my @langshtml;
+
+ my $format = '<a href="listing.html?lang=%s%s">%s</a>';
+ foreach my $curlang (@langs) {
+   if($lang eq $curlang) {
+     push @langshtml, $curlang;
+     next;
+   }
+   my $vislang = $curlang;
+   $vislang =~ s/\s+/&nbsp;/g;
+   my $html = sprintf($format,
+                      &utils::armorurl($curlang),
+		      ( $bg ? ";bg=$bg" : "" ),
+                      $vislang);
+   push @langshtml, $html;
+ }
+ $titlestr = $mapping{$lang};
+</%perl>
+
+<font size="+3">Word listings for "<% $mapping{$lang} %>"</font>
+% # If using bestguesses
+% if( $bg )
+% {
+<p>
+    This is a "best guess" listing, meaning that selecting a word will
+    show only the valsi and place which is currently considered the best
+    guess as to what corresponds to that natural language word.  The
+    best guess is determined by compiling user votes.
+</p>
+<p>
+    As a side effect, only words that have votes registered will be
+    shown here.
+</p>
+% }
+<hr />
+<center>[&nbsp;<% join("&nbsp;| ",@langshtml) %>&nbsp;]</center>
+<hr />
+
+<%perl>
+    my $listingquery;
+    if( $bg )
+    {
+	$listingquery = $dbh->prepare("SELECT distinct word, wordid
+	FROM natlangwords nlw, natlangwordbestguesses nlwbg
+	WHERE nlw.langid=
+	    (SELECT langid FROM languages WHERE tag=?)
+	AND nlw.wordid=nlwbg.natlangwordid
+	ORDER BY word");
+    } else {
+	$listingquery = $dbh->prepare("SELECT distinct word
+	FROM natlangwords WHERE langid=
+	    (SELECT langid FROM languages WHERE tag=?)
+	ORDER BY word");
+    }
+    $listingquery->execute($lang);
+
+    my $count = $listingquery->rows;
+    my $columns = 4;
+    my $percolumn = POSIX::ceil($count/$columns);
+</%perl>
+
+
+<table width="100%"><tr>
+%   for(my $column=0; $column<$columns; $column++) {
+  <td width="25%" valign="top" align="left">
+%      my $thiscolcount=$percolumn;
+%      while(defined(my $listingrow = $listingquery->fetchrow_hashref)) {
+%	my $bgstring = $bg ? "?bg=1;wordidarg=$listingrow->{'wordid'}" : "";
+-&nbsp;<a href="<%$lang%>/<%
+&utils::armorutf8forurl($listingrow->{'word'}) %><% $bgstring %>"><% $listingrow->{'word'} %></a><br />
+%        last unless --$thiscolcount;
+%      }
+  </td>
+%   }
+</tr></table>
+
+<%shared>
+our $titlestr;
+</%shared>
+
+<%method title>
+Word Listings: <% $titlestr %>
+</%method>
+
+<%init>
+ our($dbh);
+ use POSIX;
+</%init>
+
+<%args>
+$lang => undef
+$bg => undef
+</%args>

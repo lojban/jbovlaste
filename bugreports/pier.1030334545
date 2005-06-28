@@ -1,0 +1,9 @@
+$VAR1 = {
+          'area' => 'natlang',
+          'username' => 'pier',
+          'brief' => 'After successfully entering gloss words into the natural language database, still doesn\'t accept a definition.',
+          'type' => 'general',
+          'report' => 'I entered {iglu} and defined it as {x1 bisli bliku zdani x2}, with gloss and places. It complained that it didn\'t know the meanings of {bisyzda}, {zdani}, or {selzda}, so I entered them and tried again. It still didn\'t accept the definition.',
+          'time' => 1030334545,
+          'response' => 'Hmm. Ok. Something certainly sounds broken. I hadn\'t intended for the glosses and places to be used when defining Lojban in terms of Lojban, but that shouldn\'t affect whether or not it works.'
+        };

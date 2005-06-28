@@ -1,0 +1,54 @@
+The main interface presented will be that of the Terminology section of
+the current Wiki. Semantically organized, etc, etc.
+
+It would have the same markup as the current Wiki, except with something
+like the following added:
+
+{brivla:w1d} which would expand to:
+
+''brivla'' selbri word x1 is a word expressing predicate relationship x2
+among arguments x3 in language x4
+
+or {brivla:1234}
+selbri word, predicate relationship, predicate arguments, language
+
+so that where we've currently got pages in the terminology section like:
+
+Astronomy (''kesyske'')
+* Cosmology (''mu'erkraske'')
+* Stellar Evolution (''puvytarga'i'')
+** Accretion Disk (''jajycukla'')
+** Star (''tarci'')
+** Red Giants (''xunre ke karda tarci'')
+
+Instead, we can have:
+
+{kesyske:g(w)}
+* {mu'erkraske:g(w)}
+* {puvytarga'i:g(w)}
+** {jajycukla:g(w)}
+** {tarci:g(w)}
+** {xunre ke karda tarci:g(w)}
+
+Where each little {..} grouping would expand to into the english gloss
+(look up the selbri, go to the best guess, retrieve the value from the
+gloss column), followed by the word itself, parenthesized. That glob
+would link to a page about the word, which would allow you to view the
+threaded comments that have appeared about it (reverse chronological),
+as well as vote on which provided definition (for a given language) was
+the best.
+
+Every so often, as appropriate, something would crawl the recorded votes
+and update the "best guess" definition for each selbri. From this page,
+you could go on and look at the pages for each natural language word
+recorded.
+
+That page would allow you to vote on what selbri worked best as a
+translation for it, as well as view the comments associated with it.
+(Which would be there to sway your vote.)
+
+If you tried to pull up the page for a selbri which doesn't yet exist,
+then you'd get a page asking you to enter a new definition. (Presumably
+that would be available by some other means, as well, but I'd make it
+no fun to find, so as to encourage people not to add definitions for
+words without linking to them via the semantic organization.)

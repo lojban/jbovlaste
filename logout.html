@@ -1,0 +1,22 @@
+Thanks for taking the time to log out.
+
+<%perl>
+my $data = encode_base64("",'');
+
+my $cookie = new CGI::Cookie(-name => 'jbovlastesessionid',
+                             -value => $data,
+                             -domain => 'lojban.org'
+			     );
+
+$r->header_out('Set-cookie' => $cookie);
+our(%session) = ( );
+</%perl>
+
+<%once>
+ use CGI::Cookie;
+ use MIME::Base64;
+</%once>
+
+<%method title>
+Logout
+</%method>

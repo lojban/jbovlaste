@@ -1,0 +1,10 @@
+$VAR1 = {
+          'area' => 'natlang',
+          'username' => 'rlpowell',
+          'brief' => 'Duplicate Hobbits.',
+          'type' => 'general',
+          'report' => 'There are two entries for Hobbit in the natlang word list, which both map to the same thing.
+
+-Robin',
+          'time' => 1030386412
+        };

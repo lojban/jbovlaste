@@ -1,0 +1,199 @@
+#!/usr/bin/perl
+
+use DBI;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my $time = time();
+
+my $lang = 2;  # English
+
+my $userid = 1;  # officialdata
+
+$dbh->begin_work;
+
+open(CMAVO,$ARGV[0]);
+while(<CMAVO>) {
+    if(/^(.{11})(.{9})(.{42})(.{5,106})(.*)./) {
+	my($cmavo,$selmaho,$glossword,$definition,$notes) = ($1,$2,$3,$4,$5);
+	## print "$cmavo,$selmaho,$glossword,$definition,$notes,\n";
+	
+	# Clean out spaces.
+	$cmavo =~ s/\s+$//;
+	$selmaho =~ s/\s+$//;
+	$glossword =~ s/\s+$//;
+	$definition =~ s/\s+$//;
+	$notes =~ s/\s+$//;
+
+	# Turn x1 into LaTex format $x_{1}$.  The HTML output engine
+	# should turn that LaTeX pattern into nice HTML.
+	$definition =~ s/x(\d)/\$x_{$1}\$/g;
+
+	$cmavo =~ s/^\.//g;
+	$cmavo =~ s/^\s+//g;
+
+	####
+	# Protect ' in variables for lookup.
+	####
+	my $pcmavo = $cmavo;
+	$pcmavo =~ s/\'/\'\'/g;
+	my $pglossword = $glossword;
+	$pglossword =~ s/\'/\'\'/g;
+
+
+	next if $cmavo =~ /\d/;
+
+	## print "GOING!\n";
+	## print "$lang, $cmavo, $definition, $notes, $userid, $time);\n";
+
+
+	my $cluster = 2;			# cmavo
+	$cluster = 6 if $selmaho =~ /\*/;	# cmavo cluster
+
+        ####
+        # Delete old versions
+        ####
+
+        my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word='$pcmavo'\n");
+        my $wordid = $dbh->selectrow_array("SELECT wordId FROM natlangwords where langid=$lang AND word='$pglossword'");
+
+        if( $valsiid )
+        {
+            $dbh->begin_work;
+            print "\nValsi id $valsiid found, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+	    $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?", undef, $valsiid, $lang );
+            $dbh->do("DELETE FROM definitionvotes WHERE valsiid=?", undef, $valsiid);
+            if( $wordid )
+            {
+		print "\nWord id $wordid found, deletions beginning.\n";
+                $dbh->do("DELETE FROM keywordmapping WHERE natlangwordId=?", undef, $wordid );
+            }
+            $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=
+		(SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?)",
+		undef,
+		$lang, $valsiid, $userid );
+            $dbh->do("DELETE FROM natlangwords WHERE word=? AND langid=?", undef, $glossword, $lang );
+            $dbh->do("DELETE FROM definitions WHERE langid=? AND valsiid=? AND userid=?", undef, $lang, $valsiid, $userid);
+            $dbh->do("DELETE FROM valsi WHERE word=? AND userid=?", undef, $cmavo, $userid);
+            $dbh->commit;
+        }
+
+	####
+	# Enter the basic valsi information.
+	####
+	$dbh->begin_work;
+	$dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, ?, ?, ?)", { }, $cmavo, $cluster, $userid, $time);
+	$dbh->commit;
+
+	####
+	# Retrieve the ValsiID that got generated above.
+	####
+	my $valsiid = $dbh->selectrow_array("SELECT last_value FROM valsi_valsiid_seq\n");
+	## print "pcm: $pcmavo";
+	## print("SELECT valsiid FROM valsi WHERE word='$pcmavo'\n");
+	## print "VALSI: $valsiid\n";
+
+	####
+	# Enter the definition information.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time, selmaho) VALUES
+                (?, ?, ?, ?, ?, ?, ?, ? )",
+                { }, $lang, $valsiid, 1, $definition, $notes, $userid, $time, $selmaho);
+	$dbh->commit;
+
+	####
+	# Protect ' in variables for lookup.
+	####
+	my $pdefinition = $definition;
+	$pdefinition =~ s/\'/\'\'/g;
+	my $pnotes = $notes;
+	$pnotes =~ s/\'/\'\'/g;
+	## print "$pdefinition, $pnotes\n";
+
+	####
+	# Retrieve the DefinitionID that got generated above.
+	####
+	my $defid = $dbh->selectrow_array("SELECT last_value FROM definitions_definitionid_seq");
+	## print("SELECT definitionId FROM definitions where langid=$lang
+	##    AND valsiId=$valsiid AND definitionNum=1");
+	## print "DEFID: $defid\n";
+
+	####
+	# Enter the vote information.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
+            VALUES
+                (?,
+		?,
+		?,
+                ?,
+                ?,
+                ?)",
+                { },
+                $lang,
+                $valsiid,
+		$defid,
+                100000,
+                $userid,
+                $time);
+	$dbh->commit;
+
+	####
+	# Enter the basic natlang word information for the gloss word.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+                { }, $lang, $glossword, 1, $userid, $time );
+	$dbh->commit;
+
+	####
+	# Retrieve the WordID that got generated above.
+	####
+	my $wordid = $dbh->selectrow_array("SELECT last_value FROM natlangwords_wordid_seq");
+	## print("SELECT wordId FROM natlangwords where langid=$lang AND word='$pglossword'\n");
+	## print "WORDID: $wordid\n";
+	## print "$valsiid, $defid, $wordid\n";
+
+	####
+	# Enter the vote information.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
+            VALUES
+                (?,
+		?,
+		?,
+                ?,
+                ?,
+                ?)",
+                undef,
+                $defid,
+		$wordid,
+                0,
+                100000,
+                $userid,
+                $time);
+	$dbh->commit;
+
+	####
+	# Enter the mapping from the gloss word to the definition.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
+		(
+		?,
+		?,
+		0
+		)",
+                undef,
+		$defid, $wordid );
+	$dbh->commit;
+
+    }
+}
+
+$dbh->commit;
+
+$dbh->disconnect;

@@ -1,0 +1,137 @@
+<%perl>
+ my $personalquery = $dbh->prepare("SELECT * FROM users WHERE username = ?");
+ $personalquery->execute( $m->dhandler_arg );
+ my $result = $personalquery->fetchrow_hashref;
+</%perl>
+
+<p>User data for <% $result->{'username'} %>.  You can also see a
+<a href="listing.html">list of all jbovlaste users</a>.</p><hr />
+
+<table>
+ <tr><td>Internal User ID</td><td><% $result->{'userid'} %></td></tr>
+ <tr><td>Username</td><td><% $result->{'username'} %></td></tr>
+ <tr><td>Real name</td><td><% $result->{'realname'} %></td></tr>
+ <tr><td>Email address</td><td><% $result->{'email'} %></td></tr>
+ <tr><td>URL</td><td><a href="<%$result->{'url'}%>"><%$result->{'url'}%></a></tr></tr>
+</table>
+
+% if (defined($session{'userid'}) && $session{'userid'} == $result->{'userid'}) {
+<br /><p>Since this is your data, you may <a href="edit.html">edit</a> it.</p>
+% }
+
+% if (defined($extra)) {
+<a href="<% $result->{'username'} %>">
+ View this user's personal wikitext.</a><br />
+% } if ($extra ne "comments") {
+<a href="<% $result->{'username'} %>?extra=comments">
+ View comments by this user</a><br />
+% } if ($extra ne "defs") {
+<a href="<% $result->{'username'} %>?extra=defs">
+ View definitions by this user</a><br />
+% } if ($extra ne "examples") {
+<a href="<% $result->{'username'} %>?extra=examples">
+ View examples by this user</a><br />
+% } if ($extra ne "valsi") {
+<a href="<% $result->{'username'} %>?extra=valsi">
+ View valsi by this user</a><br />
+% }
+
+<hr />
+% if (!defined($extra)) {
+
+<p>Personal Wikitext:</p>
+<& /bits/wikirender, wikitext => $result->{'personal'}, lang => "en" &>
+
+% } elsif ($extra eq "comments") {
+
+<p>Comments by this user:</p>
+<%perl>
+ my $comments = $dbh->prepare("SELECT * FROM comments WHERE " .
+  "userid=? ORDER BY time DESC");
+ $comments->execute($result->{'userid'});
+ $m->out("<ul>");
+ while (defined(my $rec = $comments->fetchrow_hashref)) {
+  my $threadq = $dbh->prepare("SELECT * FROM threads WHERE " .
+   "threadid=?");
+  $threadq->execute($rec->{'threadid'});
+  my $thres = $threadq->fetchrow_hashref;
+
+  $m->out("<li><a href=\"../comments.html?valsi=$thres->{'valsiid'};" .
+   "natlangword=$thres->{'natlangwordid'};commentid=$rec->{'commentid'};definition=$thres->{'definitionid'}\">");
+  $m->out(Wiki::interpret( $rec->{'subject'}, undef, 1 ));
+  $m->out("</a></li>\n");
+ }
+ $m->out("</ul>");
+</%perl>
+
+% } elsif ($extra eq "defs" || $extra eq "examples" || $extra eq "valsi") {
+
+<%perl>
+ my ($defs, $tab, $do_lan, $do_vla, $what, $order);
+
+ $do_vla = 1;
+ $order = "valsiid";
+ if ($extra eq "defs") {
+  $m->out("<p>Definitions were created by this user for words:</p>\n");
+  $tab = "definitions";
+  $do_lan = 1;
+  $what = "valsiid, langid";
+ } elsif ($extra eq "examples") {
+  $m->out("<p>Examples were created by this user for words:</p>\n");
+  $tab = "example";
+  $what = "DISTINCT valsiid";
+ } elsif ($extra eq "valsi") {
+  $m->out("<p>Valsi created by this user:</p>\n");
+  $what = "word";
+  $tab = "valsi";
+  $do_vla = 0;
+  $order = "word";
+ }
+
+ $defs = $dbh->prepare("SELECT $what FROM $tab
+ WHERE userid=? ORDER BY $order");
+ $defs->execute($result->{'userid'});
+ $m->out("<ul>");
+ while (defined(my $rec = $defs->fetchrow_hashref)) {
+  my $valsiq = $dbh->prepare("SELECT word FROM valsi
+  WHERE valsiid=?") if $do_vla;
+  my $langq = $dbh->prepare("SELECT tag FROM languages
+  WHERE langid=?") if $do_lan;
+  $valsiq->execute($rec->{'valsiid'}) if $do_vla;
+  $langq->execute($rec->{'langid'}) if $do_lan;
+  my $vres = $valsiq->fetchrow_hashref if $do_vla;
+  my $lres = $langq->fetchrow_hashref if $do_lan;
+
+  $m->out("<li>");
+  if (!$do_vla) {
+   $m->out("<a href=\"../dict/" . utils::armorurl($rec->{'word'}) . "\">");
+   $m->out("$rec->{'word'}");
+  } else {
+   $m->out("<a href=\"../dict/" . utils::armorurl($vres->{'word'}) . "\">");
+   if ($do_lan) {
+    $m->out("$vres->{'word'}, $lres->{'tag'}");
+   } else {
+    $m->out("$vres->{'word'}");
+   }
+  }
+  $m->out("</a>");
+  $m->out("</li>\n");
+ }
+ $m->out("</ul>\n");
+</%perl>
+
+% }
+
+<%init>
+ our($dbh,%session);
+ $r->content_type("text/html; charset=utf-8");
+ use Wiki;
+</%init>
+
+<%method title>
+User record: <% $m->dhandler_arg %>
+</%method>
+
+<%args>
+$extra => undef
+</%args>

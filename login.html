@@ -1,0 +1,131 @@
+
+<%once>
+use CGI::Cookie;
+use MIME::Base64;
+use utils;
+</%once>
+
+% if(!( defined($username) && defined($password) &&
+%       length($username)>1 && length($password)>1 )) {
+
+<font size="+3">jbovlaste Login</font>
+<hr />
+
+<p>So you want to login, hmm?</p>
+<p>If you don't already have an account, you'll need to
+ <a href="accountrequest.html">request one</a>.</p>
+
+<p>Since jbovlaste is moving towards public testing, you can get <a
+href="personal/listing.html">a listing of all user
+accounts</a>. I'll be making accounts for people who I know are
+interested in jbovlaste. Your password will be the same as your
+username. If I havn't already made you an account, just use guest. You
+can ask for one, too. Please don't use other people's. That wouldn't
+be nice.</p>
+
+<p>Please note that while I occasionally use IRC nicks or aliases for
+jbovlaste usernames, with the production version I'll only assign
+usernames which are a recognizable function of one's realname, for
+easiest recognition by those who aren't "in the know" and such.</p>
+
+<p>
+<strong>The guest account is now locked.</strong>
+A form to create your own accounts will be made eventually.  In the
+meantime, please submit your request as a bug.
+</p>
+
+<& loginform &>
+
+% } else {
+
+<%perl>
+ use Digest::MD5 qw(md5_hex);
+ our $dbh;
+ my $userquery = $dbh->prepare("SELECT * FROM users WHERE username=? AND password=?");
+ $password =~ y/A-Za-z/N-ZA-Mn-za-m/;
+ $userquery->execute($username, md5_hex($password));
+ my $userresult = $userquery->fetchrow_hashref;
+ our(%session) = (username => $userresult->{'username'},
+                  userid => $userresult->{'userid'},
+                  logintime => time);
+</%perl>
+
+%  if(defined($userresult) && defined($session{'username'})) {
+
+<p>Ah, welcome back <% $userresult->{'realname'} %>.</p>
+<p>We're trying to set a cookie in your browser, now. Please accept it,
+as, otherwise I'm not going to think you're logged in after this page.</p>
+<p>I promise to be really nice with the cookie. It is set to expire in
+48 hours, and will only be relayed to exactly this host. The only thing
+I'm tracking with it is your user ID, and the time of your login. Of
+course, I have to encrypt so that you can't trick me into thinking you're
+someone else. I will occasionally change the key I use to encrypt
+cookies, so you might come back after a day or two and find that you
+have to log back in. I'm sorry about that, but I take security very
+seriously. (And so should you!)</p>
+
+% if(length($backto)>1) {
+<p><a href="<% $backto %>">Return to where you were</a>.</p>
+% }
+
+<%perl>
+# Create and set the cookie.
+
+my $time = time;
+my $data = join(":",
+                 length($userresult->{'userid'})+
+                 length($userresult->{'username'})+
+                 length($time),
+                $userresult->{'userid'},
+                $userresult->{'username'},
+                $time);
+
+my $wrappeddata = encode_base64(utils::encrypt($data), '');
+
+my $cookie = new CGI::Cookie(-name => 'jbovlastesessionid',
+                             -value => $wrappeddata,
+                             -expires => '+48h',
+                             -domain => 'lojban.org'
+			     );
+$r->header_out('Set-cookie' => $cookie);
+
+</%perl>
+
+%  } else {
+
+<p>I hate to have to tell you, but there was some sort of problem with your
+login. Either the user name you just tried is invalid, or the password
+you tried was incorrect. I'm not allowed to tell you which, sorry. If
+you are absolutely sure you've reached this message in error, please
+<a href="mailto:rt-jvs@lojban.org">submit a bug</a>.</p>
+<p>If you'd really like, you can try to log in again:</p>
+<& loginform &>
+
+%  }
+
+% }
+
+<%def loginform>
+<form method="post" action="login.html">
+ <input type="hidden" name="backto" value="<% $r->header_in('Referer') %>">
+ <table>
+  <tr><td align="right">Login:</td>
+      <td align="left"><input size="32" name="username" type="text"></td></tr>
+  <tr><td align="right">Password:</td>
+      <td align="left"><input size="32" name="password" type="password"></td></tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr><td></td>
+      <td align="right"><input type="submit"></td></tr>
+ </table>
+</form>
+</%def>
+
+<%args>
+$username => undef
+$password => undef
+$backto => undef
+</%args>
+
+<%method title>
+Login
+</%method>

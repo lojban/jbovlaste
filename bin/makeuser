@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+
+use DBI;
+use Digest::MD5 qw(md5_hex);
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my($username,$realname,$email,$password);
+
+print "Username: ";
+chomp($username = <STDIN>);
+print "Realname: ";
+chomp($realname = <STDIN>);
+print "email:    ";
+chomp($email = <STDIN>);
+print "password: ";
+chomp($password = <STDIN>);
+
+print "Username: $username
+Realname: $realname
+email:    $email
+password: $password
+
+Is that correct? ";
+my $response;
+chomp($response = <STDIN>);
+
+die "invalid input; must say 'yes'." unless $response =~ /yes/;
+
+$password =~ y/A-Za-z/N-ZA-Mn-za-m/;
+
+my $curuser = $dbh->selectrow_array("SELECT userid FROM users WHERE username=?", undef, $username);
+
+if( $curuser )
+{
+	if( $realname )
+	{
+		$dbh->do("UPDATE users set realname = ? WHERE userid = ?", undef, $realname, $curuser );
+	}
+	
+	if( $email )
+	{
+		$dbh->do("UPDATE users set email = ? WHERE userid = ?", undef, $email, $curuser );
+	}
+	
+	if( $password )
+	{
+		$dbh->do("UPDATE users set password = ? WHERE userid = ?", undef, md5_hex($password), $curuser );
+	}
+} else {
+	$dbh->do("INSERT INTO users (username, password, email, realname,
+	votesize) VALUES (?, ?, ?, ?, ?)", { }, $username, md5_hex($password),
+	$email, $realname, 1);
+}
+
+printf("%s\n",$dbh->errstr);
+
+$dbh->disconnect;
+
+print "\n\nNow go put them in the mailing list.\n";

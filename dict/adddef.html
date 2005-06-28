@@ -1,0 +1,561 @@
+% unless(defined($session{'username'})) {
+<font size="+3">Not logged in</font>
+<hr />
+You ought not have been able to view this page, as you aren't logged in!
+%    $titlestr = "Not logged in";
+%    return;
+% }
+
+% unless(defined($valsi) && defined($lang)) {
+<font size="+3">Must specify valsi and language</font>
+<hr />
+Not enough info to know what to do.
+%   $titlestr = "Must specify valsi and language";
+%   return;
+% }
+
+% unless(defined($definitiontxt)) {
+
+<%perl>
+   my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
+    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
+    undef, $valsi, $lang);
+   my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+    (SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
+   my($valsiword,$langrealname,$langtag) = @initialresult;
+   unless(defined($valsiword) && defined($langrealname)) {
+     $m->out("Sorry, couldn't find either the valsi ID or language ID you requested.");
+     return;
+   }
+   $titlestr = sprintf('Adding definition for "%s" in language "%s"',
+                       $valsiword, $langrealname);
+</%perl>
+
+<font size="+3">Adding definition for "<% $valsiword %>" in language
+"<% $langrealname %>"</font>
+
+<hr />
+
+<p><strong>PLEASE</strong> remember to vote for your new definition,
+otherwise wiki links and Best Guesses listings will be guaranteed to
+*not* include it.</p>
+
+<form method="post" action="adddef.html">
+ <table>
+  <tr>
+   <td>Definition</td>
+   <td><input type="text" name="definitiontxt" size="80"></td>
+   <td>
+	For information on how to format the definition, see <a
+	href="../help/definitions.html">the definition help file</a>.
+   </td>
+  </tr>
+% if( $type eq "cmavo" || $type eq "cmavo cluster" ||
+% $type eq "experimental cmavo" )
+% {
+  <tr>
+   <td>selma'o</td>
+   <td><input type="text" name="selmaho" size="15"></td>
+    <td>
+	Don't enter a selma'o unless you're sure you understand the
+	implications, please.  Ask people to comment on the word and
+	suggest what might work.
+    </td>
+  </tr>
+% }
+  <tr>
+   <td>Notes</td>
+   <td>
+    <textarea rows="4" cols="60" name="notes"></textarea>
+   </td>
+   <td>Yes, you're being given multiple lines. Try not to use them.</td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <h3>Gloss Keywords</h3>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <p>
+    Gloss Word #1: <input type="text" name="glossw1" size="20">
+    In Sense: <input type="text" name="glossm1" size="30">
+   </p>
+   <p>
+    Gloss Word #2: <input type="text" name="glossw2" size="20">
+    In Sense: <input type="text" name="glossm2" size="30">
+   </p>
+   <p>
+    Gloss Word #3: <input type="text" name="glossw3" size="20">
+    In Sense: <input type="text" name="glossm3" size="30">
+   </p>
+   <p>
+    Gloss Word #4: <input type="text" name="glossw4" size="20">
+    In Sense: <input type="text" name="glossm4" size="30">
+   </p>
+   <p>
+    Gloss Word #5: <input type="text" name="glossw5" size="20">
+    In Sense: <input type="text" name="glossm5" size="30">
+   </p>
+   </td>
+   <td>
+    Please read <a href="../help/natlangwords.html">details on the
+    second field</a>. You can look at a <a
+    href="../natlang/listing.html" target="_blank">natlang listing in a
+    new window</a> to see what words already exist.
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <h3>Place Keywords</h3>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <p>
+    Place Word #1: <input type="text" name="placew1" size="20">
+    In Sense: <input type="text" name="placem1" size="30">
+   </p>
+   <p>
+    Place Word #2: <input type="text" name="placew2" size="20">
+    In Sense: <input type="text" name="placem2" size="30">
+   </p>
+   <p>
+    Place Word #3: <input type="text" name="placew3" size="20">
+    In Sense: <input type="text" name="placem3" size="30">
+   </p>
+   <p>
+    Place Word #4: <input type="text" name="placew4" size="20">
+    In Sense: <input type="text" name="placem4" size="30">
+   </p>
+   <p>
+    Place Word #5: <input type="text" name="placew5" size="20">
+    In Sense: <input type="text" name="placem5" size="30">
+   </p>
+   <p>
+    Place Word #6: <input type="text" name="placew6" size="20">
+    In Sense: <input type="text" name="placem6" size="30">
+   </p>
+   <p>
+    Place Word #7: <input type="text" name="placew7" size="20">
+    In Sense: <input type="text" name="placem7" size="30">
+   </p>
+   <p>
+    Place Word #8: <input type="text" name="placew8" size="20">
+    In Sense: <input type="text" name="placem8" size="30">
+   </p>
+   <p>
+    Place Word #9: <input type="text" name="placew9" size="20">
+    In Sense: <input type="text" name="placem9" size="30">
+   </p>
+   </td>
+   <td>
+    Please read <a href="../help/natlangwords.html">details on the
+    second field</a>. You can look at a <a
+    href="../natlang/listing.html" target="_blank">natlang listing in a
+    new window</a> to see what words already exist.  Yes, you can now
+    skip places.  Try not to, though; if less important places are at
+    the front of your valsi, it's probably badly ordered.
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <input type="hidden" name="valsi" value="<% $valsi %>">
+    <input type="hidden" name="lang" value="<% $lang %>">
+    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
+    <input type="hidden" name="langtag" value="<% $langtag %>">
+   </td>
+   <td><input type="submit"></td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <h3>Extra Gloss Keywords</h3>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <p>
+    Gloss Word #6: <input type="text" name="glossw6" size="20">
+    In Sense: <input type="text" name="glossm6" size="30">
+   </p>
+   <p>
+    Gloss Word #7: <input type="text" name="glossw7" size="20">
+    In Sense: <input type="text" name="glossm7" size="30">
+   </p>
+   <p>
+    Gloss Word #8: <input type="text" name="glossw8" size="20">
+    In Sense: <input type="text" name="glossm8" size="30">
+   </p>
+   <p>
+    Gloss Word #9: <input type="text" name="glossw9" size="20">
+    In Sense: <input type="text" name="glossm9" size="30">
+   </p>
+   <p>
+    Gloss Word #10: <input type="text" name="glossw10" size="20">
+    In Sense: <input type="text" name="glossm10" size="30">
+   </p>
+   <p>
+    Gloss Word #11: <input type="text" name="glossw11" size="20">
+    In Sense: <input type="text" name="glossm11" size="30">
+   </p>
+   <p>
+    Gloss Word #12: <input type="text" name="glossw12" size="20">
+    In Sense: <input type="text" name="glossm12" size="30">
+   </p>
+   <p>
+    Gloss Word #13: <input type="text" name="glossw13" size="20">
+    In Sense: <input type="text" name="glossm13" size="30">
+   </p>
+   <p>
+    Gloss Word #14: <input type="text" name="glossw14" size="20">
+    In Sense: <input type="text" name="glossm14" size="30">
+   </p>
+   <p>
+    Gloss Word #15: <input type="text" name="glossw15" size="20">
+    In Sense: <input type="text" name="glossm15" size="30">
+   </p>
+   </td>
+   <td>
+    Please don't use these.
+   </td>
+  </tr>
+ </table>
+</form>
+
+<!--
+<p>Please note that when you submit this, the values will be checked
+   for consistency just as much as possible. For instance, you cannot
+   provide a keyword for place 3 unless the contents of the definition
+   lead me to believe that your definition includes a third
+   place. (I'll generally be looking for "x3" in that case.)</p>
+-->
+
+% } elsif (
+% # If Already agreed to the dollar sign problem
+% ( defined( $dollarsok ) && defined( $definitiontxt ) )
+% # Or There is no problem
+% || ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 ) && defined( $definitiontxt ) )
+% ) {
+<%perl>
+ my $langrealnamequery =
+   $dbh->prepare("SELECT * FROM languages WHERE tag=?");
+ $langrealnamequery->execute($langtag);
+ my $langrealnameresult = $langrealnamequery->fetchrow_hashref;
+ $titlestr = sprintf('Processing new definition for "%s" in language "%s"',
+                     $valsitxt, $langrealnameresult->{'realname'});
+
+ my @bytes = unpack("C*", $langrealnameresult->{'realname'});
+</%perl>
+
+<font size="+3">Processing new definition for "<% $valsitxt %>" in
+language "<% pack("C*",@bytes) %>"</font>
+<hr />
+
+<%perl>
+  # process what we were given, checking for validity and such.
+  $dbh->begin_work;
+
+#  my @glosskeywords = &utils::processkeywordlisting($glosswords);
+#  my @placekeywords = &utils::processkeywordlisting($placekeywords);
+
+#  my %words = map { $_->[0] => 1 }
+#                  (grep { defined } (@glosskeywords,@placekeywords));
+#  my @words = keys %words;
+
+    my @glosskeywords = ( [ $glossw1, $glossm1 ], [ $glossw2, $glossm2],
+    [ $glossw3, $glossm3 ], [ $glossw4, $glossm4 ], [ $glossw5,
+    $glossm5], [ $glossw6, $glossm6 ], [ $glossw7, $glossm7 ], [
+    $glossw8, $glossm8], [ $glossw9, $glossm9 ], [ $glossw10,
+    $glossm10], [ $glossw11, $glossm11 ], [ $glossw12, $glossm12 ], [
+    $glossw13, $glossm13 ], [ $glossw14, $glossm14 ], [ $glossw15,
+    $glossm15 ] );
+
+    my @placekeywords = ( [ $placew1, $placem1 ], [ $placew2, $placem2],
+    [ $placew3, $placem3 ], [ $placew4, $placem4 ], [ $placew5,
+    $placem5], [ $placew6, $placem6 ], [ $placew7, $placem7 ], [
+    $placew8, $placem8], [ $placew9, $placem9 ] );
+
+    my @words = ( $placew1, $placew2, $placew3, $placew4, $placew5,
+    $placew6, $placew7, $placew8, $placew9, $glossw1, $glossw2,
+    $glossw3, $glossw4, $glossw5, $glossw6, $glossw7, $glossw8,
+    $glossw9, $glossw10, $glossw11, $glossw12, $glossw13, $glossw14,
+    $glossw15 );
+
+  my @missingwords;
+
+  if(scalar @words) {
+
+    my $querystr =
+     sprintf('SELECT * FROM natlangwords WHERE word IN (%s) AND langid=?',
+             join(',',('?') x (scalar @words)));
+
+    my $natlangwordsquery = $dbh->prepare($querystr);
+    $natlangwordsquery->execute(@words,$lang);
+
+    my %releventnatlangwords;
+    for(my $i=0; $i<=$natlangwordsquery->rows; $i++) {
+      my $tmp = $natlangwordsquery->fetchrow_hashref;
+      next unless defined $tmp;
+      $releventnatlangwords{$tmp->{'word'}}->{$tmp->{'meaning'}} = $tmp;
+    }
+
+    foreach my $natlangword (@glosskeywords,@placekeywords) {
+      next unless (defined $natlangword && $natlangword->[0]);
+
+      unless(
+             defined( $releventnatlangwords{ $natlangword->[0] }->{ $natlangword->[1] } )
+            )
+      {
+        push @missingwords, $natlangword;
+      }
+    }
+  }
+</%perl>
+
+%  if(0==scalar @missingwords) {
+
+<p>I'm sure you'll be glad to know that we identified all of the natural
+language words you provided. Hopefully you didn't make any typos! Here
+we go...</p>
+
+<%perl>
+  my @seqvalueresult =
+    $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')");
+
+    my @curDefNum = $dbh->selectrow_array("SELECT max(definitionNum)
+    FROM definitions WHERE langid=$lang AND valsiid=$valsi"
+    );
+
+    my $nextDefNum = $curDefNum[0] + 1;
+
+  $dbh->do("INSERT INTO definitions ".
+           "(definitionid, langid, valsiid, definitionNum, definition,
+	   selmaho, notes, userid, time) ".
+           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
+	   $lang, $valsi, $nextDefNum, $definitiontxt, $selmaho,
+	   $notes, $session{'userid'}, time());
+
+  for(my $i=0; $i<=$#glosskeywords; $i++) {
+   next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
+   my @tmp = @{ $glosskeywords[$i] };
+   my $meaning = $tmp[1] ? $tmp[1] : undef;
+   $dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
+            'VALUES (?, 0, (SELECT wordid FROM natlangwords '.
+	    'WHERE langid=? AND word=? AND '.
+            '(meaning=? OR (? IS NULL AND meaning IS NULL))))',
+            undef, $seqvalueresult[0], $lang, $tmp[0], $meaning, $meaning );
+  }
+
+  for(my $i=0; $i<=$#placekeywords; $i++) {
+   next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
+   my @tmp = @{ $placekeywords[$i] };
+   my $meaning = $tmp[1] ? $tmp[1] : undef;
+   $dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
+            'VALUES (?, ?, (SELECT wordid FROM natlangwords '.
+            'WHERE langid=? AND word=? AND '.
+            '(meaning=? OR (? IS NULL AND meaning IS NULL))))',
+            undef, $seqvalueresult[0], $i+1, $lang, $tmp[0], $meaning, $meaning );
+  }
+
+  $dbh->do("DELETE FROM definitionvotes
+    WHERE valsiid=? and langid=? and userid=?",
+    undef,
+    $valsi, $lang, $session{'userid'});
+
+  $dbh->do("INSERT INTO definitionvotes
+    (valsiid, langid, definitionid, value, userid, time)
+    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
+    ?)",
+    undef,
+    $valsi, $lang, $seqvalueresult[0], $session{'userid'}, $session{'userid'}, time());
+
+  $dbh->commit or die $dbh->errstr;
+
+  # Update valsibestguesses
+  my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+  system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang $valsi $session{'userid'} $seqvalueresult[0] \&" );
+</%perl>
+
+<p>If you're seeing this, it probably worked. Please go to
+<a href="<% $valsitxt %>">the definition you added</a> and check
+on things.  Also <strong>make sure to click on and vote for all the
+natural language words</strong>.  A vote for you on the definition you
+just added has already been recorded.</p>
+
+%     } else {
+
+<p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
+entered at this point.  You need to deal with the issues below, then go
+back to the page before this one and hit submit again.</p>
+
+<p>Dreadfully sorry, I'm afraid I don't know some of the words you tried
+to use as keywords:</p>
+
+<ul>
+% foreach my $word (@missingwords)
+% {
+%    if( $word->[0] )
+%    {
+  <li><% &utils::generatemissingwordlink($langtag, @{ $word }) %></li>
+%    }
+% }
+</ul>
+
+%        $dbh->rollback;
+%     }
+
+% # This is the case where there might not be dollar signs and we want
+% # to check with the user.
+% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2 ) {
+
+<form method="post" action="adddef.html">
+
+    <p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
+    entered at this point.  You need to deal with the issues below, then go
+    back to the page before this one and hit submit again.</p>
+
+    <p>
+	I see that there are less than two dollar signs in your
+	definition.  This implies that either your word has no place
+	structure, which is fine for cmavo and cmene and such, or you
+	didn't <a
+	href="../help/definitions.html">read the instructions</a>.
+    </p>
+    <p>
+	Please hit the submit button only if you are <em>sure</em> that
+	what you've done isn't going to waste time for the people
+	responsible for turning this into a real dictionary.
+    </p>
+    <input type="hidden" name="definitiontxt" value="<% $definitiontxt %>" />
+    <input type="hidden" name="notes" value="<% $notes %>" />
+    <input type="hidden" name="valsi" value="<% $valsi %>" />
+    <input type="hidden" name="lang" value="<% $lang %>" />
+    <input type="hidden" name="valsitxt" value="<% $valsitxt %>" />
+    <input type="hidden" name="langtag" value="<% $langtag %>" />
+    <input type="hidden" name="selmaho" value="<% $selmaho %>" />
+    <input type="hidden" name="dollarsok" value="yes" />
+    <input type="hidden" name="placew1" value="<% $placew1 %>" />
+    <input type="hidden" name="placew2" value="<% $placew2 %>" />
+    <input type="hidden" name="placew3" value="<% $placew3 %>" />
+    <input type="hidden" name="placew4" value="<% $placew4 %>" />
+    <input type="hidden" name="placew5" value="<% $placew5 %>" />
+    <input type="hidden" name="placew6" value="<% $placew6 %>" />
+    <input type="hidden" name="placew7" value="<% $placew7 %>" />
+    <input type="hidden" name="placew8" value="<% $placew8 %>" />
+    <input type="hidden" name="placew9" value="<% $placew9 %>" />
+    <input type="hidden" name="glossw1" value="<% $glossw1 %>" />
+    <input type="hidden" name="glossw2" value="<% $glossw2 %>" />
+    <input type="hidden" name="glossw3" value="<% $glossw3 %>" />
+    <input type="hidden" name="glossw4" value="<% $glossw4 %>" />
+    <input type="hidden" name="glossw5" value="<% $glossw5 %>" />
+    <input type="hidden" name="glossw6" value="<% $glossw6 %>" />
+    <input type="hidden" name="glossw7" value="<% $glossw7 %>" />
+    <input type="hidden" name="glossw8" value="<% $glossw8 %>" />
+    <input type="hidden" name="glossw9" value="<% $glossw9 %>" />
+    <input type="hidden" name="glossw10" value="<% $glossw10 %>" />
+    <input type="hidden" name="glossw11" value="<% $glossw11 %>" />
+    <input type="hidden" name="glossw12" value="<% $glossw12 %>" />
+    <input type="hidden" name="glossw13" value="<% $glossw13 %>" />
+    <input type="hidden" name="glossw14" value="<% $glossw14 %>" />
+    <input type="hidden" name="glossw15" value="<% $glossw15 %>" />
+    <input type="hidden" name="placem1" value="<% $placem1  %>" />
+    <input type="hidden" name="placem2" value="<% $placem2  %>" />
+    <input type="hidden" name="placem3" value="<% $placem3  %>" />
+    <input type="hidden" name="placem4" value="<% $placem4  %>" />
+    <input type="hidden" name="placem5" value="<% $placem5  %>" />
+    <input type="hidden" name="placem6" value="<% $placem6  %>" />
+    <input type="hidden" name="placem7" value="<% $placem7  %>" />
+    <input type="hidden" name="placem8" value="<% $placem8  %>" />
+    <input type="hidden" name="placem9" value="<% $placem9  %>" />
+    <input type="hidden" name="glossm1" value="<% $glossm1  %>" />
+    <input type="hidden" name="glossm2" value="<% $glossm2  %>" />
+    <input type="hidden" name="glossm3" value="<% $glossm3  %>" />
+    <input type="hidden" name="glossm4" value="<% $glossm4  %>" />
+    <input type="hidden" name="glossm5" value="<% $glossm5  %>" />
+    <input type="hidden" name="glossm6" value="<% $glossm6  %>" />
+    <input type="hidden" name="glossm7" value="<% $glossm7  %>" />
+    <input type="hidden" name="glossm8" value="<% $glossm8  %>" />
+    <input type="hidden" name="glossm9" value="<% $glossm9  %>" />
+    <input type="hidden" name="glossm10" value="<% $glossm10  %>" />
+    <input type="hidden" name="glossm11" value="<% $glossm11  %>" />
+    <input type="hidden" name="glossm12" value="<% $glossm12  %>" />
+    <input type="hidden" name="glossm13" value="<% $glossm13  %>" />
+    <input type="hidden" name="glossm14" value="<% $glossm14  %>" />
+    <input type="hidden" name="glossm15" value="<% $glossm15  %>" />
+    <input type="submit">
+</form>
+% }
+
+<%shared>
+our $titlestr;
+</%shared>
+
+<%method title>
+Adding definition: <% $titlestr %>
+</%method>
+
+<%init>
+  our($dbh,%session);
+  use utils;
+  use Unicode::String;
+  $r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%args>
+$valsi => undef
+$lang => undef
+$definitiontxt => undef
+$notes => undef
+$valsitxt => undef
+$langtag => undef
+$selmaho => undef
+$dollarsok => undef
+$placew1 => undef 
+$placew2 => undef 
+$placew3 => undef 
+$placew4 => undef 
+$placew5 => undef 
+$placew6 => undef 
+$placew7 => undef 
+$placew8 => undef 
+$placew9 => undef 
+$glossw1 => undef 
+$glossw2 => undef 
+$glossw3 => undef 
+$glossw4 => undef 
+$glossw5 => undef 
+$glossw6 => undef 
+$glossw7 => undef 
+$glossw8 => undef 
+$glossw9 => undef 
+$glossw10 => undef 
+$glossw11 => undef 
+$glossw12 => undef 
+$glossw13 => undef 
+$glossw14 => undef 
+$glossw15 => undef 
+$placem1 => undef 
+$placem2 => undef 
+$placem3 => undef 
+$placem4 => undef 
+$placem5 => undef 
+$placem6 => undef 
+$placem7 => undef 
+$placem8 => undef 
+$placem9 => undef 
+$glossm1 => undef 
+$glossm2 => undef 
+$glossm3 => undef 
+$glossm4 => undef 
+$glossm5 => undef 
+$glossm6 => undef 
+$glossm7 => undef 
+$glossm8 => undef 
+$glossm9 => undef 
+$glossm10 => undef 
+$glossm11 => undef 
+$glossm12 => undef 
+$glossm13 => undef 
+$glossm14 => undef 
+$glossm15 => undef 
+</%args>

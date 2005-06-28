@@ -1,0 +1,194 @@
+<%perl>
+  my $output;
+  if(defined($dbh)) {
+     $output = $m->scomp($m->fetch_next,$m->caller_args(0));
+  } else {
+     $output = '
+Hey, I really hate to be the one to break it to you, but for some
+reason, I can\'t get a connection to the database. Dreadfully sorry.
+Please let <a href="mailto:'.
+$m->base_comp->attr('admin_email').
+'">the admins</a>
+know just as soon as you can. Please include a concise description of
+what happened leading up to this. Just in case.
+';
+  }
+</%perl>
+
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+ PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//<% uc($lang) %>"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%$lang%>" lang="<%$lang%>">
+ <STYLE type="text/css">
+  <!--
+    BODY { /*background-image:url(<% $base_url %>/gaufarvica.jpg);*/
+           background-attachment:fixed;
+           background-repeat:no-repeat;
+           background-position:bottom right; }
+    -->
+ </STYLE>
+ <head>
+  <meta name="keywords" content="jbovlaste lojban dictionary" />
+  <!-- Don't bitch about my XHTML, and I won't gnaw off your head.
+       Besides, it is all pieced together from a half dozen files.
+       Each individual bit looks good to me when I work on it. -jfk -->
+  <title>jbovlaste: <& SELF:title &></title>
+ </head>
+ <body bgcolor="white" text="black">
+
+<table width="100%">
+ <tr>
+  <td colspan="2">
+   <table width="100%"><tr>
+     <td align="left">
+       <font face="Viner Hand ITC,Times" size="+5">
+          <strong>jbovlaste</strong>
+       </font>
+     </td>
+   </tr></table>
+   a lojban dictionary editing system<hr />
+  </td>
+ </tr>
+ <tr>
+  <& bits/menubar, menu => $menu &>
+  <td width="80%">
+
+<% $output %>
+
+  </td>
+
+ </tr>
+ <tr>
+  <td width="100%" colspan="2">
+   <& bits/status &>
+  </td>
+ </tr>
+</table>
+  <hr />
+  <table width="100%">
+   <tr>
+    <td align="left" valign="top">
+     <font color="red">Under Development<br />ca farvi gau</font><br />
+    </td>
+    <td valign="top">
+     <a href="<% $base_url %>/recent.html">recent changes</a>
+    </td>
+    <td align="right" valign="top">
+     <a href="<% $base_url %>/">jbovlaste main</a>
+    </td>
+   </tr>
+   <tr>
+    <td align="left" valign="top">
+     <font size="-1">
+     This is jbovlaste, the lojban dictionary system.<br />
+     This is version <!-- #JVS#VERSION# -->, last changed on <!-- #JVS#DATE# -->.<br />
+     All content is public domain. By submitting content, you agree to place
+     it in the public domain to the fullest extent allowed by local law. <br />
+     jbovlaste is an official project of the logical language group,
+     and is now headed by <a href="mailto:rlpowell@lojban.org">Robin Lee Powell</a>.<br />
+     E-mail him if you have any questions.
+     </font>
+    </td>
+    <td />
+    <td align="right" valign="bottom">
+     <font size="-1">
+% if(!defined($session{'username'})) {
+      care to <a href="<% $base_url %>/login.html">log in</a>?
+% } else {
+      you're logged in as <% $session{'username'} %>.<br />
+      <a href="<% $base_url %>/logout.html">click here to logout</a>.
+% }
+     </font>
+    </td>
+   </tr>
+  </table>
+ </body>
+</html>
+
+<%once>
+ use MIME::Base64;
+ use Data::Dumper;
+ use DBI;
+ use utils;
+</%once>
+
+<%init>
+    # The stuff below (about base_url) has been copied copied to
+    # bits/menuhandler, and should be kept in synch with it.
+    my $base_url=$r->hostname()."/".$r->unparsed_uri();
+    $base_url =~ s{//+}{/}g;
+    $base_url =~ s{\?.*}{}g;
+    $base_url = "http://".$base_url;
+
+    my $path=($m->fetch_next)->path;
+
+    $path =~ s/dhandler/\.\*/;
+
+    $base_url =~ s/$path//;
+    $base_url =~ s{/*$}{};
+
+ my $menu =
+  [ [ "Home", "$base_url/" ],
+    [ "Recent Changes", "$base_url/recent.html" ],
+    [ "Wiki", "$base_url/wiki/FrontPage" ],
+    [ "Search", "http://www.lojban.org/cgi-bin/dict.pl" ],
+    [ "How You Can Help", "$base_url/help/howtohelp.html" ],
+    [ "valsi Listing", "$base_url/dict/listing.html" ],
+    [ "valsi Best Guesses Listing", "$base_url/dict/listing.html?bg=1" ],
+    [ "natlang Listing", "$base_url/natlang/listing.html" ],
+    [ "natlang Best Guesses Listing", "$base_url/natlang/listing.html?bg=1" ],
+    [ "Dictionary Production", "$base_url/latex/index.html" ],
+    [ "user Listing", "$base_url/personal/listing.html" ],
+    [ "Report Bugs", "mailto:rt-jvs\@lojban.org" ],
+    [ "Utilities", "$base_url/util/index.html" ],
+    [ "Status", "$base_url/status.html" ],
+    [ "Help", "$base_url/help/index.html" ],
+    [ "Request Account", "$base_url/accountrequest.html" ]
+  ];
+
+    if( $m->fetch_next->attr_if_exists('menu') )
+    {
+	push @{$menu}, @{$m->fetch_next->attr('menu')};
+    };
+
+ my $lang = "en";
+ our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste","jbovlaste","makfa");
+
+ my $cookie = $r->header_in('Cookie');
+ my @cookies = split(/\s*;\s*/, $cookie);
+ my %cookies = map { /(.+)=(.+)/; $1 => $2 } @cookies;
+
+ our %session;
+ if(defined($cookies{'jbovlastesessionid'})) {
+  $cookies{'jbovlastesessionid'} =~ s/\%(..)/chr hex $1/ge;
+  my $sessionid = utils::decrypt(decode_base64($cookies{'jbovlastesessionid'}));
+  if($sessionid =~ /^(\d+):(\d+):(\w+):(\d+)$/ &&
+     ($1 == length($2)+length($3)+length($4))) {
+     my @info = split(/:/,$sessionid);
+     %session = ( 'userid' => $info[1],
+                  'username' => $info[2],
+                  'logintime' => $info[3] );
+  } else {
+   %session = ( );
+  }
+ } else {
+  %session = ( );
+ }
+ $r->header_out('Cache-Control' => 'no-cache');
+
+ my $self = $m->base_comp;
+</%init>
+
+<%cleanup>
+  $dbh->disconnect();
+</%cleanup>
+
+<%attr>
+admin_email => "rlpowell\@lojban.org"
+jbovlaste_dir => "/home/jbovlaste/current"
+</%attr>
+
+<%method title>
+The Lojban Dictionary Editing System (Something is Screwed Up)
+</%method>

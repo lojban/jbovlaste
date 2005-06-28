@@ -1,0 +1,42 @@
+<%perl>
+ sub twinktags {
+  my $tag = shift;
+  my @alts;
+  $tag =~ s/;.*//;
+  my $origtag = $tag;
+  while($tag =~ s/-.+?$//) {
+   push @alts, $tag;
+  }
+  return ($origtag,@alts);
+ }
+
+ our($dbh);
+
+ use Data::Dumper;
+ my @rows = $dbh->selectall_arrayref("SELECT tag FROM languages");
+
+ my %langs = map { $_->[0] => 1 } @{ $rows[0] };
+
+ if(defined($lang)) {
+   return ($lang);
+ } else {
+   my $acceptlang = $r->header_in('Accept-Language');
+   if(defined($acceptlang)) {
+     my @acceptlanguages = split(/\s*,\s*/,$acceptlang);
+     my @reallytmp = map { &twinktags($_) } @acceptlanguages;
+     my @lesstmp;
+     foreach my $tag (@reallytmp) {
+        if(defined($langs{$tag})) {
+            push @lesstmp, $tag;
+        }
+     }
+     return (@lesstmp);
+   } else {
+     return ("en");
+   }
+ }
+</%perl>
+
+<%args>
+$lang => undef
+</%args>

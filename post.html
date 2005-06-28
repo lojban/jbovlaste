@@ -1,0 +1,339 @@
+% use Text::Wrap qw($columns wrap);
+% use Data::Dumper;
+
+% unless( ($new && ($valsi || $natlangword)) || ($respond && $comment) ) {
+<font size="+3">Couldn't locate what you wanted to post in regards to</font>
+<hr />
+Either jbovlaste generated an invalid URL for you to follow, or you're trying
+to fiddle around with things you ought not be messing with! Either way, please
+report this page's URL.
+%    $titlestr = "Couldn't locate what you wanted to post in regards to";
+%    return;
+% }
+
+<%perl>
+
+# keep things clean for quoting.
+sub fmtcomment {
+	my $cmt = shift;
+	my ($out, @lines);
+
+	$columns = 75;
+
+	$out = "";
+	@lines = split(/\r?\n/, $cmt);
+	foreach my $line (@lines) {
+		$out .= wrap("", "", $line) . "\n";
+	}
+
+	$out;
+}
+
+</%perl>
+
+% unless( defined($session{'username'}) ) {
+<font size="+3">Not logged in</font>
+<hr />
+I'm afraid you'll need to <a href="login.html">log in</a> in order to post.
+%    $titlestr = "Not logged in";
+%    return;
+% }
+
+% if($new) {
+%   if(!defined($content)) {
+
+<%perl>
+  my $table = $valsi?"valsi":"natlangwords";
+  my $column = $valsi?"valsiid":"wordid";
+  my $query = $dbh->prepare("SELECT * FROM $table WHERE $column = ?");
+  $query->execute($valsi?$valsi:$natlangword);
+  my $wordtypestr = $valsi?"valsi":"natural language word";
+  my $theword = $query->fetchrow_hashref->{'word'};
+  $titlestr = sprintf('New post for %s "%s"',$wordtypestr, $theword);
+</%perl>
+
+<font size="+3">New Post</font><br />
+<font size="+2">For <% $wordtypestr %> "<% $theword %>"</font>
+<hr />
+
+<form action="post.html" method="post">
+ <table>
+  <tr>
+   <td valign="top">Subject:</td>
+   <td><input type="text" name="subject" size="80"></td>
+  </tr>
+  <tr>
+   <td valign="top">Message:</td>
+   <td>
+    <textarea name="content" rows="12" cols="60"></textarea>
+    <input type="hidden" name="new" value="1">
+    <input type="hidden" name="valsi" value="<% $valsi %>">
+    <input type="hidden" name="natlangword" value="<% $natlangword %>">
+    <input type="hidden" name="definition" value="<% $definition %>">
+   </td>
+  </tr>
+  <tr>
+   <td></td><td align="right"><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+%    } else {
+
+%if((length($subject)<=0) || (length($comment)<=0)) {
+<font size="+3">You've got to write something</font>
+<hr />
+Sorry, you'll need to actually post something before I can let it through.
+%   $titlestr = "Must actually write something";
+%   return;
+%}
+
+<%perl>
+
+$dbh->begin_work;
+$dbh->do("LOCK TABLE threads IN ACCESS EXCLUSIVE MODE");
+
+my $threadquery = $dbh->prepare("SELECT * FROM threads WHERE valsiid=? AND natlangwordid=? AND definitionId=?");
+$threadquery->execute($valsi,$natlangword,$definition);
+my $threadrow = $threadquery->fetchrow_hashref;
+$threadquery->finish;
+
+if(!defined($threadrow)) {
+ $dbh->do("INSERT INTO threads (valsiid, natlangwordid, definitionId ) VALUES (?,?,?)",
+          undef,
+	  $valsi, $natlangword, $definition);
+ $threadquery->execute($valsi, $natlangword, $definition);
+ $threadrow = $threadquery->fetchrow_hashref;
+ if(!defined($threadrow)) {
+   $m->out("Something is really broken!");
+   return;
+ }
+}
+
+$content = fmtcomment($content);
+my $commentNum = $dbh->selectrow_array("SELECT max(commentNum) + 1 FROM comments
+WHERE threadid=$threadrow->{'threadid'}\n");
+if (! defined($commentNum))
+{
+    $commentNum=1
+}
+$dbh->do(
+    "INSERT INTO comments (threadid, parentid, userid, time, subject,
+    content, commentNum) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    undef,
+    $threadrow->{'threadid'}, 0, $session{'userid'},
+    time(), $subject, $content, $commentNum );
+
+$dbh->commit;
+
+$titlestr = "Post received";
+</%perl>
+
+<font size="+3">Post received</font>
+<hr />
+
+<p>I think I submitted your comment. You probably ought to check.</p>
+
+<%perl>
+$m->out("<p>Click <a href=\"comments.html?valsi=$valsi;".
+	"natlangword=$natlangword;commentid=$comment;definition=$definition\">".
+	"here</a> to get back to the thread.</p>\n\n");
+
+# Here we send e-mail to the person who entered the word, if this is
+# a per-definition comment.
+if( $definition )
+{
+    my $email = $dbh->selectrow_array("SELECT u.email FROM
+	definitions d, users u WHERE d.userid = u.userid AND d.definitionid=$definition");
+
+    my $valsiwordword = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsi");
+    my $natlangwordword = $dbh->selectrow_array("SELECT word FROM natlangwords WHERE wordid=$natlangword");
+    my $word = $valsiwordword ? $valsiwordword : $natlangwordword;
+
+    open( MAILX, "| /usr/bin/mailx -s \"Comment Response At Word $word\" $email");
+
+    print MAILX "
+
+A jbovlaste thread you have commented in has had a reply added!
+
+Please go to
+
+<http://jbovlaste.lojban.org/comments.html?valsi=$valsi;natlangword=$natlangword;commentid=$comment;definition=$definition>
+
+to see the thread.
+
+Thank you.
+
+-The jbovlaste Admin Team
+";
+
+    close( MAILX );
+}
+
+</%perl>
+
+%    }
+
+%    return;
+% }
+
+% if($respond && $comment>0) {
+%    if(!defined($content)) {
+
+<%perl>
+ # Acquire comment we're responding to
+ my $commentquery = $dbh->prepare("SELECT *
+    FROM convenientthreads t, convenientcomments c
+    WHERE t.threadid=c.threadid AND c.commentid=?");
+ $commentquery->execute($comment);
+ $comment = $commentquery->fetchrow_hashref;
+
+ my($wordtypestr,$theword);
+ if($comment->{'valsiid'}>0) {
+   $wordtypestr = "valsi";
+   $theword = $comment->{'valsi'};
+ } else {
+   $wordtypestr = "natural language word";
+   $theword = $comment->{'natlangword'};
+ }
+ $titlestr = sprintf('Responding to "%s"', $comment->{'subject'});
+</%perl>
+
+<font size="+3">Responding to: "<% $comment->{'subject'}  %>"</font><br />
+<font size="+2">In thread for <% $wordtypestr %> "<% $theword %>"</font>
+<hr />
+
+<%perl>
+ $comment->{'content'} =~ s/^/> /mg;
+ $comment->{'content'} =~ s/$//mg;
+ $comment->{'content'} = sprintf("%s wrote:\n",$comment->{'username'}).$comment->{'content'}."\n\n";
+ $comment->{'subject'} = "Re: ".$comment->{'subject'} unless $comment->{'subject'} =~ /Re:/;
+</%perl>
+
+<form action="post.html" method="post">
+ <table>
+  <tr>
+   <td valign="top">Subject:</td>
+   <td><input type="text" name="subject" size="80" value="<% $comment->{'subject'} %>"></td>
+  </tr>
+  <tr>
+   <td valign="top">Message:</td>
+   <td>
+    <textarea name="content" rows="12" cols="60"><% $comment->{'content'} %></textarea>
+    <input type="hidden" name="respond" value="1">
+    <input type="hidden" name="comment" value="<% $comment->{'commentid'} %>">
+    <input type="hidden" name="valsi" value="<% $valsi %>">
+    <input type="hidden" name="natlangword" value="<% $natlangword %>">
+    <input type="hidden" name="definition" value="<% $definition %>">
+   </td>
+  </tr>
+  <tr>
+   <td></td><td align="right"><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+%    } else {
+
+<%perl>
+ $content = fmtcomment($content);
+
+my $commentNum = $dbh->selectrow_array("SELECT max(commentNum) + 1 FROM
+comments WHERE threadid=(SELECT threadid FROM comments WHERE
+commentid=$comment)\n");
+
+if (! defined($commentNum))
+{
+    $commentNum=1
+}
+
+ $dbh->do("INSERT INTO comments (threadid, parentid, userid, time,
+ subject, content, commentNum)
+ VALUES ( (SELECT threadid FROM comments WHERE commentid=?), ?, ?, ?, ?, ?, ?)",
+ undef,
+ $comment, $comment, $session{'userid'}, time(), $subject, $content,
+ $commentNum);
+
+$titlestr = "Post received";
+</%perl>
+
+<font size="+3">Post received</font>
+<hr />
+
+<p>I think I submitted your comment. You probably ought to check.</p>
+
+<%perl>
+$m->out("<p>Click <a href=\"comments.html?valsi=$valsi;".
+	"natlangword=$natlangword;commentid=$comment;definition=$definition\">".
+	"here</a> to get back to the thread.</p>\n\n");
+
+# Here we send mail.
+my $emails = $dbh->selectall_arrayref( "SELECT DISTINCT u.email from users u,
+comments c WHERE u.userid = c.userid AND c.threadid = (SELECT threadid FROM
+comments WHERE commentid=$comment)" );
+
+my $selfemail = $dbh->selectrow_array("SELECT email FROM users WHERE userid=$session{'userid'}");
+
+foreach my $email (@{$emails})
+{
+    my $valsiwordword = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsi");
+    my $natlangwordword = $dbh->selectrow_array("SELECT word FROM natlangwords WHERE wordid=$natlangword");
+    my $word = $valsiwordword ? $valsiwordword : $natlangwordword;
+
+    if( @{$email}[0] eq $selfemail )
+    {
+	next;
+    }
+
+    open( MAILX, "| /usr/bin/mailx -s \"Comment Response At Word $word\" @{$email}[0]");
+
+    print MAILX "
+
+A jbovlaste thread you have commented in has had a reply added!
+
+Please go to
+
+<http://jbovlaste.lojban.org/comments.html?valsi=$valsi;natlangword=$natlangword;commentid=$comment;definition=$definition>
+
+to see the thread.
+
+Thank you.
+
+-The jbovlaste Admin Team
+";
+
+    close( MAILX );
+
+}
+</%perl>
+
+%    }
+%    return;
+% }
+
+% $titlestr = "Magical Bug!";
+
+You've found a magical bug! Please report whatever you did.
+
+<%init>
+ our($dbh,%session);
+</%init>
+
+<%args>
+$new => 0
+$respond => 0
+$comment => 0
+$valsi => 0
+$natlangword => 0
+$subject => undef
+$content => undef
+$definition => 0
+</%args>
+
+<%shared>
+ our $titlestr;
+</%shared>
+
+<%method title>
+<% $titlestr %>
+</%method>

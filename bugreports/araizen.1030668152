@@ -1,0 +1,11 @@
+$VAR1 = {
+          'area' => 'natlang',
+          'username' => 'araizen',
+          'brief' => 'text with both hebrew and english gets jumbled',
+          'type' => 'general',
+          'report' => 'Text with both hebrew and english in it get the parts jumbled (for example the strings \'x1\' and \'x2\' get switched). I can fix this in Internet Explorer by choosing Encoding->Right-to-Left Document, but I think that the browser can be told to do this automatically with the attribute dir=rtl on the tag which contains the text (for all the right-to-left languages). The same problem appears on the wiki, but there there may also be paragraphs which are mostly in English, so it would be nice to be able to specify rtl or ltr in the wiki markup.',
+response => 'Unicode provides nonprinting characters which can control/indicate directionality. Consult Unicode Standard Annex #9, http://www.unicode.org/unicode/reports/tr9/ for information on forcing directionality. It is unclear to me that jbovlaste should attempt to force directionality for certain languages. (The "x1"s and "x2"s after all, should retain left to right directionality.)',
+          'time' => 1030668152
+        };
+
+

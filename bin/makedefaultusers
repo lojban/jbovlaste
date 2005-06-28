@@ -1,0 +1,28 @@
+#!/bin/sh
+
+echo "Use design/users.sql."
+exit
+
+echo "officialdata
+Official Data
+webmaster@lojban.org
+password
+yes" | /home/jbovlaste/current/bin/makeuser
+
+echo "jkominek
+Jay Kominek
+jkominek-jbovlaste@miranda.org
+password
+yes" | /home/jbovlaste/current/bin/makeuser
+
+echo "rlpowell
+Robin Powell
+robin@lojban.org
+password
+yes" | /home/jbovlaste/current/bin/makeuser
+
+echo "guest
+Guest User
+webmaster@lojban.org
+guest
+yes" | /home/jbovlaste/current/bin/makeuser

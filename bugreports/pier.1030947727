@@ -1,0 +1,9 @@
+$VAR1 = {
+          'report' => '1. It is possible to add a natlang word twice to the database. This should not be allowed.
+2. Having added a word twice, one cannot use it in a definition. Attempting to do so causes it to appear to accept the word, but it does not show up in the list of definitions.',
+          'area' => 'natlang',
+          'time' => 1030947727,
+          'type' => 'general',
+          'brief' => 'duplicate natlang words cause definition to appear to go in, but it doesn\'t',
+          'username' => 'pier'
+        };

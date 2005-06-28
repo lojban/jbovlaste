@@ -1,0 +1,61 @@
+% unless(defined($session{'username'})) {
+<font size="+3">Voting Error!</font><hr />
+<p>Sorry, you've got to be logged in!</p>
+%    return;
+% }
+
+% unless(defined($definition)) {
+<font size="+3">Voting Error!</font><hr />
+<p>Sorry, you've got to tell me what you want to vote for!</p>
+%    return;
+% }
+
+<%method title>
+Recording Vote
+</%method>
+
+<font size="+3">Voting...</font>
+<hr />
+
+<p>Any previous vote will be silently removed.</p>
+
+<%perl>
+  my $resultref = $dbh->selectall_arrayref("SELECT valsiid, langid FROM definitions WHERE definitionid=?", { }, $definition);
+
+  $dbh->do("DELETE FROM definitionvotes
+    WHERE valsiid=? and langid=? and userid=?", 
+    undef,
+    @{$resultref->[0]}, $session{'userid'});
+
+  $dbh->do("INSERT INTO definitionvotes
+    (valsiid, langid, definitionid, value, userid, time)
+    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
+    ?)",
+    undef,
+    @{$resultref->[0]}, $definition, $session{'userid'}, $session{'userid'}, time());
+
+ my $errstr = $dbh->errstr;
+
+ if( ! $errstr )
+ {
+    # Update valsibestguesses
+    my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+    system( "$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition \&" );
+ }
+
+</%perl>
+
+<p>Your vote should've be recorded.</p>
+
+% my @wordvotedfor = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?", { }, $definition);
+
+<p>You may go back to <a href="<% $wordvotedfor[0] %>">where you
+were</a>.</p>
+
+<%init>
+ our(%session,$dbh);
+</%init>
+
+<%args>
+$definition => undef
+</%args>

@@ -1,0 +1,16 @@
+
+<%perl>
+ our($dbh);
+ my $alternatepagequery =
+ $dbh->prepare("SELECT l.realname, l.tag FROM languages l, pages p WHERE p.pagename=? AND p.langId=l.langId GROUP BY l.realname, l.tag ORDER BY l.tag");
+ $alternatepagequery->execute($page);
+ my @alternates;
+ while(defined(my $row=$alternatepagequery->fetchrow_hashref)) {
+   push @alternates, [$row->{'realname'}, $row->{'tag'}];
+ }
+ return @alternates;
+</%perl>
+
+<%args>
+$page
+</%args>

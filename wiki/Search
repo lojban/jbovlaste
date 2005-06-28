@@ -1,0 +1,52 @@
+<%method title>
+Wiki: Search
+</%method title>
+
+<%once>
+ use utils;
+</%once>
+
+% if(defined($search)) {
+
+<font size="+3">Searching...</font>
+
+<hr /><br />
+
+Your search for "<% $search %>" returned:
+
+<%perl>
+ my $searchquery = $dbh->prepare("SELECT p.pagename, l.tag, l.realname FROM pages p, languages l WHERE p.latest='true' AND p.langId=l.langId AND (p.pagename ~ ? OR p.content ~ ? )");
+ $searchquery->execute($search, $search);
+</%perl>
+
+<ul>
+% while(defined(my $row=$searchquery->fetchrow_hashref)) {
+ <li>
+  <a href="<% utils::armorurl($row->{'pagename'}) %>?lang=<% $row->{'tag'} %>"><% $row->{'pagename'} %></a> (<% $row->{'realname'} %>)
+ </li>
+% }
+</ul>
+
+% } else {
+
+<form method="post" action="Search">
+ <table>
+  <tr><td valign="bottom" align="left">
+   <input type="text" name="search" />
+  </td></tr>
+  <tr><td valign="top" align="right">
+   <input type="submit" />
+  </td></tr>
+ </table>
+</form>
+
+% }
+
+<%init>
+ our($dbh);
+ $r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%args>
+$search => undef
+</%args>

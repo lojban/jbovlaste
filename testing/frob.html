@@ -1,0 +1,22 @@
+% unless(defined($frob)) {
+
+%my $str = join('',map{ chr($_) }(0x02a0,0x02a1,0x02a2,0x02a3,0x02a4,0x02a5));
+
+%$str = encode_base64($str);
+
+<a href="frob.html?frob=<% $str %>">click on me</a>
+
+% } else {
+
+<% decode_base64($frob) %>
+
+% }
+
+<%init>
+use urlbase64;
+use utf8;
+</%init>
+
+<%args>
+$frob => undef
+</%args>

@@ -1,0 +1,8 @@
+$VAR1 = {
+          'report' => 'I tried to define {figre} in Hebrew and although it created an entry for the gloss word "ta\'en" (and also "cha\'en" - I\'m not adept at typing Hebrew and mistook one letter for another), it didn\'t store the x2 "min ta\'enim" or complain about its missing from the Hebrew wordlist. It also still reverses the Hebrew - I type it in LTR, it shows it RTL in Clearlyu, but when I click on edit, it\'s RTL in the editbox, which makes it store it backward when I hit submit.',
+          'area' => 'natlang',
+          'time' => 1030857206,
+          'type' => 'general',
+          'brief' => 'jbovlaste doesn\'t store places for gismu defined in Hebrew',
+          'username' => 'pier'
+        };

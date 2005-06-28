@@ -1,0 +1,29 @@
+<%perl>
+ our($dbh);
+ my $languagequery =
+  $dbh->prepare("SELECT tag, englishname, lojbanname, realname, forlojban, url FROM languages WHERE langId >= 1 ORDER BY tag");
+ $languagequery->execute; 
+</%perl>
+
+<table width="100%">
+ <tr>
+  <td>Language Tag</td>
+  <td>English Name</td>
+  <td>Lojban Name</td>
+  <td>"Real" Name</td>
+  <td>Name for Lojban</td>
+  <td>URL</td>
+ </tr>
+% my $row;while(defined($row=$languagequery->fetchrow_arrayref)) {
+ <tr>
+%  my @row = @$row;
+%  foreach my $item (@row) {
+<td><% $item %></td>
+%  }
+ </tr>
+% }
+</table>
+
+<%method title>
+Supported language listings
+</%method>

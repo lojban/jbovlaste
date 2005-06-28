@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'general',
+          'username' => 'jkominek',
+          'brief' => 'Implement typeset edition export',
+          'type' => 'featurerequest',
+          'report' => 'Implement export of type set version of the dictionary',
+          'time' => 1030508286
+        };

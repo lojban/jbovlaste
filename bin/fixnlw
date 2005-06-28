@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+#
+# Used to update natlangwordbestguesses entries
+#
+
+$| = 1;
+
+use DBI;
+use Data::Dumper;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+# Prepare searches
+my $voteSearch = $dbh->prepare("select count(word), word, meaning, langid from
+natlangwords group by word, meaning, langid having count(*) > 1 order by
+count(*) asc");
+
+$voteSearch->execute();
+
+while( my @voteInfo = $voteSearch->fetchrow_array )
+{
+	print Dumper(@voteInfo)."\n";
+	($count, $word, $meaning, $langid) = @voteInfo;
+
+	my $idSearch = $dbh->prepare("select wordid from natlangwords
+	where word=? and (meaning=? OR (? is null and meaning is null))
+	and langid=? order by wordid");
+
+	$idSearch->execute( $word, $meaning, $meaning, $langid );
+
+	my $firstid=undef;
+	while( my @id = $idSearch->fetchrow_array )
+	{
+	    my $id = @id[0];
+
+	    if( ! defined( $firstid ) )
+	    {
+		$firstid = $id;
+		print "firstid: $firstid\n";
+	    } else {
+		print "not first: $id\n";
+
+		$dbh->begin_work;
+
+		$dbh->do("update keywordmapping set natlangwordid=?
+		where natlangwordid=?", undef, $firstid, $id );
+
+		$dbh->do("delete from natlangwordbestguesses where
+		natlangwordid=?", undef, $id );
+
+		$dbh->do("delete from natlangwordvotes where
+		natlangwordid=?", undef, $id );
+
+		$dbh->do("delete from natlangwords where wordid=?",
+		undef, $id );
+
+		$dbh->commit;
+	    }
+	}
+
+	print "\n---\n\n";
+}
+
+#
+# For the very last definition.
+#
+print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
+
+$dbh->disconnect;

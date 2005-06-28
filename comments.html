@@ -1,0 +1,169 @@
+% if( ($valsi!=0) && ($natlangword!=0) ) {
+
+Erm. I'm not sure what kinds of games you're trying to play, but, you can't
+specify both the valsi and the natural language word ID if you're trying
+to display a thread.
+
+%   return;
+% }
+
+% if( ($valsi==0) && ($natlangword==0) ) {
+
+Sorry, you'll have to specify either a valsi, or a natural language word
+for which to retrieve the thread.
+
+%   return;
+% }
+
+<%perl>
+ my $threadquery = $dbh->prepare("SELECT * FROM convenientthreads
+ WHERE valsiid=? AND natlangwordid=? AND definitionId=?");
+ $threadquery->execute($valsi,$natlangword,$definition);
+ my $threadrow = $threadquery->fetchrow_hashref;
+
+ my $commentquery = $dbh->prepare("SELECT * FROM
+ convenientcomments WHERE threadid = ?");
+ $commentquery->execute($threadrow->{'threadid'});
+
+ my(@comments, $main_parent_id, $main_comment);
+ while(defined(my $commentrow=$commentquery->fetchrow_hashref)) {
+   if ($commentrow->{'commentid'} == $commentid) {
+    $main_parent_id = $commentrow->{'parentid'};
+    $main_comment = $commentrow;
+   }
+   push @{ $comments[ $commentrow->{'parentid'} ] }, $commentrow;
+ }
+
+ sub gencomment {
+   my $comment = shift;
+   my $comments = shift;
+   my $myvalsi = shift;
+   my $mynatlangword = shift;
+   my $mydefinition = shift;
+
+   my $content = $comment->{'content'};
+   # let wiki keep the lines proper; make sure not to double up
+   # any existing %%% that a user manually entered.
+   $content =~ s/%%%\r?\n/\n/mg;
+   $content =~ s/\r?\n/%%%/mg;
+
+   $m->out(
+"<table width=\"100%\">
+  <tr>
+   <td bgcolor=\"#c0c0c0\" align=\"left\" valign=\"top\">
+    Comment #$comment->{'commentnum'}:
+    <a href=\"" . "comments.html?valsi=$myvalsi;natlangword=$mynatlangword;".
+     "commentid=$comment->{'commentid'};" . 
+     "definition=$mydefinition" .
+     "\">" .
+     Wiki::interpret( $comment->{'subject'}, undef, 1 ) .
+    "</a>
+   </td>
+  </tr>
+  <tr>
+   <td align=\"left\" valign=\"top\">
+   " . (sprintf("<a href=\"personal/%s\">%s</a>", 
+        $comment->{'username'},$comment->{'realname'})) .
+   " (" . (scalar localtime $comment->{'time'}) . ")
+   </td>
+  </tr>
+  <tr>
+   <td valign=\"top\" align=\"left\">
+   " . Wiki::interpret( $content )
+     . (defined($session{'username'}) ?
+        sprintf("<font size=\"-2\"><a href=\"post.html?respond=1;comment=%i;
+	valsi=$myvalsi;
+	natlangword=$mynatlangword;
+	definition=$mydefinition\">[reply]</a></font>",$comment->{'commentid'}) :
+        "") . "
+   </td>
+  </tr>
+ <tr>
+  <td valign=\"top\" align=\"left\"><dl><dd>
+");
+
+  generatebyparent( $comment->{'commentid'}, $comments, $myvalsi,
+  $mynatlangword, $mydefinition );
+  $m->out(
+"   </dd></dl>
+   </td>
+  </tr>
+ </table>");
+ }
+
+ sub generatebyparent {
+   my $parent = shift;
+   my $comments = shift;
+   my $myvalsi = shift;
+   my $mynatlangword = shift;
+   my $mydefinition = shift;
+   my @commentset = @{ $comments->[$parent] || [ ] };
+   @commentset = sort { $a->{'time'} <=> $b->{'time'} } @commentset;
+   foreach my $comment (@commentset) {
+     gencomment($comment, $comments, $myvalsi, $mynatlangword,
+     $mydefinition);
+   }
+ }
+
+</%perl>
+
+% my $isvalsi = !!($threadrow->{'valsiid'});
+% $wordbeingdiscussed = ($isvalsi?$threadrow->{'valsi'}:$threadrow->{'natlangword'});
+% my $wordbeingdiscussed_link = "<a href=\"";
+% if ($isvalsi) {
+%  $wordbeingdiscussed_link .= "dict";
+% } else {
+%  $wordbeingdiscussed_link .= "natlang/$threadrow->{'tag'}";
+% }
+% $wordbeingdiscussed_link .= "/$wordbeingdiscussed\">$wordbeingdiscussed</a>";
+<font size="+3">
+ Discussion of "<% $wordbeingdiscussed_link %>"
+</font>
+<br />
+% if($commentid == 0) {
+%  if(defined($session{'username'})) {
+<font size="-1">
+ <a href="post.html?new=1&<%
+   $isvalsi ? 
+      sprintf("valsi=%i",$threadrow->{'valsiid'}) :
+      sprintf("natlangword=%i",$threadrow->{'natlangword'})
+  %>">[post new]</a></font>
+%  }
+% } else {
+<font size="-1">
+ <a href="comments.html?valsi=<% $valsi %>;natlangword=<% $natlangword %>;commentid=<% $main_parent_id %>;definition=<% $definition %>">
+ [parent]
+ </a>
+ <a href="comments.html?valsi=<% $valsi %>;natlangword=<% $natlangword %>;commentid=0;definition=<% $definition %>">
+ [root]
+ </a>
+</font>
+% }
+<hr />
+
+% if ($commentid == 0) {
+% &generatebyparent(0,\@comments,$valsi,$natlangword, $definition )
+% } else {
+% &gencomment($main_comment, \@comments, $valsi, $natlangword, $definition)
+% }
+
+<%shared>
+our $wordbeingdiscussed;
+</%shared>
+
+<%method title>
+Discussion of "<% $wordbeingdiscussed %>"
+</%method>
+
+<%init>
+ our($dbh,%session);
+</%init>
+
+<%once> use Wiki; </%once>
+
+<%args>
+$valsi => 0
+$natlangword => 0
+$commentid => 0
+$definition => 0
+</%args>

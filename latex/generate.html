@@ -1,0 +1,238 @@
+<%perl>
+    # Make a temp directory and file.
+    my $dir = tempdir( DIR => "/home/www/tmp/" );
+    my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
+
+    open(TMP, ">$filename") or die "Couldn't open a temporary file.\n";
+
+    my $langrealname = $dbh->selectrow_array("SELECT realname FROM
+	languages WHERE tag=?", undef, $lang);
+    my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
+	tag=?", undef, $lang);
+#    my $words = $dbh->selectall_arrayref("SELECT word, meaning, wordId FROM natlangwords WHERE langId=$langid ORDER BY word");
+#    my @words = map
+#    {
+#	my $inword=$_->[2];
+#	my $defwords=$dbh->selectall_arrayref("SELECT valsi.word,
+#	    pk.place FROM valsi,
+#	    placekeywordmapping pk, natlangdefs nld WHERE
+#	    pk.wordId=$inword AND
+#	    pk.definitionID = nld.definitionID AND
+#	    nld.valsiId=valsi.valsiId
+#	    ");
+#	my @defwords=map
+#	{
+#	    "\\item $_->[0] place $_->[1]\n"
+#	} @{ $defwords };
+#
+#	"\n\\item [" . $_->[0] . "] " .
+#	( $_->[1] ? "in the sense of " . $_->[1] : " in the default sense") .
+#	"\n" .
+#	( @defwords ?
+#	    "\\begin{itemize}\n" .
+#	    join("", @defwords) .
+#	    "\n\\end{itemize}"
+#
+#	    : ""
+#	)
+#    } @{ $words };
+#
+#    my $joinedwords=join("",@words);
+
+    my $shortfilename=$filename;
+    $shortfilename =~ s#/home/www##;
+
+    # Get the valsi best guesses list.
+    my $valsibestguesses = $dbh->selectall_hashref("SELECT v.word, vbg.* from
+	valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
+	AND v.valsiid=vbg.valsiid
+	ORDER BY v.word", "word" );
+    #print Dumper( $valsibestguesses );
+
+    my $lojbanToNatLang;
+    my @lojbanToNatLangEntries;
+    my $natLangToLojban;
+    my @natLangToLojbanEntries;
+
+    # Print the lojban -> foo section
+    foreach my $valsirow ( values %{$valsibestguesses} )
+    {
+	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
+	    FROM convenientdefinitions
+	    WHERE definitionid=${$valsirow}{'definitionid'}" );
+	
+	my $entry .= "\n\n\\textbf{".
+	    massage(${$convenientDefinition}{'word'} ) ."} ";
+
+	# \markboth is for the top-of-page markings.
+	$entry .= "\\markboth{".
+	    massage(${$convenientDefinition}{'word'} ) .
+	    "}{" .
+	    massage(${$convenientDefinition}{'word'} ) .
+	    "}";
+
+	# Clear out silly rafsi spaces
+	my $rafsi = massage( ${$convenientDefinition}{'rafsi'} );
+	$rafsi =~ s/\s+$//;
+	$rafsi =~ s/^\s+//;
+	$rafsi =~ s/\s+/ / ;
+
+	if( $rafsi )
+	{
+	    $entry .= "\\textbf{[$rafsi]} "
+	}
+	if( ${$convenientDefinition}{'selmaho'} )
+	{
+	    $entry .= "\\textbf{[".
+		massage(${$convenientDefinition}{'selmaho'})
+		."]} "
+	}
+	$entry .= massage("${$convenientDefinition}{'definition'}");
+	if( ${$convenientDefinition}{'notes'} )
+	{
+	    $entry .= " (".
+		massage(${$convenientDefinition}{'notes'})
+		.")";
+	}
+
+	push @lojbanToNatLangEntries, $entry;
+    }
+
+    foreach my $valsirow ( values %{$valsibestguesses} )
+    {
+	#print Dumper( $valsirow );
+	my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
+	    nlw.meaning, nlwbg.* from
+	    natlangwordbestguesses nlwbg, natlangwords nlw WHERE
+	    definitionid=${$valsirow}{'definitionid'}
+	    AND nlwbg.natlangwordid = nlw.wordid
+	    ORDER BY nlw.word", "word" );
+	#print Dumper( $nlwbg );
+	foreach my $nlwbgrow (values %{$nlwbg} )
+	{
+	    my $entry .= "\n\n\\textbf{". massage(${$nlwbgrow}{'word'}) ."} ";
+
+	    # \markboth is for the top-of-page markings.
+	    $entry .= "\\markboth{". massage(${$nlwbgrow}{'word'}) 
+		."}{". massage(${$nlwbgrow}{'word'}) ."}";
+
+	    if( ${$nlwbgrow}{'meaning'} )
+	    {
+		$entry .= "\\textit{(".
+		    massage(${$nlwbgrow}{'meaning'})
+		    .")} ";
+	    }
+
+	    my $defvalsi = $dbh->selectrow_array("SELECT word
+	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
+	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
+		
+	    #my $defvalsitype = $dbh->selectrow_array("SELECT descriptor
+	    #FROM valsi v, definitions d, valsitypes vt
+	    #WHERE v.valsiid = d.valsiid
+	    #AND d.definitionid = ${$nlwbgrow}{'definitionid'}
+	    #AND v.typeid=vt.typeid");
+
+	    $entry .= massage($defvalsi);
+
+	    #if( $defvalsitype eq "gismu" )
+	    #{
+		if( ${$nlwbgrow}{'place'} > 0 )
+		{
+		#    $entry .= ", gloss word";
+		#} else {
+		    $entry .= ", place ${$nlwbgrow}{'place'}";
+		}
+	    #}
+
+	    push @natLangToLojbanEntries, $entry;
+	    #print Dumper( $nlwbgrow );
+	}
+    }
+
+    $lojbanToNatLang = join('', sort(@lojbanToNatLangEntries));
+    $natLangToLojban = join('', sort(@natLangToLojbanEntries));
+
+    #print Dumper($lojbanToNatLang);
+    #print Dumper($natLangToLojban);
+
+    print TMP '
+\documentclass[notitlepage,twocolumn,letter]{book}
+
+\usepackage{fancyhdr} % important, lets us actually pull this stuff off.
+\usepackage{fixmarks} % unbreaks some stuff.
+\pagestyle{fancy}     % turns on the magic provided by fancyhdr
+\fancyhead{}          % empty out the header
+\fancyfoot{}          % empty out the footer
+\fancyhead[LE,LO]{\rightmark} % left side, odd and even pages
+\fancyhead[RE,RO]{\leftmark}  % right side, odd and even pages
+\fancyfoot[LE,RO]{\thepage}   % left side even, right side odd
+
+\setlength{\parindent}{0pt}
+
+\title{'. $langrealname . ' To lojban and lojban To '. $langrealname .' Dictionary}
+\author{Lojbanic Community}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\chapter{lojban to '. $langrealname .'}'.
+$lojbanToNatLang. '
+
+\chapter{'. $langrealname .' to lojban}'.
+$natLangToLojban. '
+
+\end{document}
+';
+#$joinedwords
+
+    close( TMP );
+
+    chdir $dir;
+
+    `pdflatex $filename`;
+
+    # Get the pdflatex generated file's name.
+    my $pdffilename=$shortfilename;
+    $pdffilename =~ s/.tex$/.pdf/;
+
+    sub massage
+    {
+	my $input=shift(@_);
+	$input =~ s/([&%#\\])/\\$1/g;
+	return $input;
+    }
+
+</%perl>
+
+<a href="http://www.lojban.org<% $shortfilename %>">Here's
+your dictionary.</a>
+
+<a href="http://www.lojban.org<% $pdffilename %>">Here's
+your dictionary in pdf.</a>
+
+<%perl>
+#print "Running /usr/local/bin/dict_clean $dir.\n";
+system( "/usr/local/bin/dict_clean $dir &" );
+</%perl>
+
+<%shared>
+    our $titlestr;
+</%shared>
+
+<%method title>
+    Lojban Printable Dictionary Generation
+</%method>
+
+<%init>
+    our($dbh);
+    use File::Temp qw{ tempfile tempdir };
+    use POSIX;
+    use Data::Dumper;
+</%init>
+
+<%args>
+    $lang => undef
+</%args>

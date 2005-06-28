@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'wiki',
+          'username' => 'jkominek',
+          'brief' => 'extend wiki rendering engine further',
+          'type' => 'featurerequest',
+          'report' => 'fix math mode, add the {valsi:123} style linkage mentioned in some of the design documents.',
+          'time' => 1030508575
+        };

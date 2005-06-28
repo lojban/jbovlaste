@@ -1,0 +1,192 @@
+aegis: project "jbovlaste.1.0": change 12: integrate begin complete
+aegis: project "jbovlaste.1.0": change 12: integration build started
+aegis: cd /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002
+aegis: user "jbovlaste", group "jbovlaste"
+aegis: cook -book /home/jbovlaste/jbovlaste/baseline/Howto.cook search_path=/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.
+	002:/home/jbovlaste/jbovlaste/branch.1/baseline:/home/jbovlaste/jbovlaste/baseline project=jbovlaste.1.0 change=12
+	version=1.0.D002 -star -no-log -action -notouch
+cook: +-+-+
+cook: blbl/massage.pl 1.0.D002 autohandler.in autohandler
+1.0.D002, 1.0, autohandler.in, autohandler
+cook: echo Done.
+Done.
+cook: *#
+cook: default_target: already up to date
+cook: @
+aegis: project "jbovlaste.1.0": change 12: integration build complete
+aegis: cd /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002
+aegis: user "jbovlaste", group "jbovlaste"
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/accountrequest.html
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/accountrequest.html -o
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/accountrequest.html,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/autohandler.in /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	autohandler.in -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/autohandler.in,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/bin/makeuser /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/
+	makeuser -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/makeuser,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/bin/updatenlbg /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/
+	updatenlbg -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/updatenlbg,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/bin/updatevbg /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/
+	updatevbg -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/updatevbg,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/bits/menubar /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bits/
+	menubar -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bits/menubar,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/design/languages.sql
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/design/languages.sql -o
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/design/languages.sql,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/dict/dhandler /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/dict/
+	dhandler -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/dict/dhandler,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/help/wikitext.html
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/help/wikitext.html -o
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/help/wikitext.html,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/lib/SimpleLaTeX.pm
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/SimpleLaTeX.pm -o
+	/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/SimpleLaTeX.pm,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/lib/Wiki.pm /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/Wiki.
+	pm -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/Wiki.pm,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/natlang/add.html /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	natlang/add.html -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/natlang/add.html,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/natlang/dhandler /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	natlang/dhandler -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/natlang/dhandler,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/post.html /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/post.html
+	-o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/post.html,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/recent.html /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/recent.
+	html -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/recent.html,D
+aegis: fcomp -w /home/jbovlaste/jbovlaste/baseline/wiki/edit.html /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/wiki/
+	edit.html -o /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/wiki/edit.html,D
+aegis: project "jbovlaste.1.0": change 12: difference complete
+aegis: cd /home/jbovlaste/jbovlaste/history
+aegis: user "jbovlaste", group "jbovlaste"
+aegis: fhist accountrequest.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/accountrequest.html -p
+	/home/jbovlaste/jbovlaste/history -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	accountrequest.html" as edit 2 of module "accountrequest.html"
+fhist: edit 2 of module "accountrequest.html" saved (inserts 4, deletes 2,
+	matches 7)
+aegis: ( fhist accountrequest.html -l 0 -p /home/jbovlaste/jbovlaste/history -q ) > /tmp/aegis-17337-3
+aegis: fhist autohandler.in -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/autohandler.in -p
+	/home/jbovlaste/jbovlaste/history -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	autohandler.in" as edit 8 of module "autohandler.in"
+fhist: edit 8 of module "autohandler.in" saved (inserts 1, deletes 0, matches
+	192)
+aegis: ( fhist autohandler.in -l 0 -p /home/jbovlaste/jbovlaste/history -q ) > /tmp/aegis-17337-4
+aegis: fhist makeuser -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/makeuser -p
+	/home/jbovlaste/jbovlaste/history/bin -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	bin/makeuser" as edit 3 of module "makeuser"
+fhist: edit 3 of module "makeuser" saved (inserts 24, deletes 3, matches 34)
+aegis: ( fhist makeuser -l 0 -p /home/jbovlaste/jbovlaste/history/bin -q ) > /tmp/aegis-17337-5
+aegis: fhist updatenlbg -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/updatenlbg -p
+	/home/jbovlaste/jbovlaste/history/bin -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	bin/updatenlbg" as edit 6 of module "updatenlbg"
+fhist: edit 6 of module "updatenlbg" saved (inserts 23, deletes 2, matches 222)
+aegis: ( fhist updatenlbg -l 0 -p /home/jbovlaste/jbovlaste/history/bin -q ) > /tmp/aegis-17337-6
+aegis: fhist updatevbg -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bin/updatevbg -p
+	/home/jbovlaste/jbovlaste/history/bin -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	bin/updatevbg" as edit 5 of module "updatevbg"
+fhist: edit 5 of module "updatevbg" saved (inserts 27, deletes 3, matches 201)
+aegis: ( fhist updatevbg -l 0 -p /home/jbovlaste/jbovlaste/history/bin -q ) > /tmp/aegis-17337-7
+aegis: fhist menubar -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/bits/menubar -p
+	/home/jbovlaste/jbovlaste/history/bits -r
+fhist: module "menubar" does not need updating
+aegis: ( fhist menubar -l 0 -p /home/jbovlaste/jbovlaste/history/bits -q ) > /tmp/aegis-17337-8
+aegis: fhist languages.sql -cr -cu -i /tmp/aegis-17337-2/languages.sql -p /home/jbovlaste/jbovlaste/history/design -r
+fhist: installing "/tmp/aegis-17337-2/languages.sql" as edit 4 of module
+	"languages.sql"
+fhist: edit 4 of module "languages.sql" saved (inserts 11, deletes 8, matches
+	151)
+aegis: ( fhist languages.sql -l 0 -p /home/jbovlaste/jbovlaste/history/design -q ) > /tmp/aegis-17337-9
+aegis: fhist dhandler -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/dict/dhandler -p
+	/home/jbovlaste/jbovlaste/history/dict -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	dict/dhandler" as edit 12 of module "dhandler"
+fhist: edit 12 of module "dhandler" saved (inserts 6, deletes 3, matches 553)
+aegis: ( fhist dhandler -l 0 -p /home/jbovlaste/jbovlaste/history/dict -q ) > /tmp/aegis-17337-10
+aegis: fhist wikitext.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/help/wikitext.html -p
+	/home/jbovlaste/jbovlaste/history/help -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	help/wikitext.html" as edit 6 of module "wikitext.html"
+fhist: edit 6 of module "wikitext.html" saved (inserts 23, deletes 1, matches
+	224)
+aegis: ( fhist wikitext.html -l 0 -p /home/jbovlaste/jbovlaste/history/help -q ) > /tmp/aegis-17337-11
+aegis: fhist SimpleLaTeX.pm -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/SimpleLaTeX.pm -p
+	/home/jbovlaste/jbovlaste/history/lib -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	lib/SimpleLaTeX.pm" as edit 5 of module "SimpleLaTeX.pm"
+fhist: edit 5 of module "SimpleLaTeX.pm" saved (inserts 4, deletes 2, matches
+	93)
+aegis: ( fhist SimpleLaTeX.pm -l 0 -p /home/jbovlaste/jbovlaste/history/lib -q ) > /tmp/aegis-17337-12
+aegis: fhist Wiki.pm -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/lib/Wiki.pm -p
+	/home/jbovlaste/jbovlaste/history/lib -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	lib/Wiki.pm" as edit 11 of module "Wiki.pm"
+fhist: edit 11 of module "Wiki.pm" saved (inserts 34, deletes 27, matches 426)
+aegis: ( fhist Wiki.pm -l 0 -p /home/jbovlaste/jbovlaste/history/lib -q ) > /tmp/aegis-17337-13
+aegis: fhist add.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/natlang/add.html -p
+	/home/jbovlaste/jbovlaste/history/natlang -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	natlang/add.html" as edit 11 of module "add.html"
+fhist: edit 11 of module "add.html" saved (inserts 7, deletes 1, matches 267)
+aegis: ( fhist add.html -l 0 -p /home/jbovlaste/jbovlaste/history/natlang -q ) > /tmp/aegis-17337-14
+aegis: fhist dhandler -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/natlang/dhandler -p
+	/home/jbovlaste/jbovlaste/history/natlang -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	natlang/dhandler" as edit 13 of module "dhandler"
+fhist: edit 13 of module "dhandler" saved (inserts 3, deletes 2, matches 352)
+aegis: ( fhist dhandler -l 0 -p /home/jbovlaste/jbovlaste/history/natlang -q ) > /tmp/aegis-17337-15
+aegis: fhist post.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/post.html -p
+	/home/jbovlaste/jbovlaste/history -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	post.html" as edit 6 of module "post.html"
+fhist: edit 6 of module "post.html" saved (inserts 3, deletes 3, matches 336)
+aegis: ( fhist post.html -l 0 -p /home/jbovlaste/jbovlaste/history -q ) > /tmp/aegis-17337-16
+aegis: fhist recent.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/recent.html -p
+	/home/jbovlaste/jbovlaste/history -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	recent.html" as edit 8 of module "recent.html"
+fhist: edit 8 of module "recent.html" saved (inserts 1, deletes 1, matches 183)
+aegis: ( fhist recent.html -l 0 -p /home/jbovlaste/jbovlaste/history -q ) > /tmp/aegis-17337-17
+aegis: fhist edit.html -cr -cu -i /home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/wiki/edit.html -p
+	/home/jbovlaste/jbovlaste/history/wiki -r
+fhist: installing "/home/jbovlaste/jbovlaste/branch.1/branch.0/delta17287.002/
+	wiki/edit.html" as edit 6 of module "edit.html"
+fhist: edit 6 of module "edit.html" saved (inserts 1, deletes 5, matches 156)
+aegis: ( fhist edit.html -l 0 -p /home/jbovlaste/jbovlaste/history/wiki -q ) > /tmp/aegis-17337-18
+aegis: project "jbovlaste.1.0": change 12: adjust file modification times
+aegis: project "jbovlaste.1.0": change 12: discard old directories
+aegis: throttling 4 seconds
+aegis: cd /home/jbovlaste/jbovlaste/branch.1/branch.0/baseline
+aegis: /home/jbovlaste/bin/passed.sh 1.0.D002 /home/jbovlaste/jbovlaste/branch.1/branch.0/baseline
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/accountrequest.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/aegis.log: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/autohandler: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/autohandler.in: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bin: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bin/makeuser: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bin/updatenlbg: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bin/updatevbg: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bits: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bits/menubar: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/bl: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/blbl: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/design: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/design/languages.sql: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/dict: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/dict/dhandler: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/help: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/help/howtohelp.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/help/wikitext.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/index.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/lib: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/lib/SimpleLaTeX.pm: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/lib/Wiki.pm: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/natlang: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/natlang/add.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/natlang/dhandler: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/post.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/recent.html: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/wiki: No such file or directory
+cpio: /home/jbovlaste/current//home/jbovlaste/jbovlaste/branch.1/branch.0/baseline/wiki/edit.html: No such file or directory
+0 blocks
+aegis: project "jbovlaste.1.0": change 12: integrate pass complete

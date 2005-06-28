@@ -1,0 +1,71 @@
+% unless(defined($session{'username'})) {
+You ought not have been able to view this page, as you aren't logged in!
+%    return;
+% }
+
+% unless(defined($etymology)) {
+You'll need to specify a valsi to add etymological data. How about you go to
+the right page and follow the link instead of playing around?
+%   return;
+% }
+
+<%method title>
+Editing etymology
+</%method>
+
+% unless(defined($content)) {
+
+<%perl>
+ my $etymologyquery = $dbh->prepare("SELECT * FROM convenientetymology WHERE etymologyid=?");
+ $etymologyquery->execute( $etymology );
+ my $etymologyrow = $etymologyquery->fetchrow_hashref;
+</%perl>
+
+<font size="+3">
+ Editing <% $etymologyrow->{'realname'} %> etymology for valsi "<% $etymologyrow->{'word'} %>".
+</font><br />
+Etymology ID: <% $etymologyrow->{'etymologyid'} %>
+<hr />
+
+%  if(defined($etymologyrow)) {
+
+<form method="post" action="editetymology.html">
+<table><tr>
+ <td valign="top">Etymology</td>
+ <td><textarea rows="6" cols="60" name="content"><% $etymologyrow->{'content'} %></textarea></td>
+</tr><tr>
+ <td><input type="hidden" name="word" value="<% $etymologyrow->{'word'} %>">
+     <input type="hidden" name="etymology" value="<% $etymology %>"></td>
+ <td><input type="submit" value="Submit"></td>
+</tr></table>
+</form>
+
+%   } else {
+
+<p>The etymological record you requested to edit doesn't exist. Sorry.</p>
+
+%   }
+
+% } else {
+
+<font size="+3">Updating etymology record for "<% $word %>".</font>
+<hr />
+
+% $dbh->do("UPDATE etymology SET content=?, time=? WHERE etymologyid=?", { },
+%          $content, time(), $etymology);
+
+<p>Done.</p>
+
+<p>Return to <a href="<% $word %>">where you were</a>.</p>
+
+% }
+
+<%init>
+ our($dbh,%session);
+</%init>
+
+<%args>
+$etymology => undef
+$content => undef
+$word => undef
+</%args>

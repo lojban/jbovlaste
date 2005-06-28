@@ -1,0 +1,41 @@
+<%method title>
+Wiki: RecentChanges
+</%method>
+
+<font size="+3">RecentChanges</font>
+
+<hr />
+
+All changed pages (per language) over the last <% $days %> days:
+
+<%perl>
+our($dbh);
+my $result = $dbh->selectall_arrayref("SELECT p.pagename, l.tag, p.time, l.realname FROM pages p, languages l WHERE p.langid=l.langid AND p.time>? ORDER BY p.version desc", { }, time-($days*24*60*60));
+</%perl>
+
+<ul>
+<%perl>
+ my %seen;
+ foreach my $row (@{ $result }) {
+  if(defined($seen{$row->[0]."\xFF".$row->[1]})) { next; }
+   $m->out("<li>");
+   $m->out(sprintf("<a href=\"%s?lang=%s\">%s (%s) (%s)</a>",
+                   utils::armorutf8forurl($row->[0]),
+                   @{ $row }[1, 0], scalar localtime $row->[2], $row->[3]));
+   $m->out("</li>");
+   $seen{$row->[0]."\xFF".$row->[1]} = 1;
+ }
+ if($#{$result}<0) {
+   $m->out("<li>Sorry, nothing has changed in the requested time span.</li>");
+ }
+</%perl>
+</ul>
+
+<%init>
+ $r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%args>
+$lang => undef
+$days => 3
+</%args>

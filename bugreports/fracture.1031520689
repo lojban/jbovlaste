@@ -1,0 +1,12 @@
+$VAR1 = {
+          'report' => 'Would be nice to have a Recent-Changes page for the lojbo
+and natlang words.  For extra credit it would be really cool
+if people could subscribe to get email notifications in the
+form of a digest of all the changes for each day.
+',
+          'area' => 'general',
+          'time' => 1031520689,
+          'type' => 'featurerequest',
+          'brief' => 'recent-changes for lojbo valsi and natlang words',
+          'username' => 'fracture'
+        };

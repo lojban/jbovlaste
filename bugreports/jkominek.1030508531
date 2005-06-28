@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'general',
+          'username' => 'jkominek',
+          'brief' => 'system to request moderator changes',
+          'type' => 'featurerequest',
+          'report' => 'deletion/moving/etc of words/definitions/etc',
+          'time' => 1030508531
+        };

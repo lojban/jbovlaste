@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'wiki',
+          'username' => 'jkominek',
+          'brief' => 'wiki urls need utf8 armoring',
+          'type' => 'general',
+          'report' => 'urls generated in/around/about the wiki need to be properly armored to preserve utf8. also, the wiki needs to understand jbovlaste-style %hh armoring of urls. (which may or may not coincide with the standards.)',
+          'time' => 1030487178
+        };

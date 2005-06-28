@@ -1,0 +1,11 @@
+$VAR1 = {
+          'area' => 'listings',
+          'username' => 'seqram',
+          'brief' => 'All-words list a reality?',
+          'type' => 'general',
+          'report' => 'I hit the "clear" field in the word-listings, and somehow that got me into a mode in which the "clear" entry no longer existed, but hitting a word-class got me a list of ALL the entries thereunder.
+
+This may or may not be a bad thing.',
+response => '"clear" clears out only any initial-letter search restriction. it is correct to be able to get a listing of everything within a word class. it would be incorrect if it showed you everything in every word class.',
+          'time' => 1030569434
+        };

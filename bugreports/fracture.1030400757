@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'general',
+          'username' => 'fracture',
+          'brief' => 'List of Comments/Definitions/Examples by user',
+          'type' => 'featurerequest',
+          'report' => 'It\'d be cool to be able to get a listing of the comments/examples/definitions/etc created by a particular user (perhaps from their personal page, etc).',
+          'time' => 1030400757
+        };

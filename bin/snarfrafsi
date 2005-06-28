@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+
+use DBI;
+use strict;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my $time = time();
+
+my $lang = 2;
+
+my $userid = 1;  # officialdata
+
+my $typeid = 1;  # gismu
+
+open(GISMU,$ARGV[0]);
+while(<GISMU>) {
+    if(/^(.{5}) (.{12}) (.{0,21}).{21}(.{96}).{0,11}(.+)$/) {
+	my($gismu,$rafsi,$glossword,$definition,$notes) = ($1,$2,$3,$4,$5);
+	# Clean out spaces.
+	$rafsi =~ s/\s+$//;
+	$gismu =~ s/\s+$//;
+
+	$gismu =~ s/^\.//g;
+	$gismu =~ s/^\s+//g;
+
+	next if $gismu =~ /\d/;
+
+	####
+	# Enter the definition information.
+	####
+	$dbh->begin_work;
+
+	my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?\n", undef, $gismu );
+
+	if( ! $rafsi )
+	{
+	    $rafsi = undef;
+	}
+
+	$dbh->do("UPDATE definitions set rafsi=? where valsiid=? and userid=? and langid=?",
+	    undef, $rafsi, $valsiid, $userid, $lang);
+
+	print "gismu: $gismu; rafsi: $rafsi\n";
+
+	#print("UPDATE definitions set rafsi='$rafsi' where valsiid=$valsiid and userid=$userid and langid=$lang\n");
+
+	$dbh->commit;
+    }
+}
+
+$dbh->disconnect;
+
+print "NOTE!  rafsi for cmavo have will be overridden by future runs of
+snarfcmavo.
+
+To fix this, run snarfrafsi gismu.txt.
+
+";

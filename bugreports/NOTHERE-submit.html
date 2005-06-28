@@ -1,0 +1,79 @@
+% unless(defined($session{'username'})) {
+Please log in to file a bug report.
+%    return;
+% }
+
+<font size="+3">Bug Reporting</font>
+<hr />
+
+% unless(defined($brief) && defined($report)) {
+<form method="post" action="submit.html">
+<table width="100%">
+ <tr>
+   <td>Brief Description</td>
+   <td><input name="brief" size="80"></td>
+ </tr>
+ <tr>
+   <td>Type</td>
+   <td><select name="type">
+     <option value="featurerequest">Feature Request</option>
+     <option value="cosmetic">Cosmetic</option>
+     <option selected value="general">General</option>
+     <option value="reallybad">Really Bad</option>
+   </select></td>
+ </tr>
+ <tr>
+   <td>Area</td>
+   <td><select name="area">
+     <option selected value="general">General</option>
+     <option value="wiki">Wiki</option>
+     <option value="valsi">Valsi</option>
+     <option value="natlang">Natural Language</option>
+     <option value="listings">Listings</option>
+     <option value="session">Session Management</option>
+     <option value="bugreporting">Bug Reporting</option>
+     <option value="titlerevamp">Title Revamping</option>
+   </select></td>
+ </tr>
+ <tr>
+   <td>Detailed Report</td>
+   <td><textarea name="report" rows="8" cols="60">YOU CANNOT BE TOO DETAILED</textarea></td>
+ </tr>
+ <tr>
+   <td></td>
+   <td><input type="submit"></td>
+ </tr>
+</table>
+</form>
+% } else {
+
+Thanks!
+
+Return to the <a href="../bugreports/">bug reports</a>.
+
+<%perl>
+open(REPORT,sprintf(">/home/jbovlaste/current/bugreports/%s.%i",
+                    $session{'username'}, time()));
+print REPORT Dumper({username => $session{'username'},
+                     time => time(),
+                     brief => $brief, report => $report,
+                     type => $type, area => $area});
+close(REPORT);
+</%perl>
+
+% }
+
+<%init>
+ our(%session);
+</%init>
+
+<%method title>
+Submitting Bug
+</%method>
+
+<%args>
+$brief => undef
+$type => undef
+$area => undef
+$report => undef
+</%args>

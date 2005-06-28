@@ -1,0 +1,58 @@
+<%perl>
+ my(%values);
+ foreach my $var ('definition', 'glossword') {
+   if(defined(${$var})) {
+      $values{$var} = sprintf('value="%s"',${$var});
+   }
+ }
+
+ sub humanreadableplace {
+   my $place = shift;
+ }
+</%perl>
+
+<form method="post" action="<% $action %>">
+ <table>
+  <tr>
+   <td>Definition</td>
+   <td><input type="text" name="definitiontxt" <% $values{'definition'} %> size="80"></td>
+  <tr>
+   <td>Notes</td>
+   <td>
+    <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
+   </td>
+   <td>Yes, you're being given multiple lines. Try not to use them.</td>
+  </tr>
+  <tr>
+   <td>Gloss word</td>
+   <td><input type="text" name="glossword" size="60" <% $values{'glossword'} %>></td>
+  </tr>
+  <tr>
+   <td>Place keywords</td>
+   <td>
+    <textarea name="placekeywords" rows="5" cols="60"><% $keywords %></textarea>
+   </td>
+   <td>
+    One keyword per line, place meaning after the keyword, separated by a
+    <code>;</code>.
+   </td>
+  </tr>
+  <tr>
+  <td>
+% foreach my $item (keys %{$hidden}) {
+   <input type="hidden" name="<% $item %>" value="<% $hidden->{$item'} %>">
+% }
+  </td>
+  <td><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+<%args>
+$action
+$definition => undef
+$notes => undef
+$glossword => undef
+$keywords => undef
+$hidden => { }
+</%args>

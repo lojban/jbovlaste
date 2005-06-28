@@ -1,0 +1,219 @@
+#!/usr/bin/perl
+#
+# Used to update valsibestguesses entries
+#
+
+$| = 1;
+
+######
+#
+# Usage:
+#
+# updatebvg dir langid valsiid userid definitionid
+#
+######
+
+#################
+#
+# To run over *everything*, use the version in ~jbovlaste/bin.
+#
+#################
+
+my ($inplangid, $jbovalstedir, $inpvalsiid, $inpuserid, $inpdefinitionid);
+
+# Five arguments; perl counts from 0.
+if( $#ARGV != 4 )
+{
+    print "Not for human consumption.\n";
+    exit;
+} else {
+    ($jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid) = @ARGV;
+    print "$jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid\n";
+}
+
+use DBI;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my $time = time();
+
+my $userid = 1; # officialdata
+
+#########
+#
+# Various cases:
+#
+# 1.  If one definition has a higher total vote value than any other,
+# great, that's our best guess.
+#
+# 2.  If there are no votes on any definition, this fact gets added to
+# the VotesNeeded page.
+#
+# 3.  If there is a tie, the first one we encountered wins, because
+# that's *WAY* easier then actually handling them.
+#
+#########
+
+#####
+# Valsi best guesses.
+#
+# First we select all the definitionvotes and pick the best one.
+#
+# Then we walk through by language and valsi and spit out all the values
+# that need a voted-upon definition.
+#####
+
+# Prepare searches
+my $voteSearch = $dbh->prepare("SELECT valsiid, langid, definitionid, sum(value)
+    FROM definitionvotes
+    WHERE valsiid=$inpvalsiid AND definitionid <> 0
+    GROUP BY valsiid, langid, definitionid
+    HAVING sum(value) >= 1.0
+    ORDER BY valsiid, langid, definitionid
+    ");
+
+#my $langSearch = $dbh->prepare("SELECT langid FROM languages WHERE langid > 0 ORDER BY langid");
+my $valsiSearch = $dbh->prepare("
+    SELECT valsiid FROM valsi
+    WHERE valsiid > 0
+    EXCEPT
+    SELECT valsiid FROM definitionvotes WHERE langid=$inplangid 
+	AND NOT userid=(
+	    select userid from users where username='noralujv'
+	)
+    ");
+# The userid bit there is to ignore votes from noralujv, whose words
+# all suck ass.
+
+
+#######
+# Deal with those words that *HAVE* at least one definition.
+#######
+
+$voteSearch->execute();
+
+my $valsiid=0;
+my $langid=0;
+my $definitionid=0;
+my $sum=0;
+
+while( my @voteInfo = $voteSearch->fetchrow_array )
+{
+    my @tieDefns=();
+    #print( "vi: @voteInfo\n");
+
+    if( $valsiid == $voteInfo[0] && $langid == $voteInfo[1] )
+    {
+	print "Second vote found.\n";
+	if( $sum > $voteInfo[3] )
+	{
+	    print "Former def'n $definitionid wins; new id was $voteInfo[2].\n";
+	}
+	else
+	{
+	    print "New def'n $voteInfo[2] wins; old id was $definitionid.\n";
+	    $valsiid=$voteInfo[0];
+	    $langid=$voteInfo[1];
+	    $definitionid=$voteInfo[2];
+	    $sum=$voteInfo[3];
+	}
+    }
+    else
+    {
+	if( $valsiid != 0 && $langid != 0 ) # etc..
+	{
+	    print "No other def'n found; record def'n $definitionid.\n";
+
+	    $dbh->begin_work;
+
+	    $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
+		undef,
+		$valsiid, $langid );
+
+	    $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
+		undef,
+		$valsiid, $langid, $definitionid );
+	    $dbh->commit;
+	}
+
+	$valsiid=$voteInfo[0];
+	$langid=$voteInfo[1];
+	$definitionid=$voteInfo[2];
+	$sum=$voteInfo[3];
+    }
+
+    #print "v: $valsiid, l: $langid, d: $definitionid, s: $sum\n";
+}
+
+# Last item
+
+#print "No other def'n found; record def'n $definitionid.\n";
+
+$dbh->begin_work;
+
+$dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
+    undef,
+    $valsiid, $langid );
+
+$dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
+    undef,
+    $valsiid, $langid, $definitionid );
+$dbh->commit;
+
+####
+# exit here to skip wiki creation.
+#exit;
+
+#######
+# Loop through valsi using the given language looking for word/language
+# combos with no definitions at all.
+#######
+#$langSearch->execute( );
+#while ( my @langid = $langSearch->fetchrow_array )
+#{
+
+#print "Next step.\n";
+    my $htmlString="";
+
+    # Loop through valsi
+    $valsiSearch->execute( );
+    while ( my @valsiid = $valsiSearch->fetchrow_array )
+    {
+	#print "valsi id needs votes: $valsiid[0] in language $inplangid\n";
+
+	$htmlString .= "\n<li> <a href=\"../../dict/";
+
+	my $valsiWord = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsiid[0]");
+
+	$htmlString .= $valsiWord;
+	$htmlString .= "\">$valsiWord</a> </li>\n";
+    };
+
+    if( $htmlString )
+    {
+	my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE langid=$inplangid");
+
+	$htmlString="<h3>Definitions Or Votes Needed</h3>
+
+The words on this page either have no definitions defined for them in the language $langrealname,
+or the definitions have no votes.  Please help.\n\n".$htmlString."
+<%method title>
+Definitions And Votes Needed in $langrealname
+</%method>
+";
+
+	my $langtag = $dbh->selectrow_array("SELECT tag FROM languages WHERE langid=$inplangid");
+
+	open( HTMLOUT, ">$jbovlastedir/needed/valsi/$langtag.html");
+
+	print HTMLOUT $htmlString;
+
+	close( HTMLOUT );
+
+	#print $htmlString;
+    }
+#};
+
+$dbh->disconnect;
+
+exit;

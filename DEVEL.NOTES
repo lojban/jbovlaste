@@ -1,0 +1,29 @@
+Mason: http://www.masonhq.com/
+perl 5.8 is in use. all the relevent man pages are installed. if you need
+new perl modules, please see if they're listed in the *Packages files in
+/var/lib/apt/lists. If so, give me the package names, and they'll be
+installed immediately. Otherwise, give me the name and I'll snag them via
+CPAN at my earliest convinence.
+
+sudo /usr/sbin/apachectl restart
+^ needed if you modify anything in jbovlaste/lib, and sometimes more often.
+  never hurts.
+
+postgresql account:
+ u: jbovlaste
+ p: makfa
+
+psql -U jbovlaste jbovlaste
+^ will pull up the textual interactive postgresql interface on the jbovlaste
+  database. (once you enter the password) be careful, the jbovlaste user can
+  drop tables and such. (it can't drop the whole database, though)
+
+if the entire schema has to be changed, jay should do it. hypothetically
+anyone else with access to the account could, but they'd have to drop every
+constraint, every sequence, every procedure, every table, _everything_ and
+then rerun the jbovlaste.sql script, readd the users, etc. no fun. don't
+change the schema. :)
+
+/tmp is your friend. Though it is trashed on every reboot. (Not that I
+go around rebooting, but shit does happen)
+

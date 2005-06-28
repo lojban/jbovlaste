@@ -1,0 +1,75 @@
+% unless(defined($session{'username'})) {
+You ought not have been able to view this page, as you aren't logged in!
+%    return;
+% }
+
+% unless(defined($example)) {
+You'll need to specify a valsi to add examples. How about you go to
+the right page and follow the link instead of playing around?
+%   return;
+% }
+
+<%method title>
+Editing example
+</%method>
+
+% unless(defined($content)) {
+
+<%perl>
+
+</%perl>
+
+<%perl>
+ my $examplequery = $dbh->prepare("SELECT * FROM convenientexamples WHERE exampleid=?");
+ $examplequery->execute( $example );
+ my $examplerow = $examplequery->fetchrow_hashref;
+</%perl>
+
+<font size="+3">
+ Editing example for valsi "<% $examplerow->{'word'} %>".
+</font><br />
+Example ID: <% $examplerow->{'exampleid'} %>
+<hr />
+
+%  if(defined($examplerow)) {
+
+<form method="post" action="editexample.html">
+<table><tr>
+ <td valign="top">Example</td>
+ <td><textarea rows="6" cols="60" name="content"><% $examplerow->{'content'} %></textarea></td>
+</tr><tr>
+ <td><input type="hidden" name="word" value="<% $examplerow->{'word'} %>">
+     <input type="hidden" name="example" value="<% $example %>"></td>
+ <td><input type="submit" value="Submit"></td>
+</tr></table>
+</form>
+
+%   } else {
+
+<p>The example you requested to edit doesn't exist. Sorry.</p>
+
+%   }
+
+% } else {
+
+<font size="+3">Updating example record for "<% $word %>".</font>
+<hr />
+
+% $dbh->do("UPDATE example SET content = ?, time = ? WHERE exampleid = ?", { },
+%          $content, time(), $example);
+
+<p>Done.</p>
+
+<p>Return to <a href="<% $word %>">where you were</a>.</p>
+
+% }
+
+<%init>
+ our($dbh,%session);
+</%init>
+
+<%args>
+$example => undef
+$content => undef
+$word => undef
+</%args>

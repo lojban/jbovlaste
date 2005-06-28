@@ -1,0 +1,122 @@
+% unless(defined($valsi)) {
+I can't very well add a valsi if you don't tell me what to add!
+%   return;
+% }
+
+% unless(defined($session{'username'})) {
+I'm not going to let you add a valsi unless you log in.
+%   return;
+% }
+
+% unless(defined($confirm)) {
+<font size="+3">Adding valsi "<% $valsi %>"</font>
+<hr />
+
+<%shared>
+our $valsi;
+</%shared>
+
+<%method title>
+Adding valsi <% $valsi %>
+</%method>
+
+<%perl>
+
+my @result = $dbh->selectrow_array("SELECT count(*) FROM valsi WHERE word=?",{},$valsi);
+
+   if($result[0]<1) {
+
+use Digest::MD5 qw(md5_hex);
+my $typestr = utils::vlatai($valsi);
+my $verifier = &produce_verifier($valsi.$typestr);
+</%perl>
+
+% if($typestr eq "nalvla") {
+<p>Sorry, that isn't actually a word in Lojban.</p>
+<p>(Did you remember to strip leading and/or trailing pauses?)</p>
+%   return;
+% }
+
+<p>So. You want to add a valsi to the database.</p>
+
+<p>This shouldn't be done lightly. Please check the following:</p>
+<ol>
+  <li>If it is a lujvo, make sure you're using the lowest scoring form
+      of the lujvo. You're not going to get anywhere by using a different
+      form, as the database is periodically swept for noncanonical form
+      lujvo, and they are modified to the appropriate canonical form. (Or
+      removed, and all related data pointed towards the canonical version,
+      if it already exists.)</li>
+  <li>Also ensure that you're adding the word you actually intend to add,
+      and not something odd.</li>
+</ol>
+
+<p>I've automatically checked the valsi myself, and have decided that it is
+of type: <i><% $typestr %></i>. (Yes, if you try to add an official gismu
+or cmavo, this will claim that they're experimental, because by the time
+this goes into production, all official ones will already be entered, and
+you obviously can't replace an existing one.) If this is correct, and you are
+<strong>ABSOLUTELY SURE, BEYOND A SHADOW OF A DOUBT</strong> that you want
+to add this word, then hit the button below:</p>
+
+<form method="post" action="addvalsi.html">
+ <input type="hidden" name="valsi" value="<% $valsi %>">
+ <input type="hidden" name="confirm" value="<% $verifier %>">
+ <input type="submit">
+</form>
+
+%   } else {
+
+<p>You're trying to add a word already in the database! Don't do
+that!  You can go to <a href="<% $valsi %>">the already existing
+entry</a>.</p>
+%      if(defined($r->header_in('Referer'))) {
+<p>Go back to <a href="<% $r->header_in('Referer') %>">where you came from</a>.</p>
+%      }
+
+%   }
+
+% } else {
+
+%   my $typestr = utils::vlatai($valsi);
+%   unless(produce_verifier($valsi.$typestr) eq $confirm) {
+
+<p>
+Uhoh. You're really trying to get sneaky on me. We can't have that.
+</p>
+<p>
+Convinently (for me, anyways), to even get to this point, you would've
+had to provide a cookie. Since they're rather well encrypted, I know
+you didn't send me a fake one, <% $session{'username'} %>. I'm afraid
+Robin is going to have to have a very, very long talk with you.
+</p>
+
+%      return;
+%   }
+
+<p>Ok, I'm adding the word to the database. Hold on!</p>
+
+% $dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)", { }, $valsi, $typestr, $session{'userid'}, time());
+
+<pre><% $dbh->errstr %></pre>
+
+If you didn't just see a big error, it worked.
+
+Go to the <a href="<% $valsi %>">record for the word you just
+added</a> and add a definition, too.
+
+% }
+
+<%init>
+ our($dbh,%session);
+ sub produce_verifier {
+   my $valsi = shift;
+   my $verifier = md5_hex(pack("f*",map { ord } (split//, $valsi)));
+   return $verifier;
+ }
+</%init>
+
+<%args>
+$valsi => undef
+$confirm => undef
+</%args>

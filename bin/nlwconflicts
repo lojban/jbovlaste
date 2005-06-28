@@ -1,0 +1,38 @@
+#!/usr/bin/perl -w
+#
+# Used to seach for natlang words with both a default and non-default
+# definition.
+#
+
+$| = 1;
+
+use DBI;
+use strict;
+use Data::Dumper;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+
+my $time = time();
+
+my $userid = 1;  # officialdata
+
+my $Search = $dbh->selectall_hashref("SELECT a.word, l.englishname
+from natlangwords a, natlangwords b, languages l where a.meaning is null
+and b.meaning is not null and a.word = b.word and a.langid=b.langid and
+a.langid=l.langid
+", "word" );
+
+if( scalar values %{$Search})
+{
+    open( MAILX, "| /usr/bin/mailx -s \"Bad NatLangWords Report\" rlpowell\@lojban.org, jkominek-jbovlaste\@miranda.org, opoudjis\@optushome.com.au" );
+
+    print MAILX "\n\nThe following words in the given languages
+have a null definition *AND* a not null definition.  Please fix.\n\n";
+
+    foreach my $word (values %{$Search})
+    {
+	print MAILX Dumper( $word )."\n\n";
+    }
+}
+
+$dbh->disconnect;

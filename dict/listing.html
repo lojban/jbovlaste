@@ -1,0 +1,223 @@
+<%perl>
+ my @langshtml;
+if( $bg )
+{
+ my $langs = $dbh->selectall_arrayref("SELECT tag,realname FROM languages WHERE langid>0 ORDER BY tag");
+ my @langs = map { $_->[0] } @{ $langs };
+ my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
+
+ my $format = '<a href="listing.html?langarg=%s%s">%s</a>';
+ foreach my $curlang (@langs)
+ {
+   if($langarg eq $curlang)
+   {
+     push @langshtml, $curlang;
+     next;
+   }
+   my $vislang = $curlang;
+   $vislang =~ s/\s+/&nbsp;/g;
+   my $html = sprintf($format,
+                      &utils::armorurl($curlang),
+		      ";bg=$bg",
+                      $vislang);
+   push @langshtml, $html;
+
+ }
+
+    # If we're in best guess mode but have no language arg...
+    if( ! $langarg )
+    {
+</%perl>
+<hr />
+<center>[&nbsp;<% join("&nbsp;| ",@langshtml) %>&nbsp;]</center>
+<%perl>
+	return;
+    }
+}
+</%perl>
+
+<%perl>
+ my $types = $dbh->selectall_arrayref("select * from valsitypes where typeid!=0 order by descriptor");
+ my @types;
+ push @types, "all";
+ push @types, map { $_->[1] } @{$types};
+ my @typeshtml;
+ my $format = $bg ? '<a href="listing.html?bg=1;langarg='. $langarg .';type=%s%s">%s</a>'
+		: '<a href="listing.html?type=%s%s">%s</a>';
+ foreach my $curtype (@types) {
+   if($type eq $curtype) {
+     push @typeshtml, $curtype;
+     next;
+   }
+   my $vistype = $curtype;
+   $vistype =~ s/\s+/&nbsp;/g;
+   my $html = sprintf($format,
+                      &utils::armorurl($curtype),
+                      defined($initial)?";initial=$initial":"",
+                      $vistype);
+   push @typeshtml, $html;
+ }
+</%perl>
+
+<%method title>
+valsi Listing
+</%method>
+
+<font size="+3">valsi listings</font>
+% if( $bg )
+% {
+<p>
+    This is a "best guess" listing, meaning that only one of the definitions
+    for each word will be shown.The best guess is determined by compiling user votes.
+</p>
+<p>
+    As a side effect, only words that have votes registered will be shown here.
+</p>
+% }
+<hr />
+<center>[&nbsp;<% join("&nbsp;| ",@typeshtml) %>&nbsp;]</center>
+% if( $bg )
+% {
+<hr />
+<center>[&nbsp;<% join("&nbsp;| ",@langshtml) %>&nbsp;]</center>
+% }
+<hr />
+
+<%perl>
+ my @initialletters = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'x', 'z');
+ my @initialshtml;
+ $format = $bg ? '<a href="listing.html?bg=1;langarg='. $langarg .';initial=%s%s"><code>%s</code></a>'
+	    : '<a href="listing.html?initial=%s%s"><code>%s</code></a>';
+ foreach my $curinitial (@initialletters) {
+   if($curinitial eq $initial) {
+     push @initialshtml, $curinitial;
+     next;
+   }
+   my $html = sprintf($format,
+                      $curinitial,
+                      defined($type)?";type=".utils::armorurl($type):";type=all",
+                      $curinitial);
+   push @initialshtml, $html;
+ }
+</%perl>
+<center>[&nbsp;<% join("&nbsp;| ",@initialshtml) %>&nbsp;]
+% if(defined($type) && defined($initial)) {
+% if( $bg )
+% {
+ <a href="listing.html?bg=1;langarg=<% $langarg %>;type=<% utils::armorurl($type) %>">clear</a>
+% } else {
+ <a href="listing.html?type=<% utils::armorurl($type) %>">clear</a>
+% }
+% }
+</center>
+
+<hr />
+
+% if(!defined($type) && !defined($initial)) {
+
+% if( $bg )
+% {
+<p>Pick a word type, above.  Or you can go to <a
+href="listing.html?bg=1;langarg=<% $langarg %>;type=all">
+the all words list</a></p>
+% } else {
+<p>Pick a word type, above.  Or you can go to <a href="listing.html?type=all">
+the all words list</a></p>
+% }
+
+%   if (defined($session{'username'})) {
+<form method="post" action="addvalsi.html">
+ You may also add a new word:  <input type="text" name="valsi" />
+
+ <input type="submit" value="Add New Word" />
+</form>
+%   } else {
+<p>If you were <a href="../login.html">logged in</a> you could also add
+new words from here.</p>
+%   }
+
+%   return;
+% }
+
+<%perl>
+ my(@conditions,@args);
+ if(defined($type) && $type ne "all") {
+   push @conditions,
+      "typeid=(SELECT typeid FROM valsitypes WHERE descriptor=?)";
+   push @args, $type;
+ }
+ if(defined($initial)) {
+   push @conditions, "word LIKE '$initial%'";
+ }
+
+ my $sql;
+
+ if( $bg )
+ {
+    if( defined($langarg) )
+    {
+	my $langid=$dbh->selectrow_array("SELECT langid FROM languages WHERE
+	tag=?", undef, $langarg);
+	push @conditions, "d.langid=$langid";
+    }
+
+    if ($#conditions >= 0) {
+	$sql = "SELECT v.word, d.definitionnum, d.definitionid,
+	d.langid
+	FROM valsi v, definitions d, valsibestguesses vbg
+	WHERE ".join(" AND ",@conditions)."
+	AND v.valsiid = d.valsiid AND d.definitionid=vbg.definitionid
+	ORDER BY v.word, d.definitionnum";
+    } else {
+	$sql = "SELECT v.word, d.definitionnum, d.definitionid,
+	d.langid FROM valsi v, definitions d WHERE v.valsiid != 0 AND
+	v.valsiid = d.valsiid ORDER BY v.word, d.definitionnum";
+    }
+ } else {    
+    if ($#conditions >= 0) {
+	$sql = "SELECT * FROM valsi WHERE ".join(" AND ",@conditions)." ORDER BY word";
+    } else {
+	$sql = "SELECT word FROM valsi WHERE valsiid!=0 ORDER BY word";
+    }
+ }
+ my $listingquery = $dbh->prepare($sql);
+ $listingquery->execute(@args);
+
+ my $count = $listingquery->rows;
+ my $columns = 4;
+ my $percolumn = POSIX::ceil($count/$columns);
+</%perl>
+
+<table width="100%"><tr>
+%   for(my $column=0; $column<$columns; $column++) {
+  <td width="25%" valign="top" align="left">
+%      my $thiscolcount=$percolumn;
+%      while(defined(my $listingrow = $listingquery->fetchrow_hashref)) {
+%	if( $bg )
+%	{
+%	    my $bgstring="?bg=1;langidarg=$listingrow->{'langid'}";
+-&nbsp;<a href="<% &utils::armorurl($listingrow->{'word'}) %><%
+$bgstring %>"><% $listingrow->{'word'} %> def #<%
+$listingrow->{'definitionnum'} %>
+</a>
+<br />
+%	} else {
+-&nbsp;<a href="<% &utils::armorurl($listingrow->{'word'}) %>"><% $listingrow->{'word'} %></a><br />
+%	}
+%        last unless --$thiscolcount;
+%      }
+  </td>
+%   }
+</tr></table>
+
+<%init>
+ our($dbh, %session);
+ use POSIX;
+</%init>
+
+<%args>
+$type => undef
+$initial => undef
+$bg => undef
+$langarg => undef
+</%args>

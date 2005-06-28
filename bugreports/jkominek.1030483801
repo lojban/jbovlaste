@@ -1,0 +1,8 @@
+$VAR1 = {
+          'area' => 'general',
+          'username' => 'jkominek',
+          'brief' => 'need more navigation links',
+          'type' => 'featurerequest',
+          'report' => 'more links for navigation (up levels, etc) are needed.',
+          'time' => 1030483801
+        };

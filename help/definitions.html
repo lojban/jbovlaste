@@ -1,0 +1,381 @@
+<h3>Notes on Notes</h3>
+
+<p>
+    Please wrap all lojban words in your notes with {}.  This wil
+    provide nice hyperlinks for the other users.  For example, "See also
+    {barda}, {cmavo}.".
+</p>    
+
+<h3>A Brief Note About Adding Natural Language Word "Definitions"</h3>
+
+<p>
+jbovlaste does not actually allow you to add definitions to natural
+language words.  There are the meaning restrictions, or senses, of
+natural language words, but that doesn't really count.  This is a
+<em>lobjan</em> dictionary, after all.
+</p>
+
+<p>
+If you have a natural language word that you feel like you'd like to
+add, in general, what you do is add a lojban word that then has a gloss
+word or place keywords that "point" to it.
+</p>
+
+<p>
+For example, if you wanted to make a definition for the word 'door' in
+the sense of "covering for a doorway", you'd enter a definition for
+"vrogai" with "door;covering for a doorway" as the gloss.
+</p>
+
+<h3>Lujvo Definitions</h3>
+
+<h4>Basic Lujvo Places</h4>
+
+<p>
+    Lujvo places that match up should be entered using an equal sign.
+    All places should be inside the $...$ delimiter.  For example, 
+    taking the following entry from NORALUJV:
+</p>
+
+<blockquote>
+    ba'urdu'u:bacru+dunku:to bitch/whine about something:$dunku1
+    $=bacru1 $dunku2 $bacru2
+</blockquote>
+
+<p>
+    The definition should look something like:
+</p>
+
+<blockquote>
+    $d_1=b_1$ bitches/whines/expresses anguish about $d_1$ with
+    utterance/sound(s) $b_2$
+</blockquote>
+
+<h4>Ambiguous Lujvo Places</h4>
+
+<p>
+    If dealing with a lujvo that has components that start with the same
+    letter, expand the abbreviation as far as you need to.  For example:
+</p>
+
+<blockquote>
+    $bi_3=ba_2$
+</blockquote>
+
+<h4>Reordered Lujvo Places</h4>
+
+<p>
+    In some cases, particularily in languages other than English, the
+    places may not be ordered in the definition in the way the lujvo
+    orders them, i.e. the lujvo place 1 may be the second place
+    presented in the definition itelf, to make the definition flow well.
+</p>
+
+<p>
+    The general solution is to do the following:
+</p>
+
+<blockquote>
+    $x_1=a_3=b_2$
+</blockquote>
+
+<p>
+    This need only be used when the places are out of order, but if any
+    place is out of order <em>all</em> places should be so marked.
+</p>
+
+<p>
+    In the case where one of the lujvo components starts with x, put
+    more than one letter after the lujvo term, just to be extra clear:
+</p>
+
+<blockquote>
+    $x_1=xi_3=xa_2$
+</blockquote>
+
+<p>
+    In geekspeak, if a place numbering field has more than n
+    <lerfu-string><number> pairs, seperated by equal signs, where n is
+    the number of components of the lujvo, the first one indicates the
+    actual lujvo place being discussed.
+</p>
+
+<h3>Definition Special Formatting</h3>
+
+<h4>Short Version</h4>
+
+<p>
+    In the definition "x1 is broda", please write "$x_1$
+    is broda".  In the amazingly unlikely event that your word has more
+    than 9 places, x10 and up need to be written "$x_{10}$".  Note that
+    jbovlaste doesn't really support place keywords beyond 9.
+</p>
+
+<p>
+    You don't need to do anything else special to mark up your
+    definitions, but if you don't do the above things will look really
+    bad in the final output and need a lot of extra work.
+</p>
+
+<p>
+    Please do be careful that your definition doesn't contain any
+    extraneous dollar signs, by the way.
+</p>
+
+<h4>Long Version</h4>
+
+<p>
+    The printed dictionary will be in LaTeX, so the
+    definitions need to be LaTeX marked up.  The definitions can have
+    absolutely arbitrary LaTeX in them, but only when it sees stuff in
+    $...$ sets will the HTML output attempt to display something useful.
+</p>
+
+<p>
+    The html output will turn all things like $x_1$ and similar into
+    x&lt;sub&gt;1&lt;/sub&gt;.  If there are still at least 2 dollar
+    signs left, it's run through latex2html to produce pretty output.
+    <strong>THIS IS VERY SLOW.</strong>  Please try not to use it.
+</p>
+
+<h3>How To Write Definitions: A Walk-Through Example</h3>
+
+<p>
+Here's a walk through for adding an English definition for the lujvo
+"samru'e".
+</p>
+
+<p>
+Go to http://jbovlaste.lojban.org/dict/listing.html and enter the
+word in the provided box.
+</p>
+
+<p>
+Click the button, read the instructions, click the button, go to the
+record.
+</p>
+
+<p>
+Select a language from the New Definition drop down box, click 'Go'.
+</p>
+
+<p>
+In the Definition box, enter:
+</p>
+
+<code>
+$p_1$ is a computer process with inputs $p_2$ and outputs/results $p_3$, passing through stages $p_4$, on computer $s_1$
+</code>
+
+<p>
+We're using $p_1$ rather than $x_1$ to identify which word of the lujvo
+the place comes from.  See <a
+href="http://www.lojban.org/publications/reference_grammar/chapter12.html">Chapter
+12 of the RefGram</a>.  The dollar signs are explained below.
+</p>
+
+<p>
+In the Notes box I entered "Taken from NORALUJV.TXT", because it was.
+You don't really need to put anything in the Notes box in general.
+</p>
+
+<p>
+In general, there should be at least one keyword for the word as a whole
+(the gloss word), and a keyword for each place, one per line in the
+place keywords box.  If the meaning of a particular natlang word is
+constrained (i.e. "bear in the sense of carry"), you put the meaning
+after a semicolon, i.e. "bear;carry".  Not putting in such a constraint,
+or "sense" of the word, implies that there could never be any reasonable
+confusion about what that word means.
+See <a
+href="http://jbovlaste.lojban.org/help/natlangwords.html">the help file on natural language
+words</a> for more information.
+</p>
+
+<p>
+<em>IMPORTANT</em>: The sense of a word <em>must</em> be in the same
+language as the word itself.  
+See <a
+href="http://jbovlaste.lojban.org/help/natlangwords.html">the help file on natural language
+words</a> for more information.
+</p>
+
+<p>
+Note that I'm hoping to obviate the need for all the semicolon malkalci
+before version 1.0.
+</p>
+
+<p>
+So, in the gloss word box, enter:
+</p>
+
+<pre>
+computer program
+computer process
+program;computer program
+process;computer process
+</pre>
+
+<p>
+This might be overkill, but people will vote as to which lojban valsi
+should be used for the English word 'process', for example, so don't
+worry much about entering too many words.
+</p>
+
+<p>
+In the place keywords box, enter:
+</p>
+
+<pre>
+computer process
+computer process inputs
+computer process outputs
+computer process stages
+processing computer
+</pre>
+
+<p>
+<em>IMPORTANT:</em>  The process (ha-ha) of defining natlang words
+requires hitting 'back' in your browser a lot.  Some browsers remember
+only a limited number of pages in their history, so you might end up
+having to re-enter all the data you just entered.  Make sure you can
+easily do so.
+</p>
+
+<p>
+Hit submit.  You will be asked to deal with a bunch of natlang words.
+Click on the first one.  You shouldn't have to enter anything here
+because any specialized meaning or sense of the word you wanted should
+have been entered after a semi-colon when you made the definition.  
+</p>
+
+<p>
+<em>IMPORTANT</em>: The sense of a word <em>must</em> be in the same
+language as the word itself.
+See <a
+href="http://jbovlaste.lojban.org/help/natlangwords.html">the help file on natural language
+words</a> for more information.
+</p>
+
+<p>
+Hit Submit a bunch of times until you come to a page like this:
+</p>
+
+<blockquote>
+<p>
+Here we go...
+</p>
+<p>
+No errors? Excellent.
+</p>
+<p>
+Go to the page for the word you added.
+</p>
+</blockquote>
+
+<p>
+Do <em>NOT</em> click on that link.  Hit the Back button in your browser
+until you get to the list of natlang words to be added again.  Do the
+next one.  Keep going until they're all done.
+</p>
+
+<p>
+In some cases, for example the new definition of process above, you may
+find yourself at a page like this:
+</p>
+
+<blockquote>
+<p>
+Here we go...
+</p>
+<p>
+This word is already defined with a default meaning.
+</p>
+<p>
+The problem here is that the existence of a default meaning implies that
+no differentiation from that meaning is reasonable. Therefore, in order
+to add a new entry with another meaning you need to have an admin modify
+the existing entry.
+</p>
+<p>
+Please send an e-mail to the admins.
+</p>
+<p>
+Alternatively, if you are the person who entered the other definition,
+you can go edit it yourself to narrow the meaning.
+</p>
+<p>
+We were unable to add the new word.
+</p>
+</blockquote>
+
+<p>
+This means that someone defined the word you're trying to add without
+narrowing the definition at all.  This is <em>BAD</em>, and whoever did
+it is a bad person, although it's possible this happened due to automated
+uploads of the gismu and cmavo lists (as was true in this case: the
+gloss word 'process' already exists from the automated upload of
+'pruce).
+</p>
+
+<p>
+Regardless, you have two choices: remove that word from your list, or
+submit a bug.
+</p>
+
+<p>
+I would very much prefer the latter.
+</p>
+
+<p>
+In this case, being the admin, I disambiguated the automatically entered
+"process" with the sense "regulated series of steps", and then went back
+to entering natlang words.
+</p>
+
+<p>
+When all the words are entered, go back to the definition entry page
+(which hopefuly your browser stored for you) and hit 'Submit'.  You
+should see a page like:
+</p>
+
+<blockquote>
+<p>
+I'm sure you'll be glad to know that we identified all of the natural
+language words you provided. Hopefully you didn't make any typos! Here
+we go...
+</p>
+<p>
+If you're seeing this, it probably worked. Please return to where you
+were and check on things.
+</p>
+</blockquote>
+
+<p>
+Follow the link.  Check that everything is correct, fix as necessary.
+</p>
+
+<p>
+<strong>Please vote for your definition!</strong>  
+</p>
+
+<p>
+<strong>Then follow the links
+to all the natlang words and vote for them too.  </strong>
+</p>
+
+<p>
+Otherwise they won't show up in the dictionary at all!  They also won't
+show up in the Best Guesses listings.  Note that the process that
+updates the Best Guesses runs about once every half hour.
+</p>
+
+<p>
+<strong>Note</strong>: you cannot vote for natural language words until
+the definition is fully entered (i.e. all the above process is
+complete), so don't try to go voting for them in the middle somewhere.
+</p>
+
+<%method title>
+How To Write Definitions
+</%method>

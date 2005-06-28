@@ -1,0 +1,55 @@
+% unless(defined($report)) {
+You've got to tell me what report to display!
+%   return;
+% }
+
+<font size="+3">Displaying Bug Report <% $report %></font>
+<hr />
+
+<%perl>
+ $report =~ s/\.\.//g;
+ $report =~ s#/##g;
+ my $filename = sprintf("/home/jbovlaste/current/bugreports/%s",$report);
+ my $reportdata = do $filename;
+</%perl>
+
+<table width="100%">
+ <tr>
+    <td width="10%">User</td>
+    <td><% $reportdata->{'username'} %></td>
+ </tr>
+ <tr>
+    <td>Time</td>
+    <td><% scalar localtime $reportdata->{'time'} %></td>
+ </tr>
+ <tr>
+    <td>Brief</td>
+    <td><% $reportdata->{'brief'} %></td>
+ </tr>
+ <tr>
+    <td>Type/Area</td>
+    <td><% join("/",$reportdata->{'type'},$reportdata->{'area'}) %></td>
+ </tr>
+ <tr>
+    <td valign="top">Report</td>
+    <td><textarea cols="60" rows="10" readonly><% $reportdata->{'report'} %></textarea></td>
+ </tr>
+% if(defined($reportdata->{'response'})) {
+ <tr>
+    <td valign="top">Response</td>
+    <td><textarea cols="60" rows="10" readonly><% $reportdata->{'response'} %></textarea></td>
+ </tr>
+% }
+</table>
+
+<%args>
+$report => undef
+</%args>
+
+<%shared>
+our($report);
+</%shared>
+
+<%method title>
+Displaying Bug Report <% $report %>
+</%method>

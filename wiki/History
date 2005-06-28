@@ -1,0 +1,29 @@
+<%method title>
+Wiki: History
+</%method>
+
+<font size="+3">History of <% $page %></font>
+
+<br /><hr />
+
+<%perl>
+ my $historyquery = $dbh->prepare("SELECT p.pagename, l.tag, u.username, p.time, p.version FROM pages p, languages l, users u WHERE u.userid=p.userid AND p.langid=l.langid AND p.pagename=? ORDER BY p.time DESC, p.version");
+ $historyquery->execute($page);
+</%perl>
+
+<ul>
+% while(defined(my $row=$historyquery->fetchrow_hashref)) {
+ <li>
+  Language <% $row->{'tag'} %>, Version <% $row->{'version'} %> <br />
+  Created <% scalar localtime $row->{'time'} %> by <% $row->{'username'} %>
+ </li>
+% }
+</ul>
+
+<%init>
+our($dbh);
+$r->content_type("text/html; charset=utf-8");
+</%init>
+<%args>
+$page
+</%args>

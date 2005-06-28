@@ -1,0 +1,57 @@
+% if(defined($hex)) {
+
+<font size="+3">Result</font>
+<hr />
+
+<%perl>
+$hex =~ s/^\s+//;
+$hex =~ s/\s+$//;
+$hex =~ s/[^0123456789abcdef\s]//gi;
+my @chunks = map { hex } split(/\s+/,$hex);
+my $u = Unicode::String->new()->pack(@chunks);
+</%perl>
+
+<% $u->utf8 %>
+
+<p><a href="hextoutf8.html">Convert another</a>.</p>
+
+% } else {
+
+<font size="+3">Unicode hex to UTF-8</font>
+<hr />
+
+Your Unicode goes here:
+
+<form action="hextoutf8.html" method="post">
+  <table width="100%">
+    <tr><td>
+<textarea cols="80" rows="5" name="hex"></textarea>
+    </td></tr>
+    <tr>
+      <td>
+        <input type="submit">
+      </td>
+    </tr>
+  </table>
+</form>
+
+The data you enter should look like:
+
+<pre>
+0050 0075 0074 0020 0079 006f
+0075 0072 0020 0055 006e 0069
+0063 006f 0064 0065 0020 0068
+0065 0072 0065 0021 000a</pre>
+
+<p>White space between hex codes will be ignored. They shouldn't be
+run together. Leading zeros are not required.</p>
+
+% }
+
+<%args>
+$hex => undef
+</%args>
+
+<%method title>
+Unicode hex to UTF-8
+</%method>

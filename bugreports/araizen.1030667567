@@ -1,0 +1,9 @@
+$VAR1 = {
+          'area' => 'natlang',
+          'username' => 'araizen',
+          'brief' => 'hebrew unicode gets mangled',
+          'type' => 'reallybad',
+          'report' => 'When I click on a link to enter a new keyword in Hebrew or to find the definitions that an already existing keyword is used in, some of the letters get replaced by non-Hebrew characters.',
+response => 'I have reason to believe this has been fixed. Please check again and let me know.',
+          'time' => 1030667567
+        };

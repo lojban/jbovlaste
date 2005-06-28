@@ -1,0 +1,49 @@
+<%perl>
+ our %session;
+ if(defined($session{'username'})) {
+  push @{$menu}, undef, [ 'Personal', "../personal/$session{'username'}" ];
+ }
+ # The stuff below is copied out of autohandler.in, and should be
+ # kept in synch with it.
+ my $base_url=$r->hostname()."/".$r->unparsed_uri();
+ $base_url =~ s{//+}{/}g;
+ $base_url =~ s{\?.*}{}g;
+ $base_url = "http://".$base_url;
+
+ my $path=($m->fetch_next)->path;
+
+ $path =~ s/dhandler/\.\*/;
+
+ $base_url =~ s/$path//;
+ $base_url =~ s{/*$}{};
+</%perl>
+
+<td width="20%" bgcolor="#c0c0c0" valign="top"><font color="white">
+%   if (!defined($session{'username'})) {
+<form method="post" action="<% $base_url %>/login.html">
+    <input type="hidden" name="backto" value="<% $r->header_in('Referer') %>" />
+    User: <input size="16" name="username" type="text" /> <br />
+    Pass: <input size="16" name="password" type="password" /> <br />
+    <input type="submit" value="Login" /> <br />
+</form>
+% }
+% foreach my $item (@{$menu}) {
+%  if(defined($item)) {
+ -&nbsp;<a href="<%$item->[1]%>"><%$item->[0]%></a><br />
+%  } else {
+ <br />
+%  }
+% }
+%   if (defined($session{'username'})) {
+    <form method="post" action="<% $base_url %>/dict/addvalsi.html">
+	<input type="text" name="valsi" />
+
+	<input type="submit" value="Add New Word" />
+    </form>
+% }
+</font></td>
+
+<%args>
+$menu => [ undef ]
+</%args>
+

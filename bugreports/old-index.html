@@ -1,0 +1,43 @@
+<font size="+3">Listing of Bug Reports</font>
+<hr />
+
+<p>For new bug reports, go to the
+<a href="http://nehwon.dyn.wiw.org/cgi-bin/bugzilla/index.cgi">jbovlaste Bugzilla</a>.</p>
+
+<%perl>
+ my @reports;
+ opendir(REPORTS,"/home/jbovlaste/current/bugreports");
+ while(defined(my $foo=readdir(REPORTS))) {
+   next unless $foo =~ /^\w+\.\d+$/;
+   push @reports, $foo;
+ }
+ closedir(REPORTS);
+</%perl>
+
+<dl>
+% @reports = sort { my@a=split/\./,$a;my@b=split/\./,$b;$b[1]<=>$a[1] } @reports;
+% foreach my $report (@reports) {
+% my $tmp = do "/home/jbovlaste/current/bugreports/$report";
+  <dt>
+    <a href="displayreport.html?report=<% $report %>"><% $report %></a>
+    <code><% join("/",$tmp->{'type'},$tmp->{'area'}) %></code>
+    (<% scalar localtime $tmp->{'time'} %>)
+    <% (defined($tmp->{'response'}))?"<font color=\"red\">Has admin response</font>":"" %>
+  </dt>
+  <dd>
+    <% $tmp->{'brief'} %>
+  </dd>
+% }
+</dl>
+
+<p>New bug reports should go into the <a
+href="http://nehwon.dyn.wiw.org/cgi-bin/bugzilla/index.cgi">jbovlaste Bugzilla</a>.</p>
+
+<p>If you filed a bug report, and it isn't here any more, I've deleted
+it because I believed it to be resolved. If you don't think that is
+the case, refile it. (It would probably help if you added more
+information than before.)</p>
+
+<%method title>
+Bug Report Listings
+</%method>

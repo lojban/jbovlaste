@@ -1,0 +1,103 @@
+% unless(defined($session{'username'})) {
+<font size="+3">Must be logged in</font>
+<hr />
+You ought not have been able to view this page, as you aren't logged in!
+%    $titlestr = "Adding example: Not logged in";
+%    return;
+% }
+
+% unless(defined($valsi)) {
+<font size="+3">Must specify a word to add an example for</font>
+<hr />
+You'll need to specify a valsi to add examples. How
+about you go to the right page and follow the link instead of playing around?
+%    $titlestr = "Adding example: Didn't specify valsi";
+%    return;
+% }
+
+% unless(defined($content)) {
+
+<%perl>
+ $pullwordquery->execute($valsi);
+ my $resultrow = $pullwordquery->fetchrow_arrayref;
+ $titlestr = sprintf('Adding example for "%s"',$resultrow->[0]);
+</%perl>
+
+<font size="+3">
+ Adding example for "<% $resultrow->[0] %>"
+</font>
+<hr />
+
+<form method="post" action="addexample.html">
+ <table>
+  <tr>
+   <td valign="top">Example</td>
+   <td><input size="60" name="content"></textarea></td>
+   <td valign="top" align="left">
+       Try to keep the example it as short as possible.
+       See <a href="../help/example.html">the example help</a> for
+       a description of all the relevant notation, etc.
+       Note that an example must be a valid Lojban utterance.</td>
+  </tr>
+  <tr>
+   <td>
+     <input type="hidden" name="valsi" value="<% $valsi %>">
+     <input type="hidden" name="definition" value="<% $definition %>">
+   </td>
+   <td><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+% } else {
+
+<font size="+3">Storing example</font>
+<hr />
+
+<%perl>
+    my $exampleNum = $dbh->selectrow_array("SELECT max(exampleNum) + 1 FROM
+    example WHERE valsiid=$valsi AND definitionid=$definition\n");
+
+    if (! defined($exampleNum))
+    {
+	$exampleNum=1
+    }
+
+    $dbh->do("INSERT INTO example (valsiid, content, time, userid,
+	definitionId, exampleNum ) VALUES
+	(?, ?, ?, ?, ?, ?)",
+	undef,
+	$valsi, $content, time(), $session{'userid'}, $definition, $exampleNum);
+</%perl>
+
+<p>Example added.</p>
+
+<%perl>
+ $pullwordquery->execute($valsi);
+ my $resultrow = $pullwordquery->fetchrow_arrayref;
+ $titlestr = sprintf('Storing example for "%s"',$resultrow->[0]);
+</%perl>
+
+<p>Return to the <a href="<% $resultrow->[0] %>">
+<% $resultrow->[0] %> record</a>.</p>
+
+% }
+
+<%shared>
+our $titlestr;
+</%shared>
+
+<%method title>
+<% $titlestr %>
+</%method>
+
+<%init>
+ our(%session,$dbh);
+ my $pullwordquery = $dbh->prepare("SELECT word FROM valsi WHERE valsiid=?");
+</%init>
+
+<%args>
+$valsi => undef
+$content => undef
+$definition => 0
+</%args>

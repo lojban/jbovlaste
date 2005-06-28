@@ -1,0 +1,8 @@
+$VAR1 = {
+          'report' => 'I wikified the Norwegian home page, then made the pages it links to. The pages ended up on the English wiki, which now has two more non-English pages and the wrong definition of "bare". There\'s also a "tubnu" page linked to from French; fortunately the word "pipe" is the same in both French and English.',
+          'area' => 'wiki',
+          'time' => 1031462256,
+          'type' => 'general',
+          'brief' => 'Wikilinks from foreign wikis point to English wiki',
+          'username' => 'pier'
+        };

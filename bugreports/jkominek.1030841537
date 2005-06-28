@@ -1,0 +1,10 @@
+$VAR1 = {
+          'report' => 'web forms need a checkbox so that text submitted is wrapped in the unicode right to left override.
+
+of course, this raises all sorts of nasty issues about extra RLOs being left over in the text, depending on who is editing, whether or not they add characters at the beginning and such...',
+          'area' => 'general',
+          'time' => 1030841537,
+          'type' => 'featurerequest',
+          'brief' => 'add rtl checkbox',
+          'username' => 'jkominek'
+        };
