@@ -47,6 +47,8 @@ semantic organization wiki<br />
             uncompress(decode_base64($result->{'content'})):$result->{'content'},
      lang => $lang &>
 
+<!-- Page version: <% $result->{'version'} %> -->
+
 % } else {
 
 <p>The page you requested, <% $pagename %>, couldn't be located in any
