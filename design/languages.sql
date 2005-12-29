@@ -6,6 +6,8 @@ BEGIN;
 -- database using:
 --
 -- psql -U jbovlaste jbovlaste < /tmp/language.sql
+--
+-- Make sure to leave the COMMIT; in at the bottom.
 
 -- Lojban!
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
