@@ -128,7 +128,9 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
  VALUES ('tpi', 'Tok Pisin', 'bangrtokpisina', 'tok Pisin', 'tok Losban' );
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
- VALUES ( 'th', 'Thai', 'bangrtai', 'ภาษา��ย', 'ภาษาลอ����า�' );
+ VALUES ('tpi', 'Tok Pisin', 'bangrtokpisina', 'tok Pisin', 'tok Losban' );
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
+ VALUES ( 'ta', 'Tamil', 'bangrtamiji', 'தமிழ்', 'யாழ்வாண்' );
 
 
 
