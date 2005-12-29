@@ -127,6 +127,10 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('hy', 'Armenian', 'bangrxaiastana', 'հայերեն');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
  VALUES ('tpi', 'Tok Pisin', 'bangrtokpisina', 'tok Pisin', 'tok Losban' );
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
+ VALUES ( 'th', 'Thai', 'bangrtai', 'ภาษา��ย', 'ภาษาลอ����า�' );
+
+
 
 -- "Exotic"
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
