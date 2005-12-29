@@ -1,5 +1,12 @@
 BEGIN;
 
+-- TO ADD NEW LANGUAGES:
+-- Add the language in the right place here, then *make a copy of
+-- the file* with just that entry in it, and load that into the
+-- database using:
+--
+-- psql -U jbovlaste jbovlaste < /tmp/language.sql
+
 -- Lojban!
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
  VALUES ('jbo', 'Lojban', 'lobybau', 'lojban', 'http://www.lojban.org/');
