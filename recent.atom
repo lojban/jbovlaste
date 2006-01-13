@@ -1,18 +1,16 @@
 % use POSIX qw(strftime);
 % my $now = time();
 % my $back_time = $now - (60 * 60 * 24 * $days);
+% $r->content_type('application/atom+xml');
+<?xml version="1.0"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
 
-<p>Changes to jbovlaste in the last <% $days %> days.  Note, recent
-changes to the wiki are at the wiki's
-own <a href="wiki/RecentChanges">RecentChanges page</a>.</p>
-
-<form method="get" action="recent.html">
-You may change the number of days viewed to
-<input type="text" name="days" value="<% $days %>" />
-<input type="submit" />
-</form>
-
-%# type, word, valsiid, natlangwordid, id0, id1, username, time
+  <title>jbovlaste</title>
+  <id>http://jbovlaste.lojban.org/</id>
+  <link href="http://jbovlaste.lojban.org/"/>
+  <link rel="self" href="http://jbovlaste.lojban.org/recent.atom?days=<% $days %>"/>
+  
+%# type, word, valsiid, natlangwordid, id0, id1, content, username, time, itemid
 
 <%perl>
 my @queries = (
@@ -23,8 +21,10 @@ my @queries = (
  t.natlangwordid AS natlangwordid,
  c.commentid AS id0,
  t.definitionid AS id1,
+ c.content,
  u.username,
- c.time
+ c.time,
+ c.commentid AS itemid
  FROM comments c, threads t, users u, definitions d
  WHERE c.time > ? AND c.threadid=t.threadid AND c.userid=u.userid
  AND d.definitionid = t.definitionid
@@ -35,8 +35,10 @@ my @queries = (
  e.valsiid AS valsiid,
  e.langid AS langid,
  0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ e.content,
  u.username,
- e.time
+ e.time,
+ e.etymologyid AS itemid
  FROM etymology e, valsi v, users u
  WHERE e.time > ? AND e.valsiid=v.valsiid AND e.userid=u.userid"
 ,
@@ -45,8 +47,10 @@ my @queries = (
  e.valsiid AS valsiid,
  d.langid AS langid,
  0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ e.content,
  u.username,
- e.time 
+ e.time,
+ e.exampleid AS itemid
  FROM example e, valsi v, users u, definitions d
  WHERE e.time > ? AND e.valsiid=v.valsiid AND e.userid=u.userid
  AND d.definitionid = e.definitionid
@@ -57,8 +61,10 @@ my @queries = (
  d.valsiid AS valsiid,
  d.langid AS langid,
  0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ NULL AS content,
  u.username,
- d.time 
+ d.time,
+ d.definitionid AS itemid
  FROM definitions d, valsi v, users u
  WHERE d.time > ? AND d.valsiid=v.valsiid AND d.userid=u.userid"
  ,
@@ -67,8 +73,10 @@ my @queries = (
  v.valsiid AS valsiid,
  0 AS langid,
  0 AS natlangwordid, 0 AS id0, 0 AS id1,
+ NULL AS content,
  u.username,
- v.time 
+ v.time,
+ v.valsiid AS itemid
  FROM valsi v, users u
  WHERE v.time > ? AND v.userid=u.userid"
 );
@@ -87,20 +95,27 @@ $completeq .= "\nORDER BY time DESC";
 
 my $query = $dbh->prepare($completeq);
 $query->execute( ($back_time) x (scalar @queries) );
-my $last_day = 0;
+
+my $begun = 0;
 
 while(defined(my $row = $query->fetchrow_hashref))
 {
     next if $row->{'username'} eq 'officialdata';
 
-    my @expandedtime = gmtime $row->{'time'};
-    if($expandedtime[3] != $last_day)
-    {
-	$m->out("<hr \/>");
-	$last_day = $expandedtime[3];
-    } 
+    my $updated = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime $row->{'time'});
 
-    my $timestr = strftime("%d-%b-%Y %T", @expandedtime);
+    unless ($begun) {
+        $m->out(sprintf("<updated>%s</updated>", $m->interp->apply_escapes($updated, 'h')));
+        $r->header_out('Last-Modified' => strftime("%a, %d %b %Y %H:%M:%S %Z", localtime($row->{'time'})));
+        $begun = 1;
+    }
+
+    $m->out(sprintf("<entry><updated>%s</updated>" .
+                    "<author><name>%s</name><uri>personal/%s</uri></author>", 
+                    $m->interp->apply_escapes($updated, 'h'), 
+                    $m->interp->apply_escapes($row->{'username'}, 'h'), 
+                    $m->interp->apply_escapes($row->{'username'}, 'u', 'h')));
+    
 SWITCH: 
     {
 	my $langreal;
@@ -116,27 +131,46 @@ SWITCH:
 		$row->{'type'} eq 'definition' ||
 		$row->{'type'} eq 'etymology')
 	{
-	    $m->out(sprintf('%s - %s update by <a href="personal/%s">%s</a>; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
+	
+            $m->out(sprintf('<id>tag:jbovlaste.lojban.org,2006:%s/%s</id>', 
+                            $m->interp->apply_escapes($row->{'type'}, 'u', 'h'),
+                            $m->interp->apply_escapes($row->{'itemid'}, 'u', 'h')));
+            $m->out(sprintf('<link href="dict/%s"/>', $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
+	    $m->out(sprintf('<title type="text">%s "%s"%s modified by %s</title>' . "\n", $row->{'type'},
+			$row->{'word'}, $langreal, $row->{'username'}
+			));
+	    $m->out(sprintf('<summary type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">%s update by <a href="personal/%s">%s</a>; see <a href="dict/%s">%s</a>%s</div></summary>' . "\n", $row->{'type'},
 			$row->{'username'}, $row->{'username'},
 			$row->{'word'}, $row->{'word'}, $langreal
 			));
 	    last SWITCH;
 	}
 	if($row->{'type'} eq 'comment') {
-	    $m->out(sprintf('%s - new comment <a href="%s">%s</a> by <a
+	          $m->out(sprintf('<link href="%s"/>', $m->interp->apply_escapes(&commentlink($row), 'h')));
+	    $m->out(sprintf('<title type="text">new comment "%s" on %s%s by %s</title>'."\n",
+			$m->interp->apply_escapes($row->{'word'}, 'h'),
+			(&wordlink($row,$vq,$nlwq))[2], $langreal, 
+			                  $row->{'username'}
+			));
+	    $m->out(sprintf('<summary type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">new comment <a href="%s">%s</a> by <a
 			href="personal/%s">%s</a>; see <a
-			href="%s/%s">%s</a>%s<br
-			/>'."\n", $timestr,
-			&commentlink($row), $row->{'word'},
+			href="%s/%s">%s</a>%s</div></summary>'."\n",
+			&commentlink($row), $m->interp->apply_escapes($row->{'word'}, 'h'),
 			$row->{'username'}, $row->{'username'},
 			&wordlink($row,$vq,$nlwq), $langreal
 			));
+			      if (defined $row->{'content'}) {
+                $m->out(sprintf('<content type="text">%s</content>'."\n",
+                                $m->interp->apply_escapes($row->{'content'}, 'h')));
+            }
 	    last SWITCH;
 	}
 	if(1) {
 # default
 	}
     }
+    
+    $m->out("</entry>");
 }
 
 $query->finish;
@@ -169,19 +203,12 @@ sub wordlink
 }
 
 </%perl>
+</feed>
 
 <%init>
-our($dbh,$days);
+our($dbh);
 use Wiki;
 </%init>
-
-<%method title>
-Recent Changes
-</%method>
-
-<%method head>
- <link rel="alternate" type="application/atom+xml" href="recent.atom?days=7" />
-</%method>
 
 <%args>
 $days => 7

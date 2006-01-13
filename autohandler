@@ -1,5 +1,9 @@
 <%perl>
   my $output;
+  if($m->fetch_next->source_file =~ /atom$/) {
+	$m->out($m->scomp($m->fetch_next,$m->caller_args(0)));
+	$m->abort();
+  } 
   if(defined($dbh)) {
      $output = $m->scomp($m->fetch_next,$m->caller_args(0));
   } else {
@@ -34,6 +38,7 @@ what happened leading up to this. Just in case.
        Besides, it is all pieced together from a half dozen files.
        Each individual bit looks good to me when I work on it. -jfk -->
   <title>jbovlaste: <& SELF:title &></title>
+  <% eval { $m->fetch_next->call_method('head') } %>
  </head>
  <body bgcolor="white" text="black">
 
@@ -190,3 +195,5 @@ jbovlaste_dir => "/home/jbovlaste/current"
 <%method title>
 The Lojban Dictionary Editing System (Something is Screwed Up)
 </%method>
+
+<%method had></%method>
