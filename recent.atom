@@ -115,6 +115,10 @@ while(defined(my $row = $query->fetchrow_hashref))
                     $m->interp->apply_escapes($updated, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'u', 'h')));
+
+    $m->out(sprintf('<id>tag:jbovlaste.lojban.org,2006:%s/%s</id>', 
+                    $m->interp->apply_escapes($row->{'type'}, 'u', 'h'),
+                    $m->interp->apply_escapes($row->{'itemid'}, 'u', 'h')));
     
 SWITCH: 
     {
@@ -132,9 +136,6 @@ SWITCH:
 		$row->{'type'} eq 'etymology')
 	{
 	
-            $m->out(sprintf('<id>tag:jbovlaste.lojban.org,2006:%s/%s</id>', 
-                            $m->interp->apply_escapes($row->{'type'}, 'u', 'h'),
-                            $m->interp->apply_escapes($row->{'itemid'}, 'u', 'h')));
             $m->out(sprintf('<link href="dict/%s"/>', $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
 	    $m->out(sprintf('<title type="text">%s "%s"%s modified by %s</title>' . "\n", $row->{'type'},
 			$row->{'word'}, $langreal, $row->{'username'}
