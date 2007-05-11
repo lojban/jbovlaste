@@ -1,9 +1,5 @@
 <%perl>
   my $output;
-  if($m->fetch_next->source_file =~ /atom$/) {
-	$m->out($m->scomp($m->fetch_next,$m->caller_args(0)));
-	$m->abort();
-  } 
   if(defined($dbh)) {
      $output = $m->scomp($m->fetch_next,$m->caller_args(0));
   } else {
@@ -38,7 +34,6 @@ what happened leading up to this. Just in case.
        Besides, it is all pieced together from a half dozen files.
        Each individual bit looks good to me when I work on it. -jfk -->
   <title>jbovlaste: <& SELF:title &></title>
-  <% eval { $m->fetch_next->call_method('head') } %>
  </head>
  <body bgcolor="white" text="black">
 
@@ -87,7 +82,7 @@ what happened leading up to this. Just in case.
     <td align="left" valign="top">
      <font size="-1">
      This is jbovlaste, the lojban dictionary system.<br />
-     This is version 2.23, last changed on Tue Mar  1 11:10:35 PST 2005.<br />
+     This is version 2.26, last changed on Fri May 11 16:05:14 PDT 2007.<br />
      All content is public domain. By submitting content, you agree to place
      it in the public domain to the fullest extent allowed by local law. <br />
      jbovlaste is an official project of the logical language group,
@@ -119,6 +114,8 @@ what happened leading up to this. Just in case.
 </%once>
 
 <%init>
+    # The stuff below (about base_url) has been copied copied to
+    # bits/menuhandler, and should be kept in synch with it.
     my $base_url=$r->hostname()."/".$r->unparsed_uri();
     $base_url =~ s{//+}{/}g;
     $base_url =~ s{\?.*}{}g;
@@ -135,12 +132,12 @@ what happened leading up to this. Just in case.
   [ [ "Home", "$base_url/" ],
     [ "Recent Changes", "$base_url/recent.html" ],
     [ "Wiki", "$base_url/wiki/FrontPage" ],
-    [ "Search", "http://www.lojban.org/cgi-bin/dict.pl" ],
+    [ "Search Preferred Words", "http://www.lojban.org/cgi-bin/dict.pl" ],
     [ "How You Can Help", "$base_url/help/howtohelp.html" ],
-    [ "valsi Listing", "$base_url/dict/listing.html" ],
-    [ "valsi Best Guesses Listing", "$base_url/dict/listing.html?bg=1" ],
-    [ "natlang Listing", "$base_url/natlang/listing.html" ],
-    [ "natlang Best Guesses Listing", "$base_url/natlang/listing.html?bg=1" ],
+    [ "valsi - All", "$base_url/dict/listing.html" ],
+    [ "valsi - Preferred Only", "$base_url/dict/listing.html?bg=1" ],
+    [ "natlang - All", "$base_url/natlang/listing.html" ],
+    [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
     [ "Dictionary Production", "$base_url/latex/index.html" ],
     [ "user Listing", "$base_url/personal/listing.html" ],
     [ "Report Bugs", "mailto:rt-jvs\@lojban.org" ],
@@ -195,5 +192,3 @@ jbovlaste_dir => "/home/jbovlaste/current"
 <%method title>
 The Lojban Dictionary Editing System (Something is Screwed Up)
 </%method>
-
-<%method had></%method>
