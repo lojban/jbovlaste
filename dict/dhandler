@@ -254,6 +254,13 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
     <tr>
 	<font size="+2">
 	    Definition #<% $defrow->{'definitionnum'} %>
+%	# Check to see if this is the highest rated for this language
+%	if( $defrow->{'definitionid'} == $dbh->selectrow_array( "SELECT definitionid
+%		FROM valsibestguesses WHERE valsiid=?", undef,
+%		$defrow->{'valsiid'} ) )
+%	{
+		- Preferred
+%	}
 	</font>
     </tr>
       <tr>
@@ -263,6 +270,10 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
      <tr>
       <td>created by</td>
       <td><% &userlink($defrow->{'username'}) %></td>
+     </tr>	
+     <tr>
+      <td>vote count</td>
+      <td><% $dbh->selectrow_array( "select sum(value) from definitionvotes where definitionid=?;", undef, $defrow->{'definitionid'} ) || 0 %> </td>
 %     if(defined($session{'userid'})) 
 %     {
       <td align="right" valign="top">
