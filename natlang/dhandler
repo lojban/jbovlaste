@@ -184,10 +184,12 @@ if(defined($session{'userid'}) && (scalar @usedinplaces) && !$bg )
 	my ($definitionid, $place) = split( /:/, $entry);
 	if( $definitionid == $mydefinitionid )
 	{
+</%perl>
+    <p>
+<%perl>
 	    if( $place == 0 )
 	    {
 </%perl>
-    <p>
 <%perl>
         # Check to see if this is the user's vote
 	if( $dbh->selectrow_array( "SELECT value FROM natlangwordvotes
@@ -202,11 +204,7 @@ if(defined($session{'userid'}) && (scalar @usedinplaces) && !$bg )
 	    $definitionid %>;place=<% $place %>">
 	    Vote For Gloss Word In This Definition</a>
 %	}
-    </p>
-<%perl>
-	    } else {
-</%perl>
-    <p>
+%	    } else {
 <%perl>
         # Check to see if this is the user's vote
 	if( $dbh->selectrow_array( "SELECT value FROM natlangwordvotes
@@ -221,9 +219,25 @@ if(defined($session{'userid'}) && (scalar @usedinplaces) && !$bg )
 	    $definitionid %>;place=<% $place %>">
 	    Vote For Place <% $place %> In This Definition</a>
 %	}
-    </p>
+%	    }
 <%perl>
-	    }
+      my $votes=$dbh->selectrow_array( "SELECT sum(value) FROM natlangwordvotes WHERE
+		natlangwordid=? AND definitionid=? AND place=?", undef,
+		$natlangword->{'wordid'}, $definitionid, $place );
+	if( ! $votes ) { $votes=0 }
+</%perl>
+	- <% $votes %> votes
+<%perl>
+      # Check to see if this is the highest rated option
+      if( $dbh->selectrow_array( "SELECT * FROM natlangwordbestguesses WHERE
+		natlangwordid=? AND definitionid=? AND place=?", undef,
+		$natlangword->{'wordid'}, $definitionid, $place ) )
+      {
+</%perl>
+	, Preferred
+%      }
+	</p>
+<%perl>
 	}
     }
 
