@@ -20,28 +20,38 @@ Recording Vote
 <p>Any previous vote will be silently removed.</p>
 
 <%perl>
-  my $resultref = $dbh->selectall_arrayref("SELECT valsiid, langid FROM definitions WHERE definitionid=?", { }, $definition);
+my $resultref = $dbh->selectall_arrayref("SELECT valsiid, langid FROM definitions WHERE definitionid=?", { }, $definition);
 
-  $dbh->do("DELETE FROM definitionvotes
-    WHERE valsiid=? and langid=? and userid=?", 
-    undef,
-    @{$resultref->[0]}, $session{'userid'});
+$dbh->do("DELETE FROM definitionvotes
+	WHERE valsiid=? and langid=? and userid=?", 
+	undef,
+	@{$resultref->[0]}, @{$resultref->[1]}, $session{'userid'});
 
-  $dbh->do("INSERT INTO definitionvotes
-    (valsiid, langid, definitionid, value, userid, time)
-    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
-    ?)",
-    undef,
-    @{$resultref->[0]}, $definition, $session{'userid'}, $session{'userid'}, time());
+my $size = $dbh->selectrow_array(
+	"SELECT votesize FROM users WHERE userid=?",
+	undef,
+	$session{'userid'} );
 
- my $errstr = $dbh->errstr;
+if( $downvote )
+{
+    $size = -$size;
+}
 
- if( ! $errstr )
- {
-    # Update valsibestguesses
+    $dbh->do("INSERT INTO definitionvotes
+	    (valsiid, langid, definitionid, value, userid, time)
+	    VALUES (?, ?, ?, ?, ?, ?)",
+	    undef,
+	    @{$resultref->[0]}, @{$resultref->[1]}, $definition, $size, $session{'userid'}, time());
+
+my $errstr = $dbh->errstr;
+
+if( ! $errstr )
+{
+# Update valsibestguesses
     my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+    #print "<pre>$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition \&</pre>\n";
     system( "$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition \&" );
- }
+}
 
 </%perl>
 
@@ -53,9 +63,10 @@ Recording Vote
 were</a>.</p>
 
 <%init>
- our(%session,$dbh);
+our(%session,$dbh);
 </%init>
 
 <%args>
 $definition => undef
+$downvote => undef
 </%args>

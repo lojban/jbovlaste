@@ -272,29 +272,41 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
       <td><% &userlink($defrow->{'username'}) %></td>
      </tr>	
      <tr>
-      <td>vote count</td>
-      <td><% $dbh->selectrow_array( "select sum(value) from definitionvotes where definitionid=?;", undef, $defrow->{'definitionid'} ) || 0 %> </td>
+      <td>vote information</td>
+      <td><% $dbh->selectrow_array(
+	      "select sum(value) from definitionvotes where definitionid=?;",
+	      undef,
+	      $defrow->{'definitionid'} ) || 0 %>
 %     if(defined($session{'userid'})) 
 %     {
-      <td align="right" valign="top">
-       <font size="-1">
 <%perl>
-	# Check to see if this is the user's vote
+	# Check to see if this is the user's vote, and it's a
+	# for-vote (positive)
 	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
 	    WHERE userid=? AND definitionid=?", undef,
-	    $session{'userid'}, $defrow->{'definitionid'} ) )
+	    $session{'userid'}, $defrow->{'definitionid'} ) > 0 )
 	{
 </%perl>
-	[your current vote]
+	[you've voted for this definition]
 %       } else {
-         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>">[vote]</a>
+         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>">[vote for this definition]</a>
+%      }
+<%perl>
+	# Check to see if this is the user's vote, and it's a
+	# downvote (negative)
+	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
+	    WHERE userid=? AND definitionid=?", undef,
+	    $session{'userid'}, $defrow->{'definitionid'} ) < 0 )
+	{
+</%perl>
+	[you've voted against this definition]
+%       } else {
+         <a href="vote.html?downvote=1&definition=<% $defrow->{'definitionid'} %>">[vote against this definition]</a>
 %      }
 %        if($session{'userid'}==$defrow->{'userid'})
 %        {
-           <br /><a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
+           <a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
 %        }
-       </font>
-      </td>
 %     }
      </tr>
      <tr>
