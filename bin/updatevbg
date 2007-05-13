@@ -28,7 +28,7 @@ if( $#ARGV != 4 )
     exit;
 } else {
     ($jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid) = @ARGV;
-    print "$jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid\n";
+    #print "$jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid\n";
 }
 
 use DBI;
@@ -96,9 +96,13 @@ my $valsiid=0;
 my $langid=0;
 my $definitionid=0;
 my $sum=0;
+my $at_least_one=0;
 
 while( my @voteInfo = $voteSearch->fetchrow_array )
 {
+    # We've seen at least one >= 1.0 vote
+    $at_least_one=1;
+
     my @tieDefns=();
     #print( "vi: @voteInfo\n");
 
@@ -151,13 +155,20 @@ while( my @voteInfo = $voteSearch->fetchrow_array )
 
 $dbh->begin_work;
 
+#print "deleting $inpvalsiid.\n";
 $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
     undef,
-    $valsiid, $langid );
+    $inpvalsiid, $inplangid );
 
-$dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
-    undef,
-    $valsiid, $langid, $definitionid );
+# Only record a best guess if at least one vote >= 1.0 exists.
+if( $at_least_one )
+{
+    #print "adding $valsiid.\n";
+    $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
+	undef,
+	$valsiid, $langid, $definitionid );
+}
+
 $dbh->commit;
 
 ####
