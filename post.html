@@ -150,9 +150,7 @@ if( $definition )
     my $natlangwordword = $dbh->selectrow_array("SELECT word FROM natlangwords WHERE wordid=$natlangword");
     my $word = $valsiwordword ? $valsiwordword : $natlangwordword;
 
-    open( MAILX, "| /usr/bin/mailx -s \"Comment Response At Word $word\" $email");
-
-    print MAILX "
+    utils::sendemail( $email, "Comment Response At Word $word", "
 
 A jbovlaste thread you have commented in has had a reply added!
 
@@ -165,9 +163,7 @@ to see the thread.
 Thank you.
 
 -The jbovlaste Admin Team
-";
-
-    close( MAILX );
+" );
 }
 
 </%perl>
@@ -285,9 +281,7 @@ foreach my $email (@{$emails})
 	next;
     }
 
-    open( MAILX, "| /usr/bin/mailx -s \"Comment Response At Word $word\" @{$email}[0]");
-
-    print MAILX "
+    utils::sendemail( @{$email}[0], "Comment Response At Word $word", "
 
 A jbovlaste thread you have commented in has had a reply added!
 
@@ -300,10 +294,7 @@ to see the thread.
 Thank you.
 
 -The jbovlaste Admin Team
-";
-
-    close( MAILX );
-
+" );
 }
 </%perl>
 

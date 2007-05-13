@@ -161,4 +161,14 @@ sub generatemissingwordlink {
 	    defined($meaning)?" in the sense of \"$meaning\"":"");
 }
 
+sub sendemail {
+    my ($address, $subject, $contents) = @_;
+    $subject =~ s/"/'/g;
+    open( MAILX, qq{| /usr/bin/mailx -s "$subject" $address});
+
+    print MAILX $contents;
+
+    close( MAILX );
+}
+
 1;

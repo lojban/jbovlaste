@@ -42,21 +42,19 @@ Thank you for submitting your request.
 </font>
 
 <%perl>
-my $mailprog = '/usr/bin/mailx';
-
-# put a comma between multiple recipients
 my $recipient = $m->base_comp->attr('admin_email');
 
 #Now send mail to $recipient
-open (MAIL, "|$mailprog -s \"jbovlaste Moderation Request\" $recipient") || die "Can't open $mailprog!\n";
+utils::sendemail( $recipient, "jbovlaste Moderation Request", "
+-----------------------------
 
-print MAIL "\n-----------------------------\n";
-print MAIL "Request Type: ", $request_type, "\n\n";
-print MAIL "Remote IP address: $ENV{'REMOTE_ADDR'}\n\n";
-print MAIL "Details: ", $details,"\n\n";
+Request Type: $request_type
 
-close (MAIL);
+Remote IP address: $ENV{'REMOTE_ADDR'}
 
+Details: $details
+
+" );
 
 </%perl>
 
