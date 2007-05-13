@@ -291,9 +291,9 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
 	    $session{'userid'}, $defrow->{'definitionid'} ) > 0 )
 	{
 </%perl>
-	[you've voted for this definition]
+	<img tag: style="border: none" src="../images/already-voted-up.png" alt="[you've voted for this definition]" />
 %       } else {
-         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>">[vote for this definition]</a>
+         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>"><img tag: style="border: none" src="../images/voteup.png" alt="[vote for this definition]" /></a>
 %      }
 <%perl>
 	# Check to see if this is the user's vote, and it's a
@@ -303,9 +303,9 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
 	    $session{'userid'}, $defrow->{'definitionid'} ) < 0 )
 	{
 </%perl>
-	[you've voted against this definition]
+	<img tag: style="border: none" src="../images/already-voted-down.png" alt="[you've voted against this definition]" />
 %       } else {
-         <a href="vote.html?downvote=1&definition=<% $defrow->{'definitionid'} %>">[vote against this definition]</a>
+         <a href="vote.html?downvote=1&definition=<% $defrow->{'definitionid'} %>"><img tag: style="border: none" src="../images/votedown.png" alt="[vote against this definition]" /></a>
 %      }
 %     }
      </tr>

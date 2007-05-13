@@ -22,7 +22,7 @@ what happened leading up to this. Just in case.
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%$lang%>" lang="<%$lang%>">
  <STYLE type="text/css">
   <!--
-    BODY { /*background-image:url(<% $base_url %>/gaufarvica.jpg);*/
+    BODY { /*background-image:url(<% $base_url %>/images/gaufarvica.jpg);*/
            background-attachment:fixed;
            background-repeat:no-repeat;
            background-position:bottom right; }
