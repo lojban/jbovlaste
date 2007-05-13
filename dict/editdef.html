@@ -406,9 +406,6 @@ You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
    my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
    where definitionid=?", undef, $definition);
 
-   my $lang = $dbh->selectrow_array("SELECT langid FROM definitions
-   where definitionid=?", undef, $definition);
-
   $dbh->do("DELETE FROM definitionvotes
     WHERE valsiid=? and langid=? and userid=?",
     undef,
