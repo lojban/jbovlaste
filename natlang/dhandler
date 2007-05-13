@@ -82,11 +82,10 @@ $natlangword->{'meaningnum'} %></font><br />
 $natlangword->{'meaning'} %>".
 %   } else {
 %     if($defaultpresent<0) {
-<h2>Database Error!</h2>
-<p>Some database corruption has slipped past the consistency checks,
-please <a href="mailto:rt-jvs@lojban.org">inform the administrator</a>
-of the word you're trying to retrieve data for.</p>
-%        $titlestr = "DATABASE CORRUPTION";
+<h2>Data Inconsistency</h2>
+<p>There appears to be both a default meaning for this word, and one
+or more specialized meanings.  This makes little sense, and should
+be corrected.</p>
 %     }
 "<% $natlangword->{'word'} %>", in the default sense.
 %     $defaultpresent=1;
