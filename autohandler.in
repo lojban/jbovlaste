@@ -144,7 +144,8 @@ what happened leading up to this. Just in case.
     [ "Utilities", "$base_url/util/index.html" ],
     [ "Status", "$base_url/status.html" ],
     [ "Help", "$base_url/help/index.html" ],
-    [ "Request Account", "$base_url/accountrequest.html" ]
+    [ "Request Account", "$base_url/moderation.html" ],
+    [ "Admin Request", "$base_url/moderation.html" ],
   ];
 
     if( $m->fetch_next->attr_if_exists('menu') )

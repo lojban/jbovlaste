@@ -15,7 +15,7 @@ set forced;
 
     autohandler = [basename [resolve autohandler.in]];
 
-    [massage] [version] [autohandler].in autohandler;
+    ./[massage] [version] [autohandler].in autohandler;
     echo "Done.";
 }
 
@@ -24,5 +24,5 @@ set forced;
  */
 %0autohandler: %0autohandler.in
 {
-    [massage] [version] %0autohandler.in %0autohandler;
+    ./[massage] [version] %0autohandler.in %0autohandler;
 }    
