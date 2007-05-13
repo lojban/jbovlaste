@@ -68,6 +68,25 @@ about you go to the right page and follow the link instead of playing around?
 	(?, ?, ?, ?, ?, ?)",
 	undef,
 	$valsi, $content, time(), $session{'userid'}, $definition, $exampleNum);
+
+    # Send e-mail to the definition creator.
+    my $email = $dbh->selectrow_array("SELECT u.email FROM
+	    definitions d, users u WHERE d.userid = u.userid AND
+	    d.definitionid=$definition");
+
+    my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
+    valsiid=$valsi");
+
+    utils::sendemail( $email, "Example Added To Word $word", "
+
+In jbovlaste, the user $session{'username'} has added the following
+example to $word:
+
+    $content
+
+You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
+" );
+
 </%perl>
 
 <p>Example added.</p>

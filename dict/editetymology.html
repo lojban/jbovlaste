@@ -51,8 +51,55 @@ Etymology ID: <% $etymologyrow->{'etymologyid'} %>
 <font size="+3">Updating etymology record for "<% $word %>".</font>
 <hr />
 
-% $dbh->do("UPDATE etymology SET content=?, time=? WHERE etymologyid=?", { },
-%          $content, time(), $etymology);
+<%perl>
+my $langid = $dbh->selectrow_array("SELECT langid FROM etymology WHERE
+        etymologyid = ?", undef, $etymology);
+my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM etymology WHERE
+        etymologyid = ?", undef, $etymology);
+
+# Send e-mail to the valsi creator, and all definition creators for that valsi
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        valsi v, users u WHERE v.userid = u.userid AND
+        v.valsiid=$valsiid");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+$emailquery->execute($valsiid, $langid);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
+
+#print "e: $email, $valsiid.\n";
+
+my $oldcontent = $dbh->selectrow_array("SELECT content FROM etymology WHERE
+        etymologyid = ?", undef, $etymology);
+
+utils::sendemail( $email, "Etymology Edited At Word $word", "
+
+In jbovlaste, the user $session{'username'} has edit the following
+etymology at $word:
+
+Old Content:
+
+    $oldcontent
+
+New Content:
+
+    $content
+
+You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
+" );
+
+$dbh->do("UPDATE etymology SET content=?, time=? WHERE etymologyid=?", { },
+         $content, time(), $etymology);
+</%perl>
 
 <p>Done.</p>
 

@@ -1,3 +1,6 @@
+%   my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
+%   where definitionid=?", undef, $definition);
+
 % unless(defined($session{'username'})) {
 You ought not have been able to view this page, as you aren't logged in!
 %    return;
@@ -24,9 +27,6 @@ Editing Definition
   $m->out("big nasty fatal error in editdef.html");
   return;
  }
-
-   my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
-   where definitionid=?", undef, $definition);
 
    my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
     (SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
@@ -322,6 +322,55 @@ we go...</p>
 %#<pre><% Dumper(\@placekeywords) %></pre>
 
 <%perl>
+my $lang = $dbh->selectrow_array("SELECT langid FROM definitions
+WHERE definitionid = ?", undef, $definition);
+
+# Send e-mail to the valsi creator, and all definition creators for that valsi
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        valsi v, users u WHERE v.userid = u.userid AND
+        v.valsiid=$valsi");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+$emailquery->execute($valsi, $lang);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
+
+#print "e: $email, $valsi.\n";
+
+my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
+        valsiid=$valsi");
+
+my $oldcontent = $dbh->selectrow_array("SELECT definition FROM definitions
+WHERE definitionid = ?", undef, $definition);
+
+utils::sendemail( $email, "Definition Edited At Word $word", "
+
+In jbovlaste, the user $session{'username'} has edited the following
+definition at $word:
+
+Old Content:
+
+    $oldcontent
+
+New Content:
+
+    $definitiontxt
+
+(not all definition information shown above)
+
+You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
+" );
+
+
  $dbh->do("UPDATE definitions SET definition=?, notes=?, time=?, selmaho=?
           WHERE definitionid=?", undef,
           $definitiontxt, $notes, time(), $selmaho, $definition);

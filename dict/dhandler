@@ -530,7 +530,7 @@ sub listetymology {
      if(defined($session{'userid'}) &&
         $etymology->{'userid'}==$session{'userid'})
      {
-        push @parts, ['right',sprintf('<a href="editetymology?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
+        push @parts, ['right',sprintf('<a href="editetymology.html?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
      }
 
      my @wrappedparts =

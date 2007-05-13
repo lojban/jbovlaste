@@ -319,6 +319,46 @@ language words you provided. Hopefully you didn't make any typos! Here
 we go...</p>
 
 <%perl>
+# Send e-mail to the valsi creator, and all definition creators for that valsi
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        valsi v, users u WHERE v.userid = u.userid AND
+        v.valsiid=$valsi");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+$emailquery->execute($valsi, $lang);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
+
+#print "e: $email, $valsi.\n";
+
+my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
+        valsiid=$valsi");
+
+#my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
+#        exampleid = ?", undef, $example);
+
+utils::sendemail( $email, "Definition Added At Word $word", "
+
+In jbovlaste, the user $session{'username'} has added the following
+definition to $word:
+
+    $definitiontxt
+
+(not all definition information shown above)
+
+You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
+" );
+
+
   my @seqvalueresult =
     $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')");
 
