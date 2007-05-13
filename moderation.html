@@ -45,7 +45,7 @@ Thank you for submitting your request.
 my $mailprog = '/usr/bin/mailx';
 
 # put a comma between multiple recipients
-my $recipient = "$m->base_comp->attr('admin_email')";
+my $recipient = $m->base_comp->attr('admin_email');
 
 #Now send mail to $recipient
 open (MAIL, "|$mailprog -s \"jbovlaste Moderation Request\" $recipient") || die "Can't open $mailprog!\n";
