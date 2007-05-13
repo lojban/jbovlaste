@@ -262,6 +262,10 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
 		- Preferred
 %	}
 	</font>
+%        if($session{'userid'}==$defrow->{'userid'})
+%        {
+           <a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
+%        }
     </tr>
       <tr>
         <td width="10%">&nbsp;</td>
@@ -303,10 +307,6 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
 %       } else {
          <a href="vote.html?downvote=1&definition=<% $defrow->{'definitionid'} %>">[vote against this definition]</a>
 %      }
-%        if($session{'userid'}==$defrow->{'userid'})
-%        {
-           <a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
-%        }
 %     }
      </tr>
      <tr>
