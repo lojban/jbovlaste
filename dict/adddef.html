@@ -444,11 +444,9 @@ to use as keywords:</p>
 %        $dbh->rollback;
 %     }
 
-% # This is the case where there might not be dollar signs and we want
-% # to check with the user.
-% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2 ) {
-
-<form method="post" action="adddef.html">
+% # This is the case where there are no dollar signs and we want
+% # to disallow  the action.
+% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2  && !( $type eq "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo") ) {
 
     <p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
     entered at this point.  You need to deal with the issues below, then go
@@ -457,73 +455,11 @@ to use as keywords:</p>
     <p>
 	I see that there are less than two dollar signs in your
 	definition.  This implies that either your word has no place
-	structure, which is fine for cmavo and cmene and such, or you
-	didn't <a
+	structure. This is only okay for cmavo and cmene. However, it
+        appears that your word is of type: <strong><% $type %></strong>.
+	Please <a
 	href="../help/definitions.html">read the instructions</a>.
     </p>
-    <p>
-	Please hit the submit button only if you are <em>sure</em> that
-	what you've done isn't going to waste time for the people
-	responsible for turning this into a real dictionary.
-    </p>
-    <input type="hidden" name="definitiontxt" value="<% $definitiontxt %>" />
-    <input type="hidden" name="notes" value="<% $notes %>" />
-    <input type="hidden" name="valsi" value="<% $valsi %>" />
-    <input type="hidden" name="lang" value="<% $lang %>" />
-    <input type="hidden" name="valsitxt" value="<% $valsitxt %>" />
-    <input type="hidden" name="langtag" value="<% $langtag %>" />
-    <input type="hidden" name="selmaho" value="<% $selmaho %>" />
-    <input type="hidden" name="dollarsok" value="yes" />
-    <input type="hidden" name="placew1" value="<% $placew1 %>" />
-    <input type="hidden" name="placew2" value="<% $placew2 %>" />
-    <input type="hidden" name="placew3" value="<% $placew3 %>" />
-    <input type="hidden" name="placew4" value="<% $placew4 %>" />
-    <input type="hidden" name="placew5" value="<% $placew5 %>" />
-    <input type="hidden" name="placew6" value="<% $placew6 %>" />
-    <input type="hidden" name="placew7" value="<% $placew7 %>" />
-    <input type="hidden" name="placew8" value="<% $placew8 %>" />
-    <input type="hidden" name="placew9" value="<% $placew9 %>" />
-    <input type="hidden" name="glossw1" value="<% $glossw1 %>" />
-    <input type="hidden" name="glossw2" value="<% $glossw2 %>" />
-    <input type="hidden" name="glossw3" value="<% $glossw3 %>" />
-    <input type="hidden" name="glossw4" value="<% $glossw4 %>" />
-    <input type="hidden" name="glossw5" value="<% $glossw5 %>" />
-    <input type="hidden" name="glossw6" value="<% $glossw6 %>" />
-    <input type="hidden" name="glossw7" value="<% $glossw7 %>" />
-    <input type="hidden" name="glossw8" value="<% $glossw8 %>" />
-    <input type="hidden" name="glossw9" value="<% $glossw9 %>" />
-    <input type="hidden" name="glossw10" value="<% $glossw10 %>" />
-    <input type="hidden" name="glossw11" value="<% $glossw11 %>" />
-    <input type="hidden" name="glossw12" value="<% $glossw12 %>" />
-    <input type="hidden" name="glossw13" value="<% $glossw13 %>" />
-    <input type="hidden" name="glossw14" value="<% $glossw14 %>" />
-    <input type="hidden" name="glossw15" value="<% $glossw15 %>" />
-    <input type="hidden" name="placem1" value="<% $placem1  %>" />
-    <input type="hidden" name="placem2" value="<% $placem2  %>" />
-    <input type="hidden" name="placem3" value="<% $placem3  %>" />
-    <input type="hidden" name="placem4" value="<% $placem4  %>" />
-    <input type="hidden" name="placem5" value="<% $placem5  %>" />
-    <input type="hidden" name="placem6" value="<% $placem6  %>" />
-    <input type="hidden" name="placem7" value="<% $placem7  %>" />
-    <input type="hidden" name="placem8" value="<% $placem8  %>" />
-    <input type="hidden" name="placem9" value="<% $placem9  %>" />
-    <input type="hidden" name="glossm1" value="<% $glossm1  %>" />
-    <input type="hidden" name="glossm2" value="<% $glossm2  %>" />
-    <input type="hidden" name="glossm3" value="<% $glossm3  %>" />
-    <input type="hidden" name="glossm4" value="<% $glossm4  %>" />
-    <input type="hidden" name="glossm5" value="<% $glossm5  %>" />
-    <input type="hidden" name="glossm6" value="<% $glossm6  %>" />
-    <input type="hidden" name="glossm7" value="<% $glossm7  %>" />
-    <input type="hidden" name="glossm8" value="<% $glossm8  %>" />
-    <input type="hidden" name="glossm9" value="<% $glossm9  %>" />
-    <input type="hidden" name="glossm10" value="<% $glossm10  %>" />
-    <input type="hidden" name="glossm11" value="<% $glossm11  %>" />
-    <input type="hidden" name="glossm12" value="<% $glossm12  %>" />
-    <input type="hidden" name="glossm13" value="<% $glossm13  %>" />
-    <input type="hidden" name="glossm14" value="<% $glossm14  %>" />
-    <input type="hidden" name="glossm15" value="<% $glossm15  %>" />
-    <input type="submit">
-</form>
 % }
 
 <%shared>
