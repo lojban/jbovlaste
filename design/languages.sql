@@ -11,7 +11,7 @@ BEGIN;
 
 -- Lojban!
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
- VALUES ('jbo', 'Lojban', 'lobybau', 'lojban', 'http://www.lojban.org/');
+ VALUES ('jbo', 'Lojban', 'jbobau', 'lojban', 'http://www.lojban.org/');
 
 -- The six base languages
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
@@ -149,6 +149,9 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, url)
 INSERT INTO languages (tag, englishname, lojbanname, realname, url, forlojban)
  VALUES ('eo', 'Esperanto', 'spe\'atybau', 'Esperanto', 'http://www.esperanto.net/', 'Loĵbano');
 -- ROLLBACK; if there are errors
+
+INSERT INTO languages (tag, englishname, lojbanname, realname, url, forlojban)
+ VALUES ('test', 'Test Language', 'cipybau', 'Test Language', '', 'Lojban');
 
 -- if it worked
 COMMIT;
