@@ -242,13 +242,14 @@ Internal definition ID: <code><% $defrow->{'definitionid'} %></code>
    lead me to believe that your definition includes a third
    place. (I'll generally be looking for "x3" in that case.)</p>
 
-% } elsif (
-% # If Already agreed to the dollar sign problem
-% ( defined( $dollarsok ) && defined( $definitiontxt ) )
-% # Or There is no problem
-% || ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 ) && defined(
-% $definitiontxt ) )
-% ) {
+<%perl>
+} elsif (
+defined( $definitiontxt )
+&& ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 )
+    || ( ( scalar( $definitiontxt =~ tr/$/$/ ) < 2 )  && $type eq
+       "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo"
+       || $type eq "cmene") ) ) {
+</%perl>
 
 <font size="+3">Processing definition edit...</font>
 <hr />
