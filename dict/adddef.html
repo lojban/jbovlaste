@@ -233,13 +233,13 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
    place. (I'll generally be looking for "x3" in that case.)</p>
 -->
 
-% } elsif (
-% # If Already agreed to the dollar sign problem
-% ( defined( $dollarsok ) && defined( $definitiontxt ) )
-% # Or There is no problem
-% || ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 ) && defined( $definitiontxt ) )
-% ) {
 <%perl>
+} elsif (
+defined( $definitiontxt )
+&& ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 )
+    || ( ( scalar( $definitiontxt =~ tr/$/$/ ) < 2 )  && $type eq
+	"cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo"
+	|| $type eq "cmene") ) ) {
  my $langrealnamequery =
    $dbh->prepare("SELECT * FROM languages WHERE tag=?");
  $langrealnamequery->execute($langtag);
