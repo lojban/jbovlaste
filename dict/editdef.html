@@ -1,5 +1,10 @@
-%   my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
-%   where definitionid=?", undef, $definition);
+<%perl>
+my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
+where definitionid=?", undef, $definition);
+
+my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
+</%perl>
 
 % unless(defined($session{'username'})) {
 You ought not have been able to view this page, as you aren't logged in!
@@ -27,9 +32,6 @@ Editing Definition
   $m->out("big nasty fatal error in editdef.html");
   return;
  }
-
-   my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
-    (SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
 
  my $glossesref =
    $dbh->selectall_arrayref("SELECT * FROM keywordmapping g, natlangwords nlw

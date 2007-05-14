@@ -1,3 +1,8 @@
+<%perl>
+my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+	(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
+</%perl>
+
 % unless(defined($session{'username'})) {
 <font size="+3">Not logged in</font>
 <hr />
@@ -20,8 +25,6 @@ Not enough info to know what to do.
    my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
     valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
     undef, $valsi, $lang);
-   my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
-    (SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
    my($valsiword,$langrealname,$langtag) = @initialresult;
    unless(defined($valsiword) && defined($langrealname)) {
      $m->out("Sorry, couldn't find either the valsi ID or language ID you requested.");
