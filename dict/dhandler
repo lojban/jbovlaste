@@ -1,4 +1,13 @@
 <%perl>
+ # Get the langid if we've been passed a lang
+ if( $langarg )
+ {
+    $langarg =~ s/^([-a-z]+).*/$1/;
+    $langarg =~ s/-[A-Z]+//;
+    $langidarg = $dbh->selectrow_array( "SELECT langid from
+    languages where tag=?", undef, $langarg );
+ }
+
  my @result;
  my $valsiquery = $dbh->prepare("SELECT * FROM convenientvalsi WHERE word=?");
  $valsiquery->execute($m->dhandler_arg());
@@ -180,39 +189,63 @@ Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
  $langid=undef; $i=-1;
  my $definitionsquery;
 
- # If we've been handed a specific langid to pull up the best guess for:
+ # If we've been handed a specific langid
  if( $langidarg )
  {
-    $definitionsquery = $dbh->prepare("SELECT * FROM
-    convenientdefinitions WHERE valsiid=?
-    AND definitionid=(
-	SELECT definitionid
-	FROM valsibestguesses
-	WHERE langid=?
-	AND valsiid=?
-	)
-    ORDER BY langrealname,
-    username");
-    $definitionsquery->execute($row->{'valsiid'}, $langidarg, $row->{'valsiid'});
+     if( $bg )
+     {
+	 $definitionsquery = $dbh->prepare("SELECT * FROM
+		 convenientdefinitions WHERE valsiid=?
+		 AND definitionid=(
+		     SELECT definitionid
+		     FROM valsibestguesses
+		     WHERE langid=?
+		     AND valsiid=?
+		     )
+		 ORDER BY langrealname,
+		 username");
+	 $definitionsquery->execute($row->{'valsiid'}, $langidarg, $row->{'valsiid'});
+     } else {
+	 $definitionsquery = $dbh->prepare("SELECT * FROM
+		 convenientdefinitions WHERE valsiid=?
+		 AND langid=?
+		 ORDER BY langrealname,
+		 username");
+	 $definitionsquery->execute($row->{'valsiid'}, $langidarg);
+     }
  } else {
-    $definitionsquery = $dbh->prepare("SELECT * FROM
-    convenientdefinitions WHERE valsiid=? ORDER BY langrealname,
-    username");
-    $definitionsquery->execute($row->{'valsiid'});
+     if( $bg )
+     {
+	 $definitionsquery = $dbh->prepare("SELECT * FROM
+		 convenientdefinitions WHERE valsiid=?
+		 AND definitionid IN (
+		     SELECT definitionid
+		     FROM valsibestguesses
+		     WHERE valsiid=?
+		     )
+		 ORDER BY langrealname,
+		 username");
+	 $definitionsquery->execute($row->{'valsiid'}, $row->{'valsiid'});
+     } else {
+	 $definitionsquery = $dbh->prepare("SELECT * FROM
+		 convenientdefinitions WHERE valsiid=? ORDER BY langrealname,
+		 username");
+	 $definitionsquery->execute($row->{'valsiid'});
+     }
  }
 
  my %defscores;
  while(defined(my $defrow=$definitionsquery->fetchrow_hashref))
  {
-   my $voteq = $dbh->prepare("SELECT value FROM definitionvotes WHERE definitionid=$defrow->{'definitionid'}");
-   $voteq->execute();
-   my $totval = 0;
-   while (defined(my $voterow = $voteq->fetchrow_hashref)) 
-   {
-     $totval += $voterow->{'value'};
-   }
-   $defscores{$defrow->{'definitionid'}} = $totval;
-   push @definitionsquery, $defrow;
+     my $voteq = $dbh->prepare("SELECT value FROM definitionvotes WHERE definitionid=$defrow->{'definitionid'}");
+     $voteq->execute();
+     my $totval = 0;
+     while (defined(my $voterow = $voteq->fetchrow_hashref)) 
+     {
+	 $totval += $voterow->{'value'};
+     }
+     $defscores{$defrow->{'definitionid'}} = $totval;
+     push @definitionsquery, $defrow;
  }
 
  foreach my $defrow (@definitionsquery) 
@@ -568,6 +601,7 @@ sub userlink {
 </%perl>
 
 <%args>
+$langarg => undef
 $langidarg => undef
 $bg => undef
 </%args>

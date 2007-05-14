@@ -5,20 +5,34 @@
  my @langs = map { $_->[0] } @{ $langs };
  my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
 
- my $natlangwordquery;
-    # If using bestguesses
-    if( $bg )
-    {
-	$natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
-	WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
-	AND wordid=$wordidarg
-	ORDER BY meaning, wordid");
-    } else {
-	$natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
-	WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
-	ORDER BY meaning, wordid");
-    }
- $natlangwordquery->execute($word,$lang);
+ if( defined $meaning )
+ {
+    # Turn meaning text into wordidarg
+     if( ! $meaning )
+     {
+	 $wordidarg = $dbh->selectrow_array( "SELECT wordid FROM
+		 natlangwords WHERE word=? AND meaning IS NULL", undef,
+		 $word );
+     } else {
+	 $wordidarg = $dbh->selectrow_array( "SELECT wordid FROM
+		 natlangwords WHERE word=? AND meaning=?", undef,
+		 $word, $meaning );
+     }
+ }
+
+my $natlangwordquery;
+if( $wordidarg )
+{
+    $natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
+	    WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
+	    AND wordid=$wordidarg
+	    ORDER BY meaning, wordid");
+} else {
+    $natlangwordquery = $dbh->prepare("SELECT * FROM natlangwords
+	    WHERE word=? AND langid=(SELECT langid FROM languages WHERE tag=?)
+	    ORDER BY meaning, wordid");
+}
+$natlangwordquery->execute($word,$lang);
 
  my @natlangwords;
  for(my $i=0; $i<$natlangwordquery->rows; $i++) {
@@ -332,25 +346,52 @@ through the system.
  
  if( $bg )
  {
- $mappingquery =
-   $dbh->prepare("
-    SELECT d.definitionid, m.place, m.natlangwordid,
-	d.definitionid, d.valsiid, d.word, d.definition,
-	d.definitionnum, d.langid
-    FROM keywordmapping m, convenientdefinitions d,
-    natlangwordbestguesses b
-    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
-    AND b.place=m.place AND b.definitionid=d.definitionid
-    AND b.natlangwordid=m.natlangwordid AND b.natlangwordid=$wordidarg
-    ");
+    if( $wordidarg )
+    {
+	$mappingquery =
+	    $dbh->prepare("
+		    SELECT d.definitionid, m.place, m.natlangwordid,
+		    d.definitionid, d.valsiid, d.word, d.definition,
+		    d.definitionnum, d.langid
+		    FROM keywordmapping m, convenientdefinitions d,
+		    natlangwordbestguesses b
+		    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+		    AND b.place=m.place AND b.definitionid=d.definitionid
+		    AND b.natlangwordid=m.natlangwordid AND b.natlangwordid=$wordidarg
+		    ");
+    } else {
+	$mappingquery =
+	    $dbh->prepare("
+		    SELECT d.definitionid, m.place, m.natlangwordid,
+		    d.definitionid, d.valsiid, d.word, d.definition,
+		    d.definitionnum, d.langid
+		    FROM keywordmapping m, convenientdefinitions d,
+		    natlangwordbestguesses b
+		    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+		    AND b.place=m.place AND b.definitionid=d.definitionid
+		    AND b.natlangwordid=m.natlangwordid
+		    ");
+    }
  } else {
- $mappingquery =
-   $dbh->prepare("
-    SELECT d.definitionid, m.place, m.natlangwordid,
-	d.definitionid, d.valsiid, d.word, d.definition, d.definitionnum
-    FROM keywordmapping m, convenientdefinitions d
-    WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
-    ");
+     if( $wordidarg )
+     {
+	 $mappingquery =
+	     $dbh->prepare("
+		     SELECT d.definitionid, m.place, m.natlangwordid,
+		     d.definitionid, d.valsiid, d.word, d.definition, d.definitionnum
+		     FROM keywordmapping m, convenientdefinitions d
+		     WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+		     AND m.natlangwordid = $wordidarg
+		     ");
+     } else {
+	 $mappingquery =
+	     $dbh->prepare("
+		     SELECT d.definitionid, m.place, m.natlangwordid,
+		     d.definitionid, d.valsiid, d.word, d.definition, d.definitionnum
+		     FROM keywordmapping m, convenientdefinitions d
+		     WHERE m.natlangwordid = ? AND m.definitionid=d.definitionid
+		     ");
+     }
  }
 </%init>
 
@@ -361,6 +402,7 @@ our $titlestr;
 <%args>
 $bg => undef
 $wordidarg => undef
+$meaning => undef
 </%args>
 
 <%method title>
