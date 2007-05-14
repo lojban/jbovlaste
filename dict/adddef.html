@@ -449,7 +449,7 @@ to use as keywords:</p>
 
 % # This is the case where there are no dollar signs and we want
 % # to disallow  the action.
-% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2  && !( $type eq "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo") ) {
+% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2  && !( $type eq "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo" || $type eq "cmene") ) {
 
     <p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
     entered at this point.  You need to deal with the issues below, then go
@@ -462,6 +462,10 @@ to use as keywords:</p>
         appears that your word is of type: <strong><% $type %></strong>.
 	Please <a
 	href="../help/definitions.html">read the instructions</a>.
+    </p>
+    <p>Debug information:<br />
+    <samp>$type eq "cmene"</samp> evaluates to: <% $type eq "cmene" %><br />
+    <samp>$type eq "gismu"</samp> evaluates to: <% $type eq "gismu" %>
     </p>
 % }
 
