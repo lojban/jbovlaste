@@ -464,8 +464,8 @@ to use as keywords:</p>
 	href="../help/definitions.html">read the instructions</a>.
     </p>
     <p>Debug information:<br />
-    <samp>$type eq &quot;cmene&quot;</samp> evaluates to: <% $type eq "cmene" %><br />
-    <samp>$type eq &quot;gismu&quot;</samp> evaluates to: <% $type eq "gismu" %>
+    The first one evaluates to: <% scalar($type eq "cmene")?"true":"false" %><br />
+    The second one evaluates to: <% scalar($type eq "gismu")?"true":"false" %>
     </p>
 % }
 
