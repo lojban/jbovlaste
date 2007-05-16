@@ -65,21 +65,16 @@ to add this word, then hit the button below:</p>
  <input type="submit">
 </form>
 
-%   } else {
+<%perl>
+   } else {
+       $m->redirect( $valsi );
+   }
 
-<p>You're trying to add a word already in the database! Don't do
-that!  You can go to <a href="<% $valsi %>">the already existing
-entry</a>.</p>
-%      if(defined($r->header_in('Referer'))) {
-<p>Go back to <a href="<% $r->header_in('Referer') %>">where you came from</a>.</p>
-%      }
+ } else {
 
-%   }
-
-% } else {
-
-%   my $typestr = utils::vlatai($valsi);
-%   unless(produce_verifier($valsi.$typestr) eq $confirm) {
+   my $typestr = utils::vlatai($valsi);
+   unless(produce_verifier($valsi.$typestr) eq $confirm) {
+</%perl>
 
 <p>
 Uhoh. You're really trying to get sneaky on me. We can't have that.

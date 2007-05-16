@@ -21,7 +21,7 @@
 <td width="20%" bgcolor="#c0c0c0" valign="top"><font color="white">
 %   if (!defined($session{'username'})) {
 <form method="post" action="<% $base_url %>/login.html">
-    <input type="hidden" name="backto" value="<% $r->header_in('Referer') %>" />
+    <input type="hidden" name="backto" value="<% $r->headers_in->{'Referer'} %>" />
     User: <input size="16" name="username" type="text" /> <br />
     Pass: <input size="16" name="password" type="password" /> <br />
     <input type="submit" value="Login" /> <br />
@@ -38,7 +38,7 @@
     <form method="post" action="<% $base_url %>/dict/addvalsi.html">
 	<input type="text" name="valsi" />
 
-	<input type="submit" value="Add New Word" />
+	<input type="submit" value="Go" />
     </form>
 % }
 </font></td>
