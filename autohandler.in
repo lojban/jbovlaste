@@ -156,7 +156,7 @@ what happened leading up to this. Just in case.
  my $lang = "en";
  our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste","jbovlaste","makfa");
 
- my $cookie = $r->header_in('Cookie');
+ my $cookie = $r->headers_in->{'Cookie'};
  my @cookies = split(/\s*;\s*/, $cookie);
  my %cookies = map { /(.+)=(.+)/; $1 => $2 } @cookies;
 
@@ -176,7 +176,7 @@ what happened leading up to this. Just in case.
  } else {
   %session = ( );
  }
- $r->header_out('Cache-Control' => 'no-cache');
+ $r->headers_out->add('Cache-Control' => 'no-cache');
 
  my $self = $m->base_comp;
 </%init>

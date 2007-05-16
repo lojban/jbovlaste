@@ -49,7 +49,7 @@ my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
 
 sub handler
 {
-    my ($r) = @_;
+    my ($r) = shift;
 
     # If you plan to intermix images in the same directory as
     # components, activate the following to prevent Mason from

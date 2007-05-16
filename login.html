@@ -87,7 +87,7 @@ my $cookie = new CGI::Cookie(-name => 'jbovlastesessionid',
                              -expires => '+48h',
                              -domain => 'lojban.org'
 			     );
-$r->header_out('Set-cookie' => $cookie);
+$r->headers_out->add('Set-cookie' => $cookie);
 
 </%perl>
 
