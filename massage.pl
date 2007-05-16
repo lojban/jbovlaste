@@ -60,4 +60,6 @@ while( <INFILE> )
 close( INFILE );
 close( OUTFILE );
 
+`chmod 444 $outfile`;
+
 exit 0
