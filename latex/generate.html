@@ -163,8 +163,9 @@
     }
 
    sub dictcollate {
-     $a =~ s/^$unofficialwarning//;
-     $b =~ s/^$unofficialwarning//;
+     my $to_be_ignored = $unofficialwarning
+     $a =~ s/^$to_be_ignored//;
+     $b =~ s/^$to_be_ignored//;
      lc($a) cmp lc($b);
    }
 
