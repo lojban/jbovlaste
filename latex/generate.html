@@ -55,6 +55,7 @@
     my @natLangToLojbanEntries;
 
     # Print the lojban -> foo section
+    my $unofficialwarning = '$\triangle$ '
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
 	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
@@ -71,7 +72,7 @@
 	my $entry .= "\n\n\\textbf{";
 
         # Alert about non-standard entries
-        if ($valsitype eq "experimental gismu") { $entry .= " (experimental) "};
+        if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
         $entry .= massage(${$convenientDefinition}{'word'} ) ."} ";
 
@@ -161,6 +162,12 @@
 	}
     }
 
+   sub dictcollate {
+     $a =~ s/^$unofficialwarning//;
+     $b =~ s/^$unofficialwarning//;
+     lc($a) cmp lc($b);
+   }
+    sort dictcollate;
     $lojbanToNatLang = join('', sort(@lojbanToNatLangEntries));
     $natLangToLojban = join('', sort(@natLangToLojbanEntries));
 
