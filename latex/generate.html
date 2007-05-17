@@ -55,7 +55,7 @@
     my @natLangToLojbanEntries;
 
     # Print the lojban -> foo section
-    my $unofficialwarning = '$\triangle$ ';
+    our $unofficialwarning = '$\triangle$ ';
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
 	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
@@ -163,6 +163,9 @@
     }
 
    sub dictcollate {
+#    error:   	Error during compilation of /home/jbovlaste/current/latex/generate.html:
+#    Variable "$unofficialwarning" will not stay shared at /home/jbovlaste/current/latex/generate.html line 166.
+#     my $to_be_ignored = '$\triangle$ ';
      my $to_be_ignored = $unofficialwarning;
      my $temp_a = $a;
      my $temp_b = $b;
