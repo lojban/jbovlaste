@@ -60,9 +60,19 @@
 	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
 	    FROM convenientdefinitions
 	    WHERE definitionid=${$valsirow}{'definitionid'}" );
+
+	my $valsitype = $dbh->selectrow_array("SELECT descriptor
+	    FROM valsi v, definitions d, valsitypes vt
+	    WHERE v.valsiid = d.valsiid
+	    AND d.definitionid = ${$valsirow}{'definitionid'}
+	    AND v.typeid=vt.typeid");
 	
-	my $entry .= "\n\n\\textbf{".
-	    massage(${$convenientDefinition}{'word'} ) ."} ";
+	my $entry .= "\n\n\\textbf{"
+
+        # Alert about non-standard entries
+        if ($valsitype eq "experimental gismu") { $entry .= " (experimental) "};
+	
+        $entry .= massage(${$convenientDefinition}{'word'} ) ."} ";
 
 	# \markboth is for the top-of-page markings.
 	$entry .= "\\markboth{".
