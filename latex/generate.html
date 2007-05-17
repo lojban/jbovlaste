@@ -55,7 +55,7 @@
     my @natLangToLojbanEntries;
 
     # Print the lojban -> foo section
-    my $unofficialwarning = '$\triangle$ '
+    my $unofficialwarning = '$\triangle$ ';
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
 	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
@@ -168,8 +168,8 @@
      lc($a) cmp lc($b);
    }
     sort dictcollate;
-    $lojbanToNatLang = join('', sort(@lojbanToNatLangEntries));
-    $natLangToLojban = join('', sort(@natLangToLojbanEntries));
+    $lojbanToNatLang = join('', sort &dictcollate @lojbanToNatLangEntries);
+    $natLangToLojban = join('', sort &dictcollate @natLangToLojbanEntries);
 
     #print Dumper($lojbanToNatLang);
     #print Dumper($natLangToLojban);
