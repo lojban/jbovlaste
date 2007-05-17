@@ -169,8 +169,8 @@
      my $to_be_ignored = $unofficialwarning;
      my $temp_a = $a;
      my $temp_b = $b;
-     $temp_a =~ s/^$to_be_ignored//;
-     $temp_b =~ s/^$to_be_ignored//;
+     $temp_a =~ s/$to_be_ignored//;
+     $temp_b =~ s/$to_be_ignored//;
      lc($temp_a) cmp lc($temp_b);
    }
 
