@@ -167,9 +167,9 @@
      $b =~ s/^$unofficialwarning//;
      lc($a) cmp lc($b);
    }
-    sort dictcollate;
-    $lojbanToNatLang = join('', sort &dictcollate @lojbanToNatLangEntries);
-    $natLangToLojban = join('', sort &dictcollate @natLangToLojbanEntries);
+
+    $lojbanToNatLang = join('', sort \&dictcollate, @lojbanToNatLangEntries);
+    $natLangToLojban = join('', sort \&dictcollate, @natLangToLojbanEntries);
 
     #print Dumper($lojbanToNatLang);
     #print Dumper($natLangToLojban);
