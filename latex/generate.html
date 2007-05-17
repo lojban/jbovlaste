@@ -66,8 +66,9 @@
 	    WHERE v.valsiid = d.valsiid
 	    AND d.definitionid = ${$valsirow}{'definitionid'}
 	    AND v.typeid=vt.typeid");
+        my $valsitype = "gismu"; # Debug.
 	
-	my $entry .= "\n\n\\textbf{"
+	my $entry .= "\n\n\\textbf{";
 
         # Alert about non-standard entries
         if ($valsitype eq "experimental gismu") { $entry .= " (experimental) "};
