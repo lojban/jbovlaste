@@ -163,9 +163,6 @@
     }
 
    sub dictcollate {
-#    error:   	Error during compilation of /home/jbovlaste/current/latex/generate.html:
-#    Variable "$unofficialwarning" will not stay shared at /home/jbovlaste/current/latex/generate.html line 166.
-#     my $to_be_ignored = '$\triangle$ ';
      my $to_be_ignored = $unofficialwarning;
      my $temp_a = $a;
      my $temp_b = $b;
@@ -174,8 +171,8 @@
      lc($temp_a) cmp lc($temp_b);
    }
 
-    $lojbanToNatLang = join('', sort \&dictcollate, @lojbanToNatLangEntries);
-    $natLangToLojban = join('', sort \&dictcollate, @natLangToLojbanEntries);
+    $lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
+    $natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
 
     #print Dumper($lojbanToNatLang);
     #print Dumper($natLangToLojban);
