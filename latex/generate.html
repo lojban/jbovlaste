@@ -178,18 +178,26 @@
     #print Dumper($natLangToLojban);
 
     print TMP '
-\documentclass[notitlepage,twocolumn,letter]{book}
+\documentclass[notitlepage,twocolumn,letter,a4paper]{book}
+
+\usepackage[utf8]{inputenc} %% Will break on chars not in font
+
+%% These apply to A4 paper only
+\pdfpagewidth 210mm
+\pdfpageheight 297mm
 
 \usepackage{fancyhdr} % important, lets us actually pull this stuff off.
 \usepackage{fixmarks} % unbreaks some stuff.
 \pagestyle{fancy}     % turns on the magic provided by fancyhdr
+\usepackage{palatino}
+
 \fancyhead{}          % empty out the header
 \fancyfoot{}          % empty out the footer
 \fancyhead[LE,LO]{\rightmark} % left side, odd and even pages
 \fancyhead[RE,RO]{\leftmark}  % right side, odd and even pages
 \fancyfoot[LE,RO]{\thepage}   % left side even, right side odd
 
-\setlength{\parindent}{0pt}
+\setlength{\parindent}{1 em}
 
 \title{'. $langrealname . ' To lojban and lojban To '. $langrealname .' Dictionary}
 \author{Lojbanic Community}
