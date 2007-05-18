@@ -69,12 +69,12 @@
 	    AND v.typeid=vt.typeid");
 #        my $valsitype = "gismu"; # Debug.
 	
-	my $entry .= "\n\n\\textbf{";
+	my $entry .= "\n\n\\textbf{{\\sffamily";
 
         # Alert about non-standard entries
         if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
-        $entry .= massage(${$convenientDefinition}{'word'} ) ."} ";
+        $entry .= massage(${$convenientDefinition}{'word'} ) ."}} ";
 
 	# \markboth is for the top-of-page markings.
 	$entry .= "\\markboth{".
