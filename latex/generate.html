@@ -69,12 +69,12 @@
 	    AND v.typeid=vt.typeid");
 #        my $valsitype = "gismu"; # Debug.
 	
-	my $entry .= "\n\n\\textbf{{\\sffamily ";
+	my $entry .= "\n\n{\\sffamily\\textbf ";
 
         # Alert about non-standard entries
         if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
-        $entry .= massage(${$convenientDefinition}{'word'} ) ."}} ";
+        $entry .= massage(${$convenientDefinition}{'word'} ) ."} ";
 
 	# \markboth is for the top-of-page markings.
 	$entry .= "\\markboth{".
@@ -91,11 +91,11 @@
 
 	if( $rafsi )
 	{
-	    $entry .= "\\textbf{[$rafsi]} "
+	    $entry .= "{\\ttfamily\\textbf[$rafsi]} "
 	}
 	if( ${$convenientDefinition}{'selmaho'} )
 	{
-	    $entry .= "\\textbf{[".
+	    $entry .= "{\\sffamily\\textbf[".
 		massage(${$convenientDefinition}{'selmaho'})
 		."]} "
 	}
@@ -122,7 +122,7 @@
 	#print Dumper( $nlwbg );
 	foreach my $nlwbgrow (values %{$nlwbg} )
 	{
-	    my $entry .= "\n\n\\textbf{". massage(${$nlwbgrow}{'word'}) ."} ";
+	    my $entry .= "\n\n{\\sffamily\\textbf ". massage(${$nlwbgrow}{'word'}) ."} ";
 
 	    # \markboth is for the top-of-page markings.
 	    $entry .= "\\markboth{". massage(${$nlwbgrow}{'word'}) 
