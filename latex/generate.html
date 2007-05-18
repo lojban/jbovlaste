@@ -55,7 +55,7 @@
     my @natLangToLojbanEntries;
 
     # Print the lojban -> foo section
-    our $unofficialwarning = '$\triangle$ ';
+    our $unofficialwarning = '$\\triangle$ ';
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
 	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
@@ -164,12 +164,10 @@
 
    sub dictcollate {
      my $to_be_ignored = $unofficialwarning;
-#     my $temp_a = $a;
-#     my $temp_b = $b;
-#     $temp_a =~ s/$to_be_ignored/ZZ/;
-#     $temp_b =~ s/$to_be_ignored/ZZ/;
-     $a =~ s/$to_be_ignored//;
-     $b =~ s/$to_be_ignored//;
+     my $temp_a = $a;
+     my $temp_b = $b;
+     $temp_a =~ s/$\Qto_be_ignored\E//;
+     $temp_b =~ s/$\Qto_be_ignored\E//;
      lc($temp_a) cmp lc($temp_b);
    }
 
