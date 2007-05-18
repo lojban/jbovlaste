@@ -39,7 +39,7 @@
 
 <p>Your vote should've be recorded.</p>
 
-<p>You may go back to <a href="<% $r->header_in('Referer') %>">where
+<p>You may go back to <a href="<% $r->headers_in->{'Referer'} %>">where
 you were</a>.</p>
 
 <%method title>
