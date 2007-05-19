@@ -74,7 +74,7 @@
         # Alert about non-standard entries
         if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
-        $entry .= massage(${$convenientDefinition}{'word'} ) ."} ";
+        $entry .= massage(${$convenientDefinition}{'word'} ) ."}";
 
 	# \markboth is for the top-of-page markings.
 	$entry .= "\\markboth{".
@@ -99,7 +99,7 @@
 		massage(${$convenientDefinition}{'selmaho'})
 		."]} "
 	}
-	$entry .= massage("${$convenientDefinition}{'definition'}");
+	$entry .= " " . massage("${$convenientDefinition}{'definition'}");
 	if( ${$convenientDefinition}{'notes'} )
 	{
 	    $entry .= " (".
@@ -145,7 +145,7 @@
 	    #AND d.definitionid = ${$nlwbgrow}{'definitionid'}
 	    #AND v.typeid=vt.typeid");
 
-	    $entry .= massage($defvalsi);
+	    $entry .= " " . massage($defvalsi);
 
 	    #if( $defvalsitype eq "gismu" )
 	    #{
