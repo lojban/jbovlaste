@@ -233,9 +233,9 @@ $natLangToLojban. '
     $pdffilename =~ s/.tex$/.pdf/;
 
     sub inserthyphenations{
-    # Suggest LaTeX hyphenation points after slashes.
+    # Suggest LaTeX linebreak points after slashes.
         my ($line) = @_;
-        $line =~ s,/,/\\-,g;
+        $line =~ s,/,/\\linebreak[0],g;
         return $line;
     }
 
