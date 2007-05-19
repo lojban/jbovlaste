@@ -107,6 +107,13 @@
 		.")";
 	}
 
+	if( ${$convenientDefinition}{'etymology'} )
+	{
+	    $entry .= " {\small ".
+		massage(${$convenientDefinition}{'etymology'})
+		."}";
+	}
+
             $entry = &inserthyphenations($entry);
 
 	push @lojbanToNatLangEntries, $entry;
