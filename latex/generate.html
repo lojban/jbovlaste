@@ -107,12 +107,14 @@
 		.")";
 	}
 
-	if( ${$convenientDefinition}{'etymology'} )
-	{
-	    $entry .= " {\small ".
-		massage(${$convenientDefinition}{'etymology'})
-		."}";
-	}
+# This doesn't work because etymologies are in their own table.
+# Moreover, a definition can have more than one etymology.
+#	if( ${$convenientDefinition}{'etymology'} )
+#	{
+#	    $entry .= " {\\small ".
+#		massage(${$convenientDefinition}{'etymology'})
+#		."}";
+#	}
 
             $entry = &inserthyphenations($entry);
 
