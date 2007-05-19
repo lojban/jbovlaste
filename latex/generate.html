@@ -107,6 +107,8 @@
 		.")";
 	}
 
+            $entry = &inserthyphenations($entry);
+
 	push @lojbanToNatLangEntries, $entry;
     }
 
@@ -156,6 +158,8 @@
 		    $entry .= ", place ${$nlwbgrow}{'place'}";
 		}
 	    #}
+
+            $entry = &inserthyphenations($entry);
 
 	    push @natLangToLojbanEntries, $entry;
 	    #print Dumper( $nlwbgrow );
@@ -227,6 +231,13 @@ $natLangToLojban. '
     # Get the pdflatex generated file's name.
     my $pdffilename=$shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
+
+    sub inserthyphenations{
+    # Suggest LaTeX hyphenation points after slashes.
+        my ($line) = @_;
+        $line =~ s,/,/\\-,g;
+        return $line;
+    }
 
     sub massage
     {
