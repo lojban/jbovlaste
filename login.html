@@ -107,7 +107,7 @@ you are absolutely sure you've reached this message in error, please
 
 <%def loginform>
 <form method="post" action="login.html">
- <input type="hidden" name="backto" value="<% $r->header_in('Referer') %>">
+ <input type="hidden" name="backto" value="<% $r->headers_in->{'Referer'} %>">
  <table>
   <tr><td align="right">Login:</td>
       <td align="left"><input size="32" name="username" type="text"></td></tr>

@@ -64,8 +64,8 @@ non-best-guesses listing</a> and vote for the word there if it exists.
 Note that it may take up to half an hour for the vote to percolate
 through the system.
 % }
-%   if(defined($r->header_in('Referer'))) {
-Return to <a href="<% $r->header_in('Referer') %>">the page you came from</a>.
+%   if(defined($r->headers_in->{'Referer'})) {
+Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>.
 %   }
 %   return;
 % }

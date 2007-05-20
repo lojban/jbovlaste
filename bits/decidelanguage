@@ -20,7 +20,7 @@
  if(defined($lang)) {
    return ($lang);
  } else {
-   my $acceptlang = $r->header_in('Accept-Language');
+   my $acceptlang = $r->headers_in->{'Accept-Language'};
    if(defined($acceptlang)) {
      my @acceptlanguages = split(/\s*,\s*/,$acceptlang);
      my @reallytmp = map { &twinktags($_) } @acceptlanguages;

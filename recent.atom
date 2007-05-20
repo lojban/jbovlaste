@@ -106,7 +106,7 @@ while(defined(my $row = $query->fetchrow_hashref))
 
     unless ($begun) {
         $m->out(sprintf("<updated>%s</updated>", $m->interp->apply_escapes($updated, 'h')));
-        $r->header_out('Last-Modified' => strftime("%a, %d %b %Y %H:%M:%S %Z", localtime($row->{'time'})));
+        $r->headers_out->add('Last-Modified' => strftime("%a, %d %b %Y %H:%M:%S %Z", localtime($row->{'time'})));
         $begun = 1;
     }
 
