@@ -7,6 +7,12 @@ Writing A Moderation Request
 <hr />
 
 <form method="post" action="moderation.html">
+<%perl>
+# reCaptcha Output form
+# Public key
+    print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
+</%perl>
+
  <table>
   <tr>
    <td>Request Type</td>
@@ -35,13 +41,24 @@ Writing A Moderation Request
  </table>
 </form>
 
-% } else {
-
-<font size="+3">
-Thank you for submitting your request.
-</font>
-
 <%perl>
+# Check the form results (both of them)
+} else {
+
+    # Verify submission
+    my $result = $c->check_answer(
+    # Private key
+        '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
+        $recaptcha_challenge_field, $recaptcha_response_field
+    );
+
+    if ( $result->{is_valid} ) {
+</%perl>
+	<font size="+3">
+	Thank you for submitting your request.
+	</font>
+<%perl>
+
 my $recipient = $m->base_comp->attr('admin_email');
 
 #Now send mail to $recipient
@@ -56,9 +73,19 @@ Details: $details
 
 " );
 
-</%perl>
 
-% }
+    } else {
+</%perl>
+	<font size="+3">
+	Captcha failed.
+	<% $recaptcha_challenge_field %>,
+	<% $recaptcha_response_field %>
+	</font>
+<%perl>
+	
+    }
+}
+</%perl>
 
 <%method title>
 Sending A Moderation Request
@@ -70,9 +97,15 @@ Sending A Moderation Request
   use utils;
   use Unicode::String;
   $r->content_type("text/html; charset=utf-8");
+
+  use Captcha::reCAPTCHA;
+
+  my $c = Captcha::reCAPTCHA->new;
 </%init>
 
 <%args>
 $request_type => undef
 $details => undef
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
 </%args>
