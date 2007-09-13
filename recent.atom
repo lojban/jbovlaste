@@ -208,7 +208,6 @@ sub wordlink
 
 <%init>
 our($dbh);
-use Wiki;
 </%init>
 
 <%args>

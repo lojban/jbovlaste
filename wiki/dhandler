@@ -11,105 +11,8 @@
 our $pagename = $m->dhandler_arg || "FrontPage";
 </%shared>
 
-<%perl>
- my @alternates;
-
- our($dbh);
- my @languages = $m->comp('/bits/decidelanguage', lang => $lang);
-
- my $pagequery = $dbh->prepare("SELECT p.version, p.time, u.username, p.content, p.compressed, l.realname FROM pages p, languages l, users u WHERE u.userId=p.userId AND l.langId=p.langId AND l.tag=? AND p.pagename = ? AND p.latest = 'true'");
- my($result,$langtag);
- foreach $langtag (@languages) {
-  $pagequery->execute($langtag,$pagename);
-  $result = $pagequery->fetchrow_hashref;
-  if(defined($result)) {
-   last;
-   $r->content_language($langtag);
-  }
- }
-</%perl>
-
-<table width="100%"><tr>
-<td width="50%" align="left" valign="middle"><font size="+3"><% $pagename %></font></td>
-<td width="50%" align="right" valign="middle"><a href="../">jbovlaste</a><br />
-semantic organization wiki<br />
-<% $result->{'realname'} %></td>
-</tr></table><hr />
-
-<%perl>
-</%perl>
-
-% if(length($result->{'content'})) {
-
-<& /bits/wikirender,
-     wikitext =>
-        $result->{'compressed'}?
-            uncompress(decode_base64($result->{'content'})):$result->{'content'},
-     lang => $lang &>
-
-<!-- Page version: <% $result->{'version'} %> -->
-
-% } else {
-
-<p>The page you requested, <% $pagename %>, couldn't be located in any
-of the languages which you indicated acceptable, and which our database
-knows about. (Either through omission, passing in the <code>lang</code>
-argument, or your browser's Accept-Languages header.) Here is the list
-we ended up with: <% join(", ",@languages) %></p>
-
-<%perl>
- @alternates = $m->comp('/bits/alternatepages', page => $pagename);
-</%perl>
-
-% if($#alternates>=0) {
-<p>However, I found the page you're looking for in the following language(s):
- <ul>
-%  foreach my $pair (@alternates) {
-  <li><a href="<% utils::armorurl($pagename) %>?lang=<% $pair->[1] %>"><% $pair->[0] %></a></li>
-%  }
- </ul>
-</p>
-% }
-
-<p>Consider
- <a href="edit.html?page=<% utils::armorurl($pagename) %>;lang=<% $languages[0] %>">creating
-  the page</a></p>
-
-% }
-
-<hr />
-
-<table width="100%"><tr>
-<td width="50%" valign="top" align="left">
- <a href="edit.html?page=<% utils::armorurl($pagename) %>;lang=<% $languages[0] %>">Edit this page</a><br />
- <a href="RecentChanges">RecentChanges</a>
- <a href="Search">Search</a><br />
-</td>
-<td width="50%" valign="top" align="right">
-
-<%perl>
-if($#alternates<0) {
- @alternates = $m->comp('/bits/alternatepages', page => $pagename);
-}
-</%perl>
-
-% if($#alternates>=0) {
-<font size="-1">
-%   foreach my $pair (@alternates) {
-<a href="<% utils::armorurl($pagename) %>?lang=<% $pair->[1] %>"><% $pair->[0] %></a>
-%   }
-</font>
-% }
-
-<br />
-<font size="-1">
- <a href="History?page=<% utils::armorurl($pagename) %>">History</a>
- <a href="DoesNotExist">Status</a>
- <a href="DoesNotExist">Diff</a>
-</font>
-
-</td>
-</tr></table>
+IF YOU SEE THIS, please mail lojban@lojban.org with an explaination
+of how you got here.  This page is defunct.
 
 <%method title>
 Wiki: <% $pagename %>
@@ -118,6 +21,3 @@ Wiki: <% $pagename %>
 <%init>
 $r->content_type("text/html; charset=utf-8");
 </%init>
-<%args>
-$lang => undef
-</%args>

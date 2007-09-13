@@ -2,9 +2,7 @@
 % my $now = time();
 % my $back_time = $now - (60 * 60 * 24 * $days);
 
-<p>Changes to jbovlaste in the last <% $days %> days.  Note, recent
-changes to the wiki are at the wiki's
-own <a href="wiki/RecentChanges">RecentChanges page</a>.</p>
+<p>Changes to jbovlaste in the last <% $days %> days.</p>
 
 <form method="get" action="recent.html">
 You may change the number of days viewed to
@@ -172,7 +170,6 @@ sub wordlink
 
 <%init>
 our($dbh);
-use Wiki;
 </%init>
 
 <%method title>

@@ -131,7 +131,6 @@ what happened leading up to this. Just in case.
  my $menu =
   [ [ "Home", "$base_url/" ],
     [ "Recent Changes", "$base_url/recent.html" ],
-    [ "Wiki", "$base_url/wiki/FrontPage" ],
     [ "Search Preferred Words", "http://www.lojban.org/cgi-bin/dict.pl" ],
     [ "How You Can Help", "$base_url/help/howtohelp.html" ],
     [ "valsi - All", "$base_url/dict/listing.html" ],
