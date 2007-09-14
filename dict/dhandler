@@ -162,8 +162,8 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
 % # Display the add new definition box.
 <table><tr><td valign="top">New definition:</td><td valign="top">
 <form method="post" action="adddef.html">
- <input type="hidden" name="valsi" value="<% $row->{'valsiid'} %>">
- <select name="lang">
+ <input type="hidden" name="valsiid" value="<% $row->{'valsiid'} %>">
+ <select name="langid">
 <%perl>
   my $langquery =
     $dbh->prepare("SELECT langid,realname,tag FROM languages ".

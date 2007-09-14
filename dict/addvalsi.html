@@ -51,17 +51,32 @@ my $verifier = &produce_verifier($valsi.$typestr);
       and not something odd.</li>
 </ol>
 
-<p>I've automatically checked the valsi myself, and have decided that it is
-of type: <i><% $typestr %></i>. (Yes, if you try to add an official gismu
-or cmavo, this will claim that they're experimental, because by the time
-this goes into production, all official ones will already be entered, and
-you obviously can't replace an existing one.) If this is correct, and you are
-<strong>ABSOLUTELY SURE, BEYOND A SHADOW OF A DOUBT</strong> that you want
-to add this word, then hit the button below:</p>
+<p>I've automatically checked the valsi myself, and have decided
+that it is of type: <i><% $typestr %></i>. If this is correct, and
+you are very sure that you want to add this word, pick a language and then hit
+the button below:</p>
 
-<form method="post" action="addvalsi.html">
- <input type="hidden" name="valsi" value="<% $valsi %>">
+<form method="post" action="adddef.html">
+ <input type="hidden" name="valsiword" value="<% $valsi %>">
+ <input type="hidden" name="type" value="<% $typestr %>">
  <input type="hidden" name="confirm" value="<% $verifier %>">
+Initial Definition In: 
+ <select name="langid">
+<%perl>
+  my $langquery =
+    $dbh->prepare("SELECT langid,realname,tag FROM languages ".
+                         "WHERE langid>0 ORDER BY realname");
+  $langquery->execute;
+  while(defined(my $langrow=$langquery->fetchrow_hashref)) {
+    my $selected="";
+    if($langrow->{'tag'} eq 'en') {
+       $selected = "selected ";
+    }
+</%perl>
+    <option <% $selected %>value="<%$langrow->{'langid'}%>"><% $langrow->{'realname'} %></option><%perl>
+ }
+</%perl>
+ </select>
  <input type="submit">
 </form>
 
@@ -89,16 +104,8 @@ Robin is going to have to have a very, very long talk with you.
 %      return;
 %   }
 
-<p>Ok, I'm adding the word to the database. Hold on!</p>
-
-% $dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)", { }, $valsi, $typestr, $session{'userid'}, time());
-
-<pre><% $dbh->errstr %></pre>
-
-If you didn't just see a big error, it worked.
-
-Go to the <a href="<% $valsi %>">record for the word you just
-added</a> and add a definition, too.
+It should no longer be possible to get here.  If you got here,
+please mail lojban@lojban.org with how you did it.
 
 % }
 

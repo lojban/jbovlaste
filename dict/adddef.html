@@ -1,6 +1,26 @@
 <%perl>
-my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
-	(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
+#print "<pre>".Dumper(\%ARGS)."</pre>";
+#print "<pre>v: $valsiid, $valsiword, $langid, $type.\n</pre>";
+
+#print "<pre>add: $glossadd, $glossmax, $placeadd, $placemax.\n</pre>";
+
+if( ! defined( $type ) )
+{
+    $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+	(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsiid);
+}
+
+# Adding a gloss word
+if( defined( $glossadd ))
+{
+    $glossmax++;
+}
+
+# Adding a place word
+if( defined( $placeadd ))
+{
+    $placemax++;
+}
 </%perl>
 
 % unless(defined($session{'username'})) {
@@ -11,7 +31,7 @@ You ought not have been able to view this page, as you aren't logged in!
 %    return;
 % }
 
-% unless(defined($valsi) && defined($lang)) {
+% unless((defined($valsiid) || defined($valsiword)) && defined($langid)) {
 <font size="+3">Must specify valsi and language</font>
 <hr />
 Not enough info to know what to do.
@@ -19,17 +39,32 @@ Not enough info to know what to do.
 %   return;
 % }
 
-% unless(defined($definitiontxt)) {
+% if( ! defined($definitiontxt) || defined( $glossadd ) || defined( $placeadd ) ) {
 
 <%perl>
-   my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
-    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
-    undef, $valsi, $lang);
-   my($valsiword,$langrealname,$langtag) = @initialresult;
-   unless(defined($valsiword) && defined($langrealname)) {
-     $m->out("Sorry, couldn't find either the valsi ID or language ID you requested.");
-     return;
-   }
+    # Either the user got here through addvalsi, in which case
+    # valsiword will be set, or they got here through dict/dhandler,
+    # in which case valsiid will be set.
+
+    my($langrealname,$langtag);
+
+    if( defined( $valsiid ))
+    {
+	my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
+	    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
+		undef, $valsiid, $langid);
+	($valsiword,$langrealname,$langtag) = @initialresult;
+    } elsif( defined( $valsiword )) {
+	my @initialresult = $dbh->selectrow_array("SELECT 
+		realname, tag FROM languages WHERE langid=?",
+		undef, $langid);
+
+	($langrealname,$langtag) = @initialresult;
+    } else {
+	$m->out("Sorry, couldn't find either the valsi ID you requested, or something else went wrong.");
+	return;
+    }
+
    $titlestr = sprintf('Adding definition for "%s" in language "%s"',
                        $valsiword, $langrealname);
 </%perl>
@@ -46,8 +81,22 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
 <form method="post" action="adddef.html">
  <table>
   <tr>
+   <td>
+% if( defined( $valsiid ) ) {
+	<input type="hidden" name="valsi" value="<% $valsiid %>">
+% }
+    <input type="hidden" name="valsiword" value="<% $valsiword %>">
+    <input type="hidden" name="langid" value="<% $langid %>">
+    <input type="hidden" name="type" value="<% $type %>">
+    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
+    <input type="hidden" name="langtag" value="<% $langtag %>">
+    <input type="hidden" name="glossmax" value="<% $glossmax %>">
+    <input type="hidden" name="placemax" value="<% $placemax %>">
+   </td>
+  </tr>
+  <tr>
    <td>Definition</td>
-   <td><input type="text" name="definitiontxt" size="80"></td>
+   <td><input type="text" name="definitiontxt" value="<% $definitiontxt %>" size="80"></td>
    <td>
 	For information on how to format the definition, see <a
 	href="../help/definitions.html">the definition help file</a>.
@@ -58,7 +107,7 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
 % {
   <tr>
    <td>selma'o</td>
-   <td><input type="text" name="selmaho" size="15"></td>
+   <td><input type="text" name="selmaho" value="<% $selmaho %>" size="15"></td>
     <td>
 	Don't enter a selma'o unless you're sure you understand the
 	implications, please.  Ask people to comment on the word and
@@ -69,7 +118,7 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
   <tr>
    <td>Notes</td>
    <td>
-    <textarea rows="4" cols="60" name="notes"></textarea>
+    <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
    </td>
    <td>Yes, you're being given multiple lines. Try not to use them.</td>
   </tr>
@@ -80,26 +129,15 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
   </tr>
   <tr>
    <td colspan="2">
+<%perl>
+    for(my $i=1; $i<=$glossmax; $i++) {
+	print qq{
    <p>
-    Gloss Word #1: <input type="text" name="glossw1" size="20">
-    In Sense: <input type="text" name="glossm1" size="30">
-   </p>
-   <p>
-    Gloss Word #2: <input type="text" name="glossw2" size="20">
-    In Sense: <input type="text" name="glossm2" size="30">
-   </p>
-   <p>
-    Gloss Word #3: <input type="text" name="glossw3" size="20">
-    In Sense: <input type="text" name="glossm3" size="30">
-   </p>
-   <p>
-    Gloss Word #4: <input type="text" name="glossw4" size="20">
-    In Sense: <input type="text" name="glossm4" size="30">
-   </p>
-   <p>
-    Gloss Word #5: <input type="text" name="glossw5" size="20">
-    In Sense: <input type="text" name="glossm5" size="30">
-   </p>
+    Gloss Word #$i: <input type="text" value="$ARGS{'glossw'.$i}" name="glossw$i" size="20">
+    In Sense: <input type="text" value="$ARGS{'glossm'.$i}" name="glossm$i" size="30">
+   </p>};
+    }
+</%perl>
    </td>
    <td>
     Please read <a href="../help/natlangwords.html">details on the
@@ -109,48 +147,24 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
    </td>
   </tr>
   <tr>
+   <td><input name="glossadd" value="Add A Gloss Keyword" type="submit"></td>
+  </tr>
+  <tr>
    <td colspan="2">
    <h3>Place Keywords</h3>
    </td>
   </tr>
   <tr>
    <td colspan="2">
+<%perl>
+    for(my $i=1; $i<=$placemax; $i++) {
+	print qq{
    <p>
-    Place Word #1: <input type="text" name="placew1" size="20">
-    In Sense: <input type="text" name="placem1" size="30">
-   </p>
-   <p>
-    Place Word #2: <input type="text" name="placew2" size="20">
-    In Sense: <input type="text" name="placem2" size="30">
-   </p>
-   <p>
-    Place Word #3: <input type="text" name="placew3" size="20">
-    In Sense: <input type="text" name="placem3" size="30">
-   </p>
-   <p>
-    Place Word #4: <input type="text" name="placew4" size="20">
-    In Sense: <input type="text" name="placem4" size="30">
-   </p>
-   <p>
-    Place Word #5: <input type="text" name="placew5" size="20">
-    In Sense: <input type="text" name="placem5" size="30">
-   </p>
-   <p>
-    Place Word #6: <input type="text" name="placew6" size="20">
-    In Sense: <input type="text" name="placem6" size="30">
-   </p>
-   <p>
-    Place Word #7: <input type="text" name="placew7" size="20">
-    In Sense: <input type="text" name="placem7" size="30">
-   </p>
-   <p>
-    Place Word #8: <input type="text" name="placew8" size="20">
-    In Sense: <input type="text" name="placem8" size="30">
-   </p>
-   <p>
-    Place Word #9: <input type="text" name="placew9" size="20">
-    In Sense: <input type="text" name="placem9" size="30">
-   </p>
+    Place Word #$i: <input type="text" value="$ARGS{'placew'.$i}" name="placew$i" size="20">
+    In Sense: <input type="text" value="$ARGS{'placem'.$i}" name="placem$i" size="30">
+   </p>};
+    }
+</%perl>
    </td>
    <td>
     Please read <a href="../help/natlangwords.html">details on the
@@ -162,65 +176,10 @@ otherwise wiki links and Best Guesses listings will be guaranteed to
    </td>
   </tr>
   <tr>
-   <td>
-    <input type="hidden" name="valsi" value="<% $valsi %>">
-    <input type="hidden" name="lang" value="<% $lang %>">
-    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
-    <input type="hidden" name="langtag" value="<% $langtag %>">
-   </td>
+   <td><input name="placeadd" value="Add A Place Keyword" type="submit"></td>
+  </tr>
+  <tr>
    <td><input type="submit"></td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Extra Gloss Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <p>
-    Gloss Word #6: <input type="text" name="glossw6" size="20">
-    In Sense: <input type="text" name="glossm6" size="30">
-   </p>
-   <p>
-    Gloss Word #7: <input type="text" name="glossw7" size="20">
-    In Sense: <input type="text" name="glossm7" size="30">
-   </p>
-   <p>
-    Gloss Word #8: <input type="text" name="glossw8" size="20">
-    In Sense: <input type="text" name="glossm8" size="30">
-   </p>
-   <p>
-    Gloss Word #9: <input type="text" name="glossw9" size="20">
-    In Sense: <input type="text" name="glossm9" size="30">
-   </p>
-   <p>
-    Gloss Word #10: <input type="text" name="glossw10" size="20">
-    In Sense: <input type="text" name="glossm10" size="30">
-   </p>
-   <p>
-    Gloss Word #11: <input type="text" name="glossw11" size="20">
-    In Sense: <input type="text" name="glossm11" size="30">
-   </p>
-   <p>
-    Gloss Word #12: <input type="text" name="glossw12" size="20">
-    In Sense: <input type="text" name="glossm12" size="30">
-   </p>
-   <p>
-    Gloss Word #13: <input type="text" name="glossw13" size="20">
-    In Sense: <input type="text" name="glossm13" size="30">
-   </p>
-   <p>
-    Gloss Word #14: <input type="text" name="glossw14" size="20">
-    In Sense: <input type="text" name="glossm14" size="30">
-   </p>
-   <p>
-    Gloss Word #15: <input type="text" name="glossw15" size="20">
-    In Sense: <input type="text" name="glossm15" size="30">
-   </p>
-   </td>
-   <td>
-    Please don't use these.
-   </td>
   </tr>
  </table>
 </form>
@@ -265,24 +224,40 @@ language "<% pack("C*",@bytes) %>"</font>
 #                  (grep { defined } (@glosskeywords,@placekeywords));
 #  my @words = keys %words;
 
-    my @glosskeywords = ( [ $glossw1, $glossm1 ], [ $glossw2, $glossm2],
-    [ $glossw3, $glossm3 ], [ $glossw4, $glossm4 ], [ $glossw5,
-    $glossm5], [ $glossw6, $glossm6 ], [ $glossw7, $glossm7 ], [
-    $glossw8, $glossm8], [ $glossw9, $glossm9 ], [ $glossw10,
-    $glossm10], [ $glossw11, $glossm11 ], [ $glossw12, $glossm12 ], [
-    $glossw13, $glossm13 ], [ $glossw14, $glossm14 ], [ $glossw15,
-    $glossm15 ] );
+    my @glosskeywords;
+    for(my $i=1; $i<=$glossmax; $i++) #>
+    {
+	if( $ARGS{"glossw".$i} )
+	{
+	    push @glosskeywords, [ $ARGS{"glossw".$i}, $ARGS{"glossm".$i} ];
+	}
+    }
+    #print "<pre>".Dumper(\@glosskeywords)."\n</pre>";
 
-    my @placekeywords = ( [ $placew1, $placem1 ], [ $placew2, $placem2],
-    [ $placew3, $placem3 ], [ $placew4, $placem4 ], [ $placew5,
-    $placem5], [ $placew6, $placem6 ], [ $placew7, $placem7 ], [
-    $placew8, $placem8], [ $placew9, $placem9 ] );
+    my @placekeywords;
+    for(my $i=1; $i<=$placemax; $i++) #>
+    {
+	if( $ARGS{"placew".$i} )
+	{
+	    push @placekeywords, [ $ARGS{"placew".$i}, $ARGS{"placem".$i} ];
+	}
+    }
+    #print "<pre>".Dumper(\@placekeywords)."\n</pre>";
 
-    my @words = ( $placew1, $placew2, $placew3, $placew4, $placew5,
-    $placew6, $placew7, $placew8, $placew9, $glossw1, $glossw2,
-    $glossw3, $glossw4, $glossw5, $glossw6, $glossw7, $glossw8,
-    $glossw9, $glossw10, $glossw11, $glossw12, $glossw13, $glossw14,
-    $glossw15 );
+    my @words;
+    # from 1 to the larger of the two
+    for(my $i=1; $i <= ( $placemax > $glossmax ? $placemax : $glossmax); $i++) #>
+    {
+	if( $ARGS{"placew".$i} )
+	{
+	    push @words, $ARGS{"placew".$i};
+	}
+	if( $ARGS{"glossw".$i} )
+	{
+	    push @words, $ARGS{"glossw".$i};
+	}
+    }
+    #print "<pre>".Dumper(\@words)."\n</pre>";
 
   my @missingwords;
 
@@ -293,7 +268,7 @@ language "<% pack("C*",@bytes) %>"</font>
              join(',',('?') x (scalar @words)));
 
     my $natlangwordsquery = $dbh->prepare($querystr);
-    $natlangwordsquery->execute(@words,$lang);
+    $natlangwordsquery->execute(@words,$langid);
 
     my %releventnatlangwords;
     for(my $i=0; $i<=$natlangwordsquery->rows; $i++) {
@@ -322,52 +297,26 @@ language words you provided. Hopefully you didn't make any typos! Here
 we go...</p>
 
 <%perl>
-# Send e-mail to the valsi creator, and all definition creators for that valsi
-my @email;
-push @email, $dbh->selectrow_array("SELECT u.email FROM
-        valsi v, users u WHERE v.userid = u.userid AND
-        v.valsiid=$valsi");
-
-my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
-
-$emailquery->execute($valsi, $lang);
-while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+# If the valsi hasn't been created yet
+if( ! defined( $valsiid ))
 {
-    push @email, $emailrow->{'email'};
+</%perl>
+    <p>Ok, I'm adding the word to the database.</p>
+
+% $dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)", {}, $valsiword, $type, $session{'userid'}, time()) or $dbh->errstr;
+
+<%perl>
+
+# Get the valsiid of the word we just created
+    $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $valsiword);
 }
 
-@email = keys %{{ map { $_ => 1 } @email }};
-
-my $email = join( ' ', @email );
-
-#print "e: $email, $valsi.\n";
-
-my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
-        valsiid=$valsi");
-
-#my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
-#        exampleid = ?", undef, $example);
-
-utils::sendemail( $email, "Definition Added At Word $word", "
-
-In jbovlaste, the user $session{'username'} has added the following
-definition to $word:
-
-    $definitiontxt
-
-(not all definition information shown above)
-
-You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
-" );
-
-
   my @seqvalueresult =
-    $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')");
+    $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')") or die $dbh->errstr;
 
     my @curDefNum = $dbh->selectrow_array("SELECT max(definitionNum)
-    FROM definitions WHERE langid=$lang AND valsiid=$valsi"
-    );
+    FROM definitions WHERE langid=$langid AND valsiid=$valsiid"
+    ) or die $dbh->errstr;
 
     my $nextDefNum = $curDefNum[0] + 1;
 
@@ -375,8 +324,8 @@ You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
            "(definitionid, langid, valsiid, definitionNum, definition,
 	   selmaho, notes, userid, time) ".
            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
-	   $lang, $valsi, $nextDefNum, $definitiontxt, $selmaho,
-	   $notes, $session{'userid'}, time());
+	   $langid, $valsiid, $nextDefNum, $definitiontxt, $selmaho,
+	   $notes, $session{'userid'}, time()) or die $dbh->errstr;
 
   for(my $i=0; $i<=$#glosskeywords; $i++) {
    next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
@@ -386,7 +335,8 @@ You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
             'VALUES (?, 0, (SELECT wordid FROM natlangwords '.
 	    'WHERE langid=?::integer AND word=?::text AND '.
             '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
-            undef, $seqvalueresult[0], $lang, $tmp[0], $meaning, $meaning );
+            undef, $seqvalueresult[0], $langid, $tmp[0], $meaning,
+	    $meaning ) or die $dbh->errstr;
   }
 
   for(my $i=0; $i<=$#placekeywords; $i++) {
@@ -397,26 +347,65 @@ You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
             'VALUES (?, ?, (SELECT wordid FROM natlangwords '.
             'WHERE langid=?::integer AND word=?::text AND '.
             '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
-            undef, $seqvalueresult[0], $i+1, $lang, $tmp[0], $meaning, $meaning );
+            undef, $seqvalueresult[0], $i+1, $langid, $tmp[0],
+	    $meaning, $meaning ) or die $dbh->errstr;
   }
 
   $dbh->do("DELETE FROM definitionvotes
     WHERE valsiid=? and langid=? and userid=?",
     undef,
-    $valsi, $lang, $session{'userid'});
+    $valsiid, $langid, $session{'userid'}) or die $dbh->errstr;
 
   $dbh->do("INSERT INTO definitionvotes
     (valsiid, langid, definitionid, value, userid, time)
     VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
     ?)",
     undef,
-    $valsi, $lang, $seqvalueresult[0], $session{'userid'}, $session{'userid'}, time());
+    $valsiid, $langid, $seqvalueresult[0], $session{'userid'},
+    $session{'userid'}, time()) or die $dbh->errstr;
 
   $dbh->commit or die $dbh->errstr;
 
+# Send e-mail to the valsi creator, and all definition creators for that valsi
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        valsi v, users u WHERE v.userid = u.userid AND
+        v.valsiid=$valsiid");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+$emailquery->execute($valsiid, $langid);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
+
+#print "e: $email, $valsiid.\n";
+
+#my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
+#        exampleid = ?", undef, $example);
+
+utils::sendemail( $email, "Definition Added At Word $valsiword", "
+
+In jbovlaste, the user $session{'username'} has added the following
+definition to $valsiword:
+
+    $definitiontxt
+
+(not all definition information shown above)
+
+You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
+" );
+
+
   # Update valsibestguesses
   my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-  system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang $valsi $session{'userid'} $seqvalueresult[0] \&" );
+  system( "$jbovlastedir/bin/updatevbg $jbovlastedir $langid $valsiid $session{'userid'} $seqvalueresult[0] \&" );
 </%perl>
 
 <p>If you're seeing this, it probably worked. Please go to
@@ -485,60 +474,18 @@ Adding definition: <% $titlestr %>
 </%init>
 
 <%args>
-$valsi => undef
-$lang => undef
+$glossmax => 3
+$glossadd => undef
+$placemax => 3
+$placeadd => undef
+$valsiword => undef
+$type => undef
+$valsiid => undef
+$langid => undef
 $definitiontxt => undef
 $notes => undef
 $valsitxt => undef
 $langtag => undef
 $selmaho => undef
 $dollarsok => undef
-$placew1 => undef 
-$placew2 => undef 
-$placew3 => undef 
-$placew4 => undef 
-$placew5 => undef 
-$placew6 => undef 
-$placew7 => undef 
-$placew8 => undef 
-$placew9 => undef 
-$glossw1 => undef 
-$glossw2 => undef 
-$glossw3 => undef 
-$glossw4 => undef 
-$glossw5 => undef 
-$glossw6 => undef 
-$glossw7 => undef 
-$glossw8 => undef 
-$glossw9 => undef 
-$glossw10 => undef 
-$glossw11 => undef 
-$glossw12 => undef 
-$glossw13 => undef 
-$glossw14 => undef 
-$glossw15 => undef 
-$placem1 => undef 
-$placem2 => undef 
-$placem3 => undef 
-$placem4 => undef 
-$placem5 => undef 
-$placem6 => undef 
-$placem7 => undef 
-$placem8 => undef 
-$placem9 => undef 
-$glossm1 => undef 
-$glossm2 => undef 
-$glossm3 => undef 
-$glossm4 => undef 
-$glossm5 => undef 
-$glossm6 => undef 
-$glossm7 => undef 
-$glossm8 => undef 
-$glossm9 => undef 
-$glossm10 => undef 
-$glossm11 => undef 
-$glossm12 => undef 
-$glossm13 => undef 
-$glossm14 => undef 
-$glossm15 => undef 
 </%args>
