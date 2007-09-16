@@ -153,7 +153,8 @@ what happened leading up to this. Just in case.
     };
 
  my $lang = "en";
- our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste","jbovlaste","makfa");
+ our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste",
+ "jbovlaste", "makfa", { RaiseError => 1 } );
 
  my $cookie = $r->headers_in->{'Cookie'};
  my @cookies = split(/\s*;\s*/, $cookie);

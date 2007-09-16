@@ -1,57 +1,84 @@
-% unless(defined($session{'username'})) {
-<font size="+3">Voting Error!</font><hr />
-<p>Sorry, you've got to be logged in!</p>
-%    return;
-% }
-
-% unless(defined($nlw) && defined($definitionid) && defined($place) )
-% {
-<font size="+3">Voting Error!</font><hr />
-<p>Sorry, you've got to tell me what you want to vote for!</p>
-%    return;
-% }
-
-<font size="+3">Voting...</font>
-<hr />
-
-<p>Any previous vote will be silently removed.</p>
-
-<%perl>
-    # We're deleting all entries for the current wordid.  Since wordid
-    # is constrained to be a particular word with a particular meaning
-    # in a particular language, this deletes all previous votes by the
-    # users.
-    $dbh->do("DELETE FROM natlangwordvotes
-    WHERE natlangwordid=? AND userid=?",
-    undef,
-    $nlw, $session{'userid'});
-
-    $dbh->do("INSERT INTO natlangwordvotes
-	(natlangwordid, definitionid, place, value, userid, time)
-	VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?, ?)",
-	undef,
-	$nlw, $definitionid, $place, $session{'userid'}, $session{'userid'}, time());
-
-    # Update natlangwordbestguesses
-    my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-    system( "$jbovlastedir/bin/updatenlbg $jbovlastedir $nlw $place $session{'userid'} $definitionid \&");
-</%perl>
-
-<p>Your vote should've be recorded.</p>
-
-<p>You may go back to <a href="<% $r->headers_in->{'Referer'} %>">where
-you were</a>.</p>
+<%args>
+$nlw => undef
+$definitionid => undef
+$place => undef
+$stfu => undef
+$word => undef
+$meaning => undef
+</%args>
 
 <%method title>
 Vote Recorded (Probably)
 </%method>
 
 <%init>
- our(%session,$dbh);
+our(%session,$dbh);
 </%init>
 
-<%args>
-$nlw => undef
-$definitionid => undef
-$place => undef
-</%args>
+<%perl>
+unless(defined($session{'username'})) {
+    </%perl>
+    <font size="+3">Voting Error!</font><hr />
+    <p>Sorry, you've got to be logged in!</p>
+    <%perl>
+    return;
+}
+</%perl>
+
+<%perl>
+unless(defined($nlw) && defined($definitionid) && defined($place) )
+{
+    </%perl>
+    <font size="+3">Voting Error!</font><hr />
+    <p>Sorry, you've got to tell me what you want to vote for!</p>
+    <%perl>
+    return;
+}
+
+if( ! defined( $stfu ) )
+{
+    </%perl>
+
+    <font size="+3">Voting...</font>
+    <hr />
+
+    <p>Any previous vote will be silently removed.</p>
+
+    <%perl>
+} else {
+    </%perl>
+    <p>Recording your vote on word "<% $word %>" in sense "<% $meaning %>".</p>
+    <%perl>
+}
+
+# We're deleting all entries for the current wordid.  Since wordid
+# is constrained to be a particular word with a particular meaning
+# in a particular language, this deletes all previous votes by the
+# users.
+$dbh->do("DELETE FROM natlangwordvotes
+    WHERE natlangwordid=? AND userid=?",
+    undef,
+    $nlw, $session{'userid'});
+
+$dbh->do("INSERT INTO natlangwordvotes
+    (natlangwordid, definitionid, place, value, userid, time)
+    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?, ?)",
+    undef,
+    $nlw, $definitionid, $place, $session{'userid'}, $session{'userid'}, time());
+
+# Update natlangwordbestguesses
+my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+system( "$jbovlastedir/bin/updatenlbg $jbovlastedir $nlw $place $session{'userid'} $definitionid \&");
+</%perl>
+
+<p>Your vote should've be recorded.</p>
+
+<%perl>
+if( ! defined( $stfu ) )
+{
+    </%perl>
+    <p>You may go back to <a href="<% $r->headers_in->{'Referer'} %>">where
+    you were</a>.</p>
+    <%perl>
+}
+</%perl>

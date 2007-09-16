@@ -1,53 +1,101 @@
-<%perl>
-my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
-where definitionid=?", undef, $definition);
+<%args>
+$check => undef
+$glossmax => undef
+$placemax => undef
+$langid => undef
+$definitiontxt => undef
+$definition => undef
+$notes => undef
+$valsitxt => undef
+$langtag => undef
+$selmaho => undef
+</%args>
 
-my $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
-(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsi);
-</%perl>
-
-% unless(defined($session{'username'})) {
-You ought not have been able to view this page, as you aren't logged in!
-%    return;
-% }
-
-% unless(defined($definition)) {
-Not enough info to know what to do.
-%   return;
-% }
+<%shared>
+our $titlestr;
+our $notready = 0;
+</%shared>
 
 <%method title>
-Editing Definition
+Editing Definition: <% $titlestr %>
 </%method>
 
-%   unless(defined($definitiontxt)) {
+<%init>
+our($dbh,%session);
+use utils;
+use Unicode::String;
+use String::Approx 'amatch';
+$r->content_type("text/html; charset=utf-8");
+my $editbitsret;
+my $valsiid;
+my $type;
+</%init>
 
 <%perl>
+#print "<pre>".Dumper(\%ARGS)."</pre>";
 
- my $defquery = $dbh->prepare("SELECT * FROM convenientdefinitions WHERE definitionid=?");
+unless(defined($session{'username'})) {
+    </%perl>
+    You ought not have been able to view this page, as you aren't logged in!
+    <%perl>
+    return;
+}
 
- $defquery->execute($definition);
- my $defrow = $defquery->fetchrow_hashref;
- if(defined($defquery->fetchrow_hashref)) {
-  $m->out("big nasty fatal error in editdef.html");
-  return;
- }
+unless(defined($definition)) {
+    </%perl>
+    Not enough info to know what to do.
+    <%perl>
+    return;
+}
 
- my $glossesref =
-   $dbh->selectall_arrayref("SELECT * FROM keywordmapping g, natlangwords nlw
-   WHERE g.place = 0 AND g.natlangwordid=nlw.wordid AND g.definitionid=?
-   ORDER BY nlw.word, nlw.meaning", undef, $defrow->{'definitionid'});
+# Don't do any prep if we're just checking the deinition
+if( ! defined( $check ) )
+{
+    $valsiid = $dbh->selectrow_array("SELECT valsiid FROM definitions
+	    where definitionid=?", undef, $definition);
 
- my @glosswords = @{ $glossesref };
+    $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+	    (SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsiid);
 
- my $placesref =
-   $dbh->selectall_hashref("SELECT * FROM keywordmapping p, natlangwords nlw
-   WHERE p.place > 0 AND p.natlangwordid=nlw.wordid AND p.definitionid=?
-   ORDER BY p.place", "place",
-   undef, $defrow->{'definitionid'});
+    my $defquery = $dbh->prepare("SELECT * FROM convenientdefinitions WHERE definitionid=?");
 
-# my @places = @{ $placesref };
-</%perl>
+    $defquery->execute($definition);
+    my $defrow = $defquery->fetchrow_hashref;
+    if(defined($defquery->fetchrow_hashref)) {
+	$m->out("big nasty fatal error in editdef.html");
+	return;
+    }
+
+    my $glossesref =
+	$dbh->selectall_arrayref("SELECT nlw.word, nlw.meaning FROM keywordmapping g, natlangwords nlw
+		WHERE g.place = 0 AND g.natlangwordid=nlw.wordid AND g.definitionid=?
+		ORDER BY nlw.word, nlw.meaning", undef, $defrow->{'definitionid'});
+
+    my @glosswords = @{ $glossesref };
+    my %glosses;
+    for(my $i=0; $i<(scalar @glosswords); $i++) {
+	$glosses{ 'glossw'.($i+1) } = $glosswords[$i]->[0];
+	$glosses{ 'glossm'.($i+1) } = $glosswords[$i]->[1];
+    }
+
+    my $placesref =
+	$dbh->selectall_arrayref("SELECT nlw.word, nlw.meaning, p.place FROM keywordmapping p, natlangwords nlw
+		WHERE p.place > 0 AND p.natlangwordid=nlw.wordid AND p.definitionid=?
+		ORDER BY p.place", 
+		undef, $defrow->{'definitionid'});
+
+    my @placewords = @{ $placesref };
+    my %places;
+    foreach my $place (@placewords)
+    {
+	$places{'placew'.$place->[2]} = $place->[0];
+	$places{'placem'.$place->[2]} = $place->[1];
+    }
+    $glossmax = 1 + (scalar @glosswords);
+    $placemax = 1 + (scalar @placewords);
+#print "<pre>".Dumper(\%glosses)."</pre>";
+#print "<pre>".Dumper(\%places)."</pre>";
+    </%perl>
 
 <font size="+3">
  Editing <% $defrow->{'langrealname'} %> definition of "<% $defrow->{'word'} %>"
@@ -56,499 +104,166 @@ Editing Definition
 Internal definition ID: <code><% $defrow->{'definitionid'} %></code>
 <hr />
 
-<form method="post" action="editdef.html">
- <table>
-  <tr>
-   <td>Definition</td>
-   <td>
-% $defrow->{'definition'} =~ s/(")/sprintf("&#%i;",ord($1))/ge;
-    <input type="text" name="definitiontxt" value="<% $defrow->{'definition'} %>" size="80">
-   </td>
-   <td>
-	For information on how to format the definition, see <a
-	href="../help/definitions.html">the definition help file</a>.
-   </td>
-  </tr>
-  <tr>
-% if( $type eq "cmavo" || $type eq "cmavo cluster" ||
-% $type eq "experimental cmavo" )
-% {
-  <tr>
-   <td>selma'o</td>
-   <td><input type="text" name="selmaho" size="15" value="<% $defrow->{'selmaho'} %>"></td>
-    <td>
-	Don't enter a selma'o unless you're sure you understand the
-	implications, please.  Ask people to comment on the word and
-	suggest what might work.
-    </td>
-  </tr>
-% }
-   <td>Notes</td>
-   <td>
-    <textarea rows="4" cols="60" name="notes"><%$defrow->{'notes'}%></textarea>
-   </td>
-   <td>Yes, you're being given multiple lines. Try not to use them.</td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Gloss Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <p>
-    Gloss Word #1: <input type="text" name="glossw1" value="<% $glosswords[0]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm1" value="<% $glosswords[0]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #2: <input type="text" name="glossw2" value="<% $glosswords[1]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm2" value="<% $glosswords[1]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #3: <input type="text" name="glossw3" value="<% $glosswords[2]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm3" value="<% $glosswords[2]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #4: <input type="text" name="glossw4" value="<% $glosswords[3]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm4" value="<% $glosswords[3]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #5: <input type="text" name="glossw5" value="<% $glosswords[4]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm5" value="<% $glosswords[4]->[6] %>" size="30">
-   </p>
-   </td>
-   <td>
-    Please read <a href="../help/natlangwords.html">details on the
-    second field</a>. You can look at a <a
-    href="../natlang/listing.html" target="_blank">natlang listing in a
-    new window</a> to see what words already exist.
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Place Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <p>
-    Place Word #1: <input type="text" name="placew1" value="<% ${$placesref}{1}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem1" value="<% ${$placesref}{1}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #2: <input type="text" name="placew2" value="<% ${$placesref}{2}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem2" value="<% ${$placesref}{2}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #3: <input type="text" name="placew3" value="<% ${$placesref}{3}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem3" value="<% ${$placesref}{3}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #4: <input type="text" name="placew4" value="<% ${$placesref}{4}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem4" value="<% ${$placesref}{4}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #5: <input type="text" name="placew5" value="<% ${$placesref}{5}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem5" value="<% ${$placesref}{5}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #6: <input type="text" name="placew6" value="<% ${$placesref}{6}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem6" value="<% ${$placesref}{6}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #7: <input type="text" name="placew7" value="<% ${$placesref}{7}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem7" value="<% ${$placesref}{7}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #8: <input type="text" name="placew8" value="<% ${$placesref}{8}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem8" value="<% ${$placesref}{8}->{'meaning'} %>" size="30">
-   </p>
-   <p>
-    Place Word #9: <input type="text" name="placew9" value="<% ${$placesref}{9}->{'word'} %>" size="20">
-    In Sense: <input type="text" name="placem9" value="<% ${$placesref}{9}->{'meaning'} %>" size="30">
-   </p>
-   </td>
-   <td>
-    Please read <a href="../help/natlangwords.html">details on the
-    second field</a>. You can look at a <a
-    href="../natlang/listing.html" target="_blank">natlang listing in a
-    new window</a> to see what words already exist.  Yes, you can now
-    skip places.  Try not to, though; if less important places are at
-    the front of your valsi, it's probably badly ordered.
-   </td>
-  </tr>
-  <tr>
-   <td><input type="hidden" name="definition" value="<% $defrow->{'definitionid'} %>"></td>
-   <td><input type="submit"></td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Extra Gloss Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <p>
-    Gloss Word #6: <input type="text" name="glossw6" value="<% $glosswords[5]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm6" value="<% $glosswords[5]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #7: <input type="text" name="glossw7" value="<% $glosswords[6]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm7" value="<% $glosswords[6]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #8: <input type="text" name="glossw8" value="<% $glosswords[7]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm8" value="<% $glosswords[7]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #9: <input type="text" name="glossw9" value="<% $glosswords[8]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm9" value="<% $glosswords[8]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #10: <input type="text" name="glossw10" value="<% $glosswords[9]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm10" value="<% $glosswords[9]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #11: <input type="text" name="glossw11" value="<% $glosswords[10]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm11" value="<% $glosswords[10]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #12: <input type="text" name="glossw12" value="<% $glosswords[11]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm12" value="<% $glosswords[11]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #13: <input type="text" name="glossw13" value="<% $glosswords[12]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm13" value="<% $glosswords[12]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #14: <input type="text" name="glossw14" value="<% $glosswords[13]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm14" value="<% $glosswords[13]->[6] %>" size="30">
-   </p>
-   <p>
-    Gloss Word #15: <input type="text" name="glossw15" value="<% $glosswords[14]->[5] %>" size="20">
-    In Sense: <input type="text" name="glossm15" value="<% $glosswords[14]->[6] %>" size="30">
-   </p>
-   </td>
-   <td>
-    Please don't use these.
-   </td>
-  </tr>
- </table>
-</form>
-
-<p>Please note that when you submit this, the values will be checked
-   for consistency just as much as possible. For instance, you cannot
-   provide a keyword for place 3 unless the contents of the definition
-   lead me to believe that your definition includes a third
-   place. (I'll generally be looking for "x3" in that case.)</p>
+<%doc>
+editbits does all the actual work, and returns 0 if more work is
+needed, 1 if we're readt to save, and undef on error.
+</%doc>
 
 <%perl>
-} elsif (
-defined( $definitiontxt )
-&& ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 )
-    || ( ( scalar( $definitiontxt =~ tr/$/$/ ) < 2 )  && $type eq
-       "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo"
-       || $type eq "cmene") ) ) {
-</%perl>
-
-<font size="+3">Processing definition edit...</font>
-<hr />
-
-<%perl>
- # process what we were given, checking for validity and such.
- $dbh->begin_work;
-
-# my @glosskeywords = &utils::processkeywordlisting($glosswords);
-# my @placekeywords = &utils::processkeywordlisting($placekeywords);
-#
-# my %words = map { $_->[0] => 1 } (grep { defined }
-#                 (@glosskeywords,@placekeywords));
-# my @words = keys %words;
-
-    my @glosskeywords = ( [ $glossw1, $glossm1 ], [ $glossw2, $glossm2],
-    [ $glossw3, $glossm3 ], [ $glossw4, $glossm4 ], [ $glossw5,
-    $glossm5], [ $glossw6, $glossm6 ], [ $glossw7, $glossm7 ], [
-    $glossw8, $glossm8], [ $glossw9, $glossm9 ], [ $glossw10,
-    $glossm10], [ $glossw11, $glossm11 ], [ $glossw12, $glossm12 ], [
-    $glossw13, $glossm13 ], [ $glossw14, $glossm14 ], [ $glossw15,
-    $glossm15 ] );
-
-    my @placekeywords = ( [ $placew1, $placem1 ], [ $placew2, $placem2],
-    [ $placew3, $placem3 ], [ $placew4, $placem4 ], [ $placew5,
-    $placem5], [ $placew6, $placem6 ], [ $placew7, $placem7 ], [
-    $placew8, $placem8], [ $placew9, $placem9 ] );
-
-    my @words = ( $placew1, $placew2, $placew3, $placew4, $placew5,
-    $placew6, $placew7, $placew8, $placew9, $glossw1, $glossw2,
-    $glossw3, $glossw4, $glossw5, $glossw6, $glossw7, $glossw8,
-    $glossw9, $glossw10, $glossw11, $glossw12, $glossw13, $glossw14,
-    $glossw15 );
-
-  my @missingwords;
-
-  if(scalar @words) {
-
-    my $querystr =
-   sprintf('SELECT * FROM natlangwords WHERE word IN (%s) '.
-           'AND langid=(SELECT langid FROM definitions WHERE definitionid=?)',
-           join(',',('?') x (scalar @words)));
-
-    my $natlangwordsquery = $dbh->prepare($querystr);
-    $natlangwordsquery->execute(@words,$definition);
-
-    my %releventnatlangwords;
-    for(my $i=0; $i<=$natlangwordsquery->rows; $i++) {
-      my $tmp = $natlangwordsquery->fetchrow_hashref;
-      next unless defined $tmp;
-      $releventnatlangwords{$tmp->{'word'}}->{$tmp->{'meaning'}} = $tmp;
-    }
-
-    foreach my $natlangword (@glosskeywords,@placekeywords) {
-      next unless (defined $natlangword && $natlangword->[0]);
-
-      unless(
-             defined( $releventnatlangwords{ $natlangword->[0] }->{ $natlangword->[1] } )
-            )
-      {
-        push @missingwords, $natlangword;
-      }
-    }
-  }
-</%perl>
-%     if(0==scalar @missingwords) {
-
-<p>I'm sure you'll be glad to know that we identified all of the natural
-language words you provided. Hopefully you didn't make any typos! Here
-we go...</p>
-
-%#<pre><% Dumper(\@glosskeywords) %></pre>
-%#<pre><% Dumper(\@placekeywords) %></pre>
-
-<%perl>
-my $lang = $dbh->selectrow_array("SELECT langid FROM definitions
-WHERE definitionid = ?", undef, $definition);
-
-# Send e-mail to the valsi creator, and all definition creators for that valsi
-my @email;
-push @email, $dbh->selectrow_array("SELECT u.email FROM
-        valsi v, users u WHERE v.userid = u.userid AND
-        v.valsiid=$valsi");
-
-my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
-
-$emailquery->execute($valsi, $lang);
-while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
-{
-    push @email, $emailrow->{'email'};
+$editbitsret = $m->comp( 'editbits', %ARGS, %glosses, %places,
+	glossmax => $glossmax, placemax => $placemax,
+	actionPage => 'editdef.html' );
+# If we're just checking the definition, do that
+} else {
+    $editbitsret = $m->comp( 'editbits', %ARGS, 
+	    actionPage => 'editdef.html' );
 }
 
-@email = keys %{{ map { $_ => 1 } @email }};
+if( $editbitsret )
+{
+    my $oldcontent = $dbh->selectrow_array("SELECT definition FROM definitions
+	WHERE definitionid = ?", undef, $definition);
 
-my $email = join( ' ', @email );
+    # Deal with the natural language words.
+    my @nlwrets = $m->comp( 'nlwbits', %ARGS );
 
-#print "e: $email, $valsi.\n";
+    #print "<pre>".Dumper(\@nlwrets)."</pre>";
 
-my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
-        valsiid=$valsi");
+    my @glosskeywords = @{ $nlwrets[0] };
+    my @placekeywords = @{ $nlwrets[1] };
 
-my $oldcontent = $dbh->selectrow_array("SELECT definition FROM definitions
-WHERE definitionid = ?", undef, $definition);
+    #print "<pre>".Dumper(\@glosskeywords)."</pre>";
+    #print "<pre>".Dumper(\@placekeywords)."</pre>";
 
-utils::sendemail( $email, "Definition Edited At Word $word", "
+    my $lang = $dbh->selectrow_array("SELECT langid FROM definitions
+	WHERE definitionid = ?", undef, $definition);
+
+
+    $dbh->do("UPDATE definitions SET definition=?, notes=?, time=?, selmaho=?
+	WHERE definitionid=?", undef,
+	$definitiontxt, $notes, time(), $selmaho, $definition);
+
+    $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", { },
+	$definition);
+
+    for(my $i=0; $i<=$#glosskeywords; $i++)
+    {
+	next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
+	my @tmp = @{ $glosskeywords[$i] };
+	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	$dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid) 
+	    VALUES (?, 0, (SELECT wordid FROM natlangwords
+		    WHERE langid=(SELECT langid FROM definitions
+			WHERE definitionid=?::integer) AND word=?::text AND
+		    (meaning=?::text OR (?::text IS NULL AND meaning IS NULL)) ))",
+	    undef, $definition, $definition, $tmp[0], $meaning, $meaning );
+    }
+
+    for(my $i=0; $i<=$#placekeywords; $i++) {
+	next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
+	my @tmp = @{ $placekeywords[$i] };
+	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	$dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid)
+	    VALUES (?, ?, (SELECT wordid FROM natlangwords
+		    WHERE langid=(SELECT langid FROM definitions
+			WHERE definitionid=?::integer) AND word=?::text AND
+		    (meaning=?::text OR (?::text IS NULL AND meaning IS NULL)) ))",
+	    undef, $definition, $i+1, $definition, $tmp[0], $meaning, $meaning );
+    }
+
+    my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM definitions
+	where definitionid=?", undef, $definition);
+
+    $dbh->do("DELETE FROM definitionvotes
+	WHERE valsiid=? and langid=? and userid=?",
+	undef,
+	$valsiid, $lang, $session{'userid'});
+
+    $dbh->do("INSERT INTO definitionvotes
+	(valsiid, langid, definitionid, value, userid, time)
+	VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
+	    ?)",
+	undef,
+	$valsiid, $lang, $definition, $session{'userid'}, $session{'userid'}, time());
+
+    # Deal with the voting
+    $m->comp( 'votebits', %ARGS, definition => $definition );
+
+    $dbh->commit;
+
+    my $errstr = $dbh->errstr;
+
+    if( ! $errstr )
+    {
+	# Update valsibestguesses
+	my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+	system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang
+	    $valsiid $session{'userid'} $definition \&" );
+    }
+
+    my @result = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?",{},$definition);
+
+    # Send e-mail to the valsi creator, and all definition creators for that valsi
+    my @email;
+    push @email, $dbh->selectrow_array("SELECT u.email FROM
+	valsi v, users u WHERE v.userid = u.userid AND
+	v.valsiid=$valsiid");
+
+    my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+    $emailquery->execute($valsiid, $lang);
+    while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+    {
+	push @email, $emailrow->{'email'};
+    }
+
+    @email = keys %{{ map { $_ => 1 } @email }};
+
+    my $email = join( ' ', @email );
+
+    #print "e: $email, $valsiid.\n";
+
+    my $valsiword = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
+	valsiid=$valsiid");
+
+    utils::sendemail( $email, "Definition Edited At Word $valsiword", "
 
 In jbovlaste, the user $session{'username'} has edited the following
-definition at $word:
+definition at $valsiword:
 
 Old Content:
 
-    $oldcontent
+	$oldcontent
 
 New Content:
 
-    $definitiontxt
+	$definitiontxt
 
 (not all definition information shown above)
 
-You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
+You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
 " );
 
 
- $dbh->do("UPDATE definitions SET definition=?, notes=?, time=?, selmaho=?
-          WHERE definitionid=?", undef,
-          $definitiontxt, $notes, time(), $selmaho, $definition);
+    if(!defined($errstr)) {
+	</%perl>
 
- $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", { },
-          $definition);
+	<p>If you're seeing this, it probably worked. Please go to
+	<a href="<% $result[0] %>">the definition you edited</a> and check on things.
+	<%perl>
+    } else {
+	</%perl>
 
- for(my $i=0; $i<=$#glosskeywords; $i++)
- {
-   next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
-   my @tmp = @{ $glosskeywords[$i] };
-   my $meaning = $tmp[1] ? $tmp[1] : undef;
-   $dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid) 
-            VALUES (?, 0, (SELECT wordid FROM natlangwords
-            WHERE langid=(SELECT langid FROM definitions
-            WHERE definitionid=?::integer) AND word=?::text AND
-            (meaning=?::text OR (?::text IS NULL AND meaning IS NULL)) ))",
-            undef, $definition, $definition, $tmp[0], $meaning, $meaning );
- }
+	<p>There might've been an error:</p>
 
- for(my $i=0; $i<=$#placekeywords; $i++) {
-   next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
-   my @tmp = @{ $placekeywords[$i] };
-   my $meaning = $tmp[1] ? $tmp[1] : undef;
-   $dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid)
-            VALUES (?, ?, (SELECT wordid FROM natlangwords
-            WHERE langid=(SELECT langid FROM definitions
-            WHERE definitionid=?::integer) AND word=?::text AND
-            (meaning=?::text OR (?::text IS NULL AND meaning IS NULL)) ))",
-            undef, $definition, $i+1, $definition, $tmp[0], $meaning, $meaning );
- }
+	<pre>"<% $errstr %>"</pre>
 
-   my $valsi = $dbh->selectrow_array("SELECT valsiid FROM definitions
-   where definitionid=?", undef, $definition);
+	<p>If that looks error-like, please let an admin know. Otherwise, you
+	can go back to <a href="<% $result[0] %>">where you were</a> and check
+	on things.</p>
 
-  $dbh->do("DELETE FROM definitionvotes
-    WHERE valsiid=? and langid=? and userid=?",
-    undef,
-    $valsi, $lang, $session{'userid'});
-
-  $dbh->do("INSERT INTO definitionvotes
-    (valsiid, langid, definitionid, value, userid, time)
-    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
-    ?)",
-    undef,
-    $valsi, $lang, $definition, $session{'userid'}, $session{'userid'}, time());
-
- $dbh->commit;
-
- my $errstr = $dbh->errstr;
-
- if( ! $errstr )
- {
-    # Update valsibestguesses
-    my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-    system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang $valsi $session{'userid'} $definition \&" );
- }
-
- my @result = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?",{},$definition);
+	<%perl>
+    }
+}
 </%perl>
-
-%        if(!defined($errstr)) {
-
-<p>If you're seeing this, it probably worked. Please go to
-<a href="<% $result[0] %>">the definition you edited</a> and check on things.
-Also <strong>make sure to click on and vote for all the natural language
-words</strong>.  A vote for you on the definition you just added has already
-been recorded.</p>
-
-%        } else {
-
-<p>There might've been an error:</p>
-
-<pre>"<% $errstr %>"</pre>
-
-<p>If that looks error-like, please let an admin know. Otherwise, you
-can go back to <a href="<% $result[0] %>">where you were</a> and check
-on things.</p>
-
-%        }
-
-%     } else {
-
-<p>Dreadfully sorry, I'm afraid I don't know some of the words you tried
-to use as keywords:</p>
-
-<%perl>
- my @langresult = $dbh->selectrow_array("SELECT tag FROM convenientdefinitions WHERE definitionid=?",{},$definition);
-</%perl>
-
-<p><strong>IMPORTANT:</strong> Your definition has <em>not</em> been
-saved.  Once you have entered these keywords you'll have to go back and
-hit submit again (assuming the edit page is still in your cache;
-otherwise you will have to re-enter the definition).</p>
-
-<ul>
-% foreach my $word (@missingwords) {
-  <li><% &utils::generatemissingwordlink($langresult[0], @{ $word }) %></li>
-% }
-</ul>
-
-%        $dbh->rollback;
-%     }
-
-% # This is the case where there are no dollar signs and we want
-% # to disallow the action.
-% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2  && !( $type eq "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo" || $type eq "cmene") ) {
-
-    <p>
-	I see that there are less than two dollar signs in your
-	definition.  This implies that your word has no place
-	structure. This is only okay for cmavo and cmene. However, it
-        appears that your word is of type: <strong><% $type %></strong>.
-	Please <a
-	href="../help/definitions.html">read the instructions</a>.
-    </p>
-% }
-
-<%init>
- our($dbh,%session);
-</%init>
-
-<%args>
-$definition => undef
-$definitiontxt => undef
-$notes => undef
-$selmaho => undef
-$dollarsok => undef
-$placew1 => undef 
-$placew2 => undef 
-$placew3 => undef 
-$placew4 => undef 
-$placew5 => undef 
-$placew6 => undef 
-$placew7 => undef 
-$placew8 => undef 
-$placew9 => undef 
-$glossw1 => undef 
-$glossw2 => undef 
-$glossw3 => undef 
-$glossw4 => undef 
-$glossw5 => undef 
-$glossw6 => undef 
-$glossw7 => undef 
-$glossw8 => undef 
-$glossw9 => undef 
-$glossw10 => undef 
-$glossw11 => undef 
-$glossw12 => undef 
-$glossw13 => undef 
-$glossw14 => undef 
-$glossw15 => undef 
-$placem1 => undef 
-$placem2 => undef 
-$placem3 => undef 
-$placem4 => undef 
-$placem5 => undef 
-$placem6 => undef 
-$placem7 => undef 
-$placem8 => undef 
-$placem9 => undef 
-$glossm1 => undef 
-$glossm2 => undef 
-$glossm3 => undef 
-$glossm4 => undef 
-$glossm5 => undef 
-$glossm6 => undef 
-$glossm7 => undef 
-$glossm8 => undef 
-$glossm9 => undef 
-$glossm10 => undef 
-$glossm11 => undef 
-$glossm12 => undef 
-$glossm13 => undef 
-$glossm14 => undef 
-$glossm15 => undef 
-</%args>
-

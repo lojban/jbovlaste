@@ -1,483 +1,6 @@
-<%perl>
-#print "<pre>".Dumper(\%ARGS)."</pre>";
-#print "<pre>v: $valsiid, $valsiword, $langid, $type.\n</pre>";
-
-#print "<pre>add: $glossadd, $glossmax, $placeadd, $placemax.\n</pre>";
-
-if( ! defined( $type ) )
-{
-    $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
-	(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsiid);
-}
-
-# Adding a gloss word
-if( defined( $glossadd ))
-{
-    $glossmax++;
-}
-
-# Adding a place word
-if( defined( $placeadd ))
-{
-    $placemax++;
-}
-</%perl>
-
-% unless(defined($session{'username'})) {
-<font size="+3">Not logged in</font>
-<hr />
-You ought not have been able to view this page, as you aren't logged in!
-%    $titlestr = "Not logged in";
-%    return;
-% }
-
-% unless((defined($valsiid) || defined($valsiword)) && defined($langid)) {
-<font size="+3">Must specify valsi and language</font>
-<hr />
-Not enough info to know what to do.
-%   $titlestr = "Must specify valsi and language";
-%   return;
-% }
-
-% if( ! defined($definitiontxt) || defined( $glossadd ) || defined( $placeadd ) ) {
-
-<%perl>
-    # Either the user got here through addvalsi, in which case
-    # valsiword will be set, or they got here through dict/dhandler,
-    # in which case valsiid will be set.
-
-    my($langrealname,$langtag);
-
-    if( defined( $valsiid ))
-    {
-	my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
-	    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
-		undef, $valsiid, $langid);
-	($valsiword,$langrealname,$langtag) = @initialresult;
-    } elsif( defined( $valsiword )) {
-	my @initialresult = $dbh->selectrow_array("SELECT 
-		realname, tag FROM languages WHERE langid=?",
-		undef, $langid);
-
-	($langrealname,$langtag) = @initialresult;
-    } else {
-	$m->out("Sorry, couldn't find either the valsi ID you requested, or something else went wrong.");
-	return;
-    }
-
-   $titlestr = sprintf('Adding definition for "%s" in language "%s"',
-                       $valsiword, $langrealname);
-</%perl>
-
-<font size="+3">Adding definition for "<% $valsiword %>" in language
-"<% $langrealname %>"</font>
-
-<hr />
-
-<p><strong>PLEASE</strong> remember to vote for your new definition,
-otherwise wiki links and Best Guesses listings will be guaranteed to
-*not* include it.</p>
-
-<form method="post" action="adddef.html">
- <table>
-  <tr>
-   <td>
-% if( defined( $valsiid ) ) {
-	<input type="hidden" name="valsi" value="<% $valsiid %>">
-% }
-    <input type="hidden" name="valsiword" value="<% $valsiword %>">
-    <input type="hidden" name="langid" value="<% $langid %>">
-    <input type="hidden" name="type" value="<% $type %>">
-    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
-    <input type="hidden" name="langtag" value="<% $langtag %>">
-    <input type="hidden" name="glossmax" value="<% $glossmax %>">
-    <input type="hidden" name="placemax" value="<% $placemax %>">
-   </td>
-  </tr>
-  <tr>
-   <td>Definition</td>
-   <td><input type="text" name="definitiontxt" value="<% $definitiontxt %>" size="80"></td>
-   <td>
-	For information on how to format the definition, see <a
-	href="../help/definitions.html">the definition help file</a>.
-   </td>
-  </tr>
-% if( $type eq "cmavo" || $type eq "cmavo cluster" ||
-% $type eq "experimental cmavo" )
-% {
-  <tr>
-   <td>selma'o</td>
-   <td><input type="text" name="selmaho" value="<% $selmaho %>" size="15"></td>
-    <td>
-	Don't enter a selma'o unless you're sure you understand the
-	implications, please.  Ask people to comment on the word and
-	suggest what might work.
-    </td>
-  </tr>
-% }
-  <tr>
-   <td>Notes</td>
-   <td>
-    <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
-   </td>
-   <td>Yes, you're being given multiple lines. Try not to use them.</td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Gloss Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-<%perl>
-    for(my $i=1; $i<=$glossmax; $i++) {
-	print qq{
-   <p>
-    Gloss Word #$i: <input type="text" value="$ARGS{'glossw'.$i}" name="glossw$i" size="20">
-    In Sense: <input type="text" value="$ARGS{'glossm'.$i}" name="glossm$i" size="30">
-   </p>};
-    }
-</%perl>
-   </td>
-   <td>
-    Please read <a href="../help/natlangwords.html">details on the
-    second field</a>. You can look at a <a
-    href="../natlang/listing.html" target="_blank">natlang listing in a
-    new window</a> to see what words already exist.
-   </td>
-  </tr>
-  <tr>
-   <td><input name="glossadd" value="Add A Gloss Keyword" type="submit"></td>
-  </tr>
-  <tr>
-   <td colspan="2">
-   <h3>Place Keywords</h3>
-   </td>
-  </tr>
-  <tr>
-   <td colspan="2">
-<%perl>
-    for(my $i=1; $i<=$placemax; $i++) {
-	print qq{
-   <p>
-    Place Word #$i: <input type="text" value="$ARGS{'placew'.$i}" name="placew$i" size="20">
-    In Sense: <input type="text" value="$ARGS{'placem'.$i}" name="placem$i" size="30">
-   </p>};
-    }
-</%perl>
-   </td>
-   <td>
-    Please read <a href="../help/natlangwords.html">details on the
-    second field</a>. You can look at a <a
-    href="../natlang/listing.html" target="_blank">natlang listing in a
-    new window</a> to see what words already exist.  Yes, you can now
-    skip places.  Try not to, though; if less important places are at
-    the front of your valsi, it's probably badly ordered.
-   </td>
-  </tr>
-  <tr>
-   <td><input name="placeadd" value="Add A Place Keyword" type="submit"></td>
-  </tr>
-  <tr>
-   <td><input type="submit"></td>
-  </tr>
- </table>
-</form>
-
-<!--
-<p>Please note that when you submit this, the values will be checked
-   for consistency just as much as possible. For instance, you cannot
-   provide a keyword for place 3 unless the contents of the definition
-   lead me to believe that your definition includes a third
-   place. (I'll generally be looking for "x3" in that case.)</p>
--->
-
-<%perl>
-} elsif (
-defined( $definitiontxt )
-&& ( ( scalar( $definitiontxt =~ tr/$/$/ ) >= 2 )
-    || ( ( scalar( $definitiontxt =~ tr/$/$/ ) < 2 )  && $type eq
-	"cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo"
-	|| $type eq "cmene") ) ) {
- my $langrealnamequery =
-   $dbh->prepare("SELECT * FROM languages WHERE tag=?");
- $langrealnamequery->execute($langtag);
- my $langrealnameresult = $langrealnamequery->fetchrow_hashref;
- $titlestr = sprintf('Processing new definition for "%s" in language "%s"',
-                     $valsitxt, $langrealnameresult->{'realname'});
-
- my @bytes = unpack("C*", $langrealnameresult->{'realname'});
-</%perl>
-
-<font size="+3">Processing new definition for "<% $valsitxt %>" in
-language "<% pack("C*",@bytes) %>"</font>
-<hr />
-
-<%perl>
-  # process what we were given, checking for validity and such.
-  $dbh->begin_work;
-
-#  my @glosskeywords = &utils::processkeywordlisting($glosswords);
-#  my @placekeywords = &utils::processkeywordlisting($placekeywords);
-
-#  my %words = map { $_->[0] => 1 }
-#                  (grep { defined } (@glosskeywords,@placekeywords));
-#  my @words = keys %words;
-
-    my @glosskeywords;
-    for(my $i=1; $i<=$glossmax; $i++) #>
-    {
-	if( $ARGS{"glossw".$i} )
-	{
-	    push @glosskeywords, [ $ARGS{"glossw".$i}, $ARGS{"glossm".$i} ];
-	}
-    }
-    #print "<pre>".Dumper(\@glosskeywords)."\n</pre>";
-
-    my @placekeywords;
-    for(my $i=1; $i<=$placemax; $i++) #>
-    {
-	if( $ARGS{"placew".$i} )
-	{
-	    push @placekeywords, [ $ARGS{"placew".$i}, $ARGS{"placem".$i} ];
-	}
-    }
-    #print "<pre>".Dumper(\@placekeywords)."\n</pre>";
-
-    my @words;
-    # from 1 to the larger of the two
-    for(my $i=1; $i <= ( $placemax > $glossmax ? $placemax : $glossmax); $i++) #>
-    {
-	if( $ARGS{"placew".$i} )
-	{
-	    push @words, $ARGS{"placew".$i};
-	}
-	if( $ARGS{"glossw".$i} )
-	{
-	    push @words, $ARGS{"glossw".$i};
-	}
-    }
-    #print "<pre>".Dumper(\@words)."\n</pre>";
-
-  my @missingwords;
-
-  if(scalar @words) {
-
-    my $querystr =
-     sprintf('SELECT * FROM natlangwords WHERE word IN (%s) AND langid=?',
-             join(',',('?') x (scalar @words)));
-
-    my $natlangwordsquery = $dbh->prepare($querystr);
-    $natlangwordsquery->execute(@words,$langid);
-
-    my %releventnatlangwords;
-    for(my $i=0; $i<=$natlangwordsquery->rows; $i++) {
-      my $tmp = $natlangwordsquery->fetchrow_hashref;
-      next unless defined $tmp;
-      $releventnatlangwords{$tmp->{'word'}}->{$tmp->{'meaning'}} = $tmp;
-    }
-
-    foreach my $natlangword (@glosskeywords,@placekeywords) {
-      next unless (defined $natlangword && $natlangword->[0]);
-
-      unless(
-             defined( $releventnatlangwords{ $natlangword->[0] }->{ $natlangword->[1] } )
-            )
-      {
-        push @missingwords, $natlangword;
-      }
-    }
-  }
-</%perl>
-
-%  if(0==scalar @missingwords) {
-
-<p>I'm sure you'll be glad to know that we identified all of the natural
-language words you provided. Hopefully you didn't make any typos! Here
-we go...</p>
-
-<%perl>
-# If the valsi hasn't been created yet
-if( ! defined( $valsiid ))
-{
-</%perl>
-    <p>Ok, I'm adding the word to the database.</p>
-
-% $dbh->do("INSERT INTO valsi (word, typeid, userid, time) VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)", {}, $valsiword, $type, $session{'userid'}, time()) or $dbh->errstr;
-
-<%perl>
-
-# Get the valsiid of the word we just created
-    $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $valsiword);
-}
-
-  my @seqvalueresult =
-    $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')") or die $dbh->errstr;
-
-    my @curDefNum = $dbh->selectrow_array("SELECT max(definitionNum)
-    FROM definitions WHERE langid=$langid AND valsiid=$valsiid"
-    ) or die $dbh->errstr;
-
-    my $nextDefNum = $curDefNum[0] + 1;
-
-  $dbh->do("INSERT INTO definitions ".
-           "(definitionid, langid, valsiid, definitionNum, definition,
-	   selmaho, notes, userid, time) ".
-           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
-	   $langid, $valsiid, $nextDefNum, $definitiontxt, $selmaho,
-	   $notes, $session{'userid'}, time()) or die $dbh->errstr;
-
-  for(my $i=0; $i<=$#glosskeywords; $i++) {
-   next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
-   my @tmp = @{ $glosskeywords[$i] };
-   my $meaning = $tmp[1] ? $tmp[1] : undef;
-   $dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
-            'VALUES (?, 0, (SELECT wordid FROM natlangwords '.
-	    'WHERE langid=?::integer AND word=?::text AND '.
-            '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
-            undef, $seqvalueresult[0], $langid, $tmp[0], $meaning,
-	    $meaning ) or die $dbh->errstr;
-  }
-
-  for(my $i=0; $i<=$#placekeywords; $i++) {
-   next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
-   my @tmp = @{ $placekeywords[$i] };
-   my $meaning = $tmp[1] ? $tmp[1] : undef;
-   $dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
-            'VALUES (?, ?, (SELECT wordid FROM natlangwords '.
-            'WHERE langid=?::integer AND word=?::text AND '.
-            '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
-            undef, $seqvalueresult[0], $i+1, $langid, $tmp[0],
-	    $meaning, $meaning ) or die $dbh->errstr;
-  }
-
-  $dbh->do("DELETE FROM definitionvotes
-    WHERE valsiid=? and langid=? and userid=?",
-    undef,
-    $valsiid, $langid, $session{'userid'}) or die $dbh->errstr;
-
-  $dbh->do("INSERT INTO definitionvotes
-    (valsiid, langid, definitionid, value, userid, time)
-    VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
-    ?)",
-    undef,
-    $valsiid, $langid, $seqvalueresult[0], $session{'userid'},
-    $session{'userid'}, time()) or die $dbh->errstr;
-
-  $dbh->commit or die $dbh->errstr;
-
-# Send e-mail to the valsi creator, and all definition creators for that valsi
-my @email;
-push @email, $dbh->selectrow_array("SELECT u.email FROM
-        valsi v, users u WHERE v.userid = u.userid AND
-        v.valsiid=$valsiid");
-
-my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
-
-$emailquery->execute($valsiid, $langid);
-while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
-{
-    push @email, $emailrow->{'email'};
-}
-
-@email = keys %{{ map { $_ => 1 } @email }};
-
-my $email = join( ' ', @email );
-
-#print "e: $email, $valsiid.\n";
-
-#my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
-#        exampleid = ?", undef, $example);
-
-utils::sendemail( $email, "Definition Added At Word $valsiword", "
-
-In jbovlaste, the user $session{'username'} has added the following
-definition to $valsiword:
-
-    $definitiontxt
-
-(not all definition information shown above)
-
-You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
-" );
-
-
-  # Update valsibestguesses
-  my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-  system( "$jbovlastedir/bin/updatevbg $jbovlastedir $langid $valsiid $session{'userid'} $seqvalueresult[0] \&" );
-</%perl>
-
-<p>If you're seeing this, it probably worked. Please go to
-<a href="<% $valsitxt %>">the definition you added</a> and check
-on things.  Also <strong>make sure to click on and vote for all the
-natural language words</strong>.  A vote for you on the definition you
-just added has already been recorded.</p>
-
-%     } else {
-
-<p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
-entered at this point.  You need to deal with the issues below, then go
-back to the page before this one and hit submit again.</p>
-
-<p>Dreadfully sorry, I'm afraid I don't know some of the words you tried
-to use as keywords:</p>
-
-<ul>
-% foreach my $word (@missingwords)
-% {
-%    if( $word->[0] )
-%    {
-  <li><% &utils::generatemissingwordlink($langtag, @{ $word }) %></li>
-%    }
-% }
-</ul>
-
-%        $dbh->rollback;
-%     }
-
-% # This is the case where there are no dollar signs and we want
-% # to disallow  the action.
-% } elsif( scalar( $definitiontxt =~ tr/$/$/ ) < 2  && !( $type eq "cmavo" || $type eq "cmavo cluster" || $type eq "experimental cmavo" || $type eq "cmene") ) {
-
-    <p><strong><font color="red">WARNING!</font></strong> Your definition is <strong>NOT</strong>
-    entered at this point.  You need to deal with the issues below, then go
-    back to the page before this one and hit submit again.</p>
-
-    <p>
-	I see that there are less than two dollar signs in your
-	definition.  This implies that your word has no place
-	structure. This is only okay for cmavo and cmene. However, it
-        appears that your word is of type: <strong><% $type %></strong>.
-	Please <a
-	href="../help/definitions.html">read the instructions</a>.
-    </p>
-    <p>Debug information:<br />
-    The first one evaluates to: <% scalar($type eq "cmene")?"true":"false" %><br />
-    The second one evaluates to: <% scalar($type eq "gismu")?"true":"false" %>
-    </p>
-% }
-
-<%shared>
-our $titlestr;
-</%shared>
-
-<%method title>
-Adding definition: <% $titlestr %>
-</%method>
-
-<%init>
-  our($dbh,%session);
-  use utils;
-  use Unicode::String;
-  $r->content_type("text/html; charset=utf-8");
-</%init>
-
 <%args>
-$glossmax => 3
-$glossadd => undef
-$placemax => 3
-$placeadd => undef
+$glossmax => undef
+$placemax => undef
 $valsiword => undef
 $type => undef
 $valsiid => undef
@@ -487,5 +10,225 @@ $notes => undef
 $valsitxt => undef
 $langtag => undef
 $selmaho => undef
-$dollarsok => undef
+$final => undef
 </%args>
+
+<%shared>
+our $titlestr;
+our $notready = 0;
+</%shared>
+
+<%method title>
+Adding definition: <% $titlestr %>
+</%method>
+
+<%init>
+our($dbh,%session);
+use utils;
+use Unicode::String;
+use String::Approx 'amatch';
+$r->content_type("text/html; charset=utf-8");
+my $editbitsret;
+</%init>
+
+<%perl>
+#print "<pre>".Dumper(\%ARGS)."</pre>";
+#print "<pre>v: $valsiid, $valsiword, $langid, $type.\n</pre>";
+
+#print "<pre>add: $glossadd, $glossmax, $placeadd, $placemax.\n</pre>";
+# Either the user got here through addvalsi, in which case
+# valsiword will be set, or they got here through dict/dhandler,
+# and/or editdef.html, in which case valsiid will be set.
+
+my($langrealname);
+
+if( defined( $valsiid ))
+{
+    my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
+	    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
+	undef, $valsiid, $langid);
+    ($valsiword,$langrealname,$langtag) = @initialresult;
+} elsif( defined( $valsiword )) {
+    my @initialresult = $dbh->selectrow_array("SELECT
+	realname, tag FROM languages WHERE langid=?",
+	undef, $langid);
+
+    ($langrealname,$langtag) = @initialresult;
+} else {
+    $m->out("Sorry, couldn't find either the valsi ID you requested, or something else went wrong.");
+    return;
+}
+</%perl>
+
+<%doc>
+editbits does all the actual work, and returns 0 if more work is
+needed, 1 if we're readt to save, and undef on error.
+</%doc>
+
+<%perl>
+$titlestr = sprintf('Adding definition for "%s" in language "%s"',
+    $valsiword, $langrealname);
+
+if( ! $final )
+{
+    </%perl>
+    <font size="+3">Adding definition for "<% $valsiword %>" in language "<% $langrealname %>"</font>
+
+    <hr />
+    <%perl>
+}
+
+$editbitsret = $m->comp( 'editbits', %ARGS,
+    actionPage => 'adddef.html' );
+
+if( $editbitsret )
+{
+
+    my $langrealnamequery = $dbh->prepare("SELECT * FROM languages WHERE tag=?");
+    $langrealnamequery->execute($langtag);
+    my $langrealnameresult = $langrealnamequery->fetchrow_hashref;
+    $titlestr = sprintf('Processing new definition for "%s" in language "%s"',
+	$valsitxt, $langrealnameresult->{'realname'});
+
+    my @bytes = unpack("C*", $langrealnameresult->{'realname'});
+    </%perl>
+
+    <font size="+3">Processing new definition for "<% $valsitxt %>" in
+    language "<% pack("C*",@bytes) %>"</font>
+    <hr />
+
+    <%perl>
+
+    # Deal with the natural language words.
+    my @nlwrets = $m->comp( 'nlwbits', %ARGS );
+
+    #print "<pre>".Dumper(\@nlwrets)."</pre>";
+
+    my @glosskeywords = @{ $nlwrets[0] };
+    my @placekeywords = @{ $nlwrets[1] };
+
+    #print "<pre>".Dumper(\@glosskeywords)."</pre>";
+    #print "<pre>".Dumper(\@placekeywords)."</pre>";
+
+    # If the valsi hasn't been created yet
+    if( ! defined( $valsiid ))
+    {
+	</%perl>
+	<p>Ok, I'm adding the word to the database.</p>
+
+	<%perl>
+	$dbh->do("INSERT INTO valsi (word, typeid, userid, time)
+	    VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)",
+	    {}, $valsiword, $type, $session{'userid'}, time()) or $dbh->errstr;
+
+
+	# Get the valsiid of the word we just created
+	$valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $valsiword);
+    }
+
+    my @seqvalueresult =
+    $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')") or die $dbh->errstr;
+
+    my @curDefNum = $dbh->selectrow_array("SELECT max(definitionNum)
+	FROM definitions WHERE langid=$langid AND valsiid=$valsiid"
+    ) or die $dbh->errstr;
+
+    my $nextDefNum = $curDefNum[0] + 1;
+
+    $dbh->do("INSERT INTO definitions ".
+	"(definitionid, langid, valsiid, definitionNum, definition,
+	    selmaho, notes, userid, time) ".
+	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
+	$langid, $valsiid, $nextDefNum, $definitiontxt, $selmaho,
+	$notes, $session{'userid'}, time()) or die $dbh->errstr;
+
+    for(my $i=0; $i<=$#glosskeywords; $i++) {
+	next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
+	my @tmp = @{ $glosskeywords[$i] };
+	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	$dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
+	    'VALUES (?, 0, (SELECT wordid FROM natlangwords '.
+		    'WHERE langid=?::integer AND word=?::text AND '.
+		    '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
+	    undef, $seqvalueresult[0], $langid, $tmp[0], $meaning,
+	    $meaning ) or die $dbh->errstr;
+    }
+
+    for(my $i=0; $i<=$#placekeywords; $i++) {
+	next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
+	my @tmp = @{ $placekeywords[$i] };
+	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	$dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
+	    'VALUES (?, ?, (SELECT wordid FROM natlangwords '.
+		    'WHERE langid=?::integer AND word=?::text AND '.
+		    '(meaning=?::text OR (?::text IS NULL AND meaning IS NULL))))',
+	    undef, $seqvalueresult[0], $i+1, $langid, $tmp[0],
+	    $meaning, $meaning ) or die $dbh->errstr;
+    }
+
+    $dbh->do("DELETE FROM definitionvotes
+	WHERE valsiid=? and langid=? and userid=?",
+	undef,
+	$valsiid, $langid, $session{'userid'}) or die $dbh->errstr;
+
+    $dbh->do("INSERT INTO definitionvotes
+	(valsiid, langid, definitionid, value, userid, time)
+	VALUES (?, ?, ?, (SELECT votesize FROM users WHERE userid=?), ?,
+	    ?)",
+	undef,
+	$valsiid, $langid, $seqvalueresult[0], $session{'userid'},
+	$session{'userid'}, time()) or die $dbh->errstr;
+
+    # Deal with the voting
+    $m->comp( 'votebits', %ARGS, definition => $seqvalueresult[0] );
+
+    $dbh->commit or die $dbh->errstr;
+
+    # Send e-mail to the valsi creator, and all definition creators for that valsi
+    my @email;
+    push @email, $dbh->selectrow_array("SELECT u.email FROM
+	valsi v, users u WHERE v.userid = u.userid AND
+	v.valsiid=$valsiid");
+
+    my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+    $emailquery->execute($valsiid, $langid);
+    while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+    {
+	push @email, $emailrow->{'email'};
+    }
+
+    @email = keys %{{ map { $_ => 1 } @email }};
+
+    my $email = join( ' ', @email );
+
+    #print "e: $email, $valsiid.\n";
+
+    utils::sendemail( $email, "Definition Added At Word $valsiword", "
+
+In jbovlaste, the user $session{'username'} has added the following
+definition to $valsiword:
+
+	$definitiontxt
+
+(not all definition information shown above)
+
+You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
+" );
+
+
+    # Update valsibestguesses
+    my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+    system( "$jbovlastedir/bin/updatevbg $jbovlastedir $langid $valsiid $session{'userid'} $seqvalueresult[0] \&" );
+    </%perl>
+
+    <p>If you're seeing this, it probably worked. Please go to
+    <a href="<% $valsitxt %>">the definition you added</a> and check
+    on things.  Also <strong>make sure to click on and vote for all the
+    natural language words</strong>.  A vote for you on the definition you
+    just added has already been recorded.</p>
+
+    <%perl>
+}
+</%perl>

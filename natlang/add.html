@@ -1,3 +1,26 @@
+<%args>
+$lang => undef
+$word => undef
+$notes => undef
+$meaning => undef
+$oncethrough => undef
+$valid => undef
+$stfu => undef
+</%args>
+
+<%init>
+ our(%session,$dbh);
+ use String::Approx 'amatch';
+</%init>
+
+<%shared>
+ our $titlestr;
+</%shared>
+
+<%method title>
+<% $titlestr %>
+</%method>
+
 % unless(defined($session{'username'})) {
 <font size="+3">Not logged in</font>
 <hr />
@@ -14,11 +37,18 @@ A language hasn't been specified.
 %   return;
 % }
 
-<font size="+3">
-Adding natural language word to language
-<% $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang) %>
-</font>
-<hr />
+<%perl>
+if( ! defined( $stfu ) )
+{
+    </%perl>
+    <font size="+3">
+    Adding natural language word to language
+    <% $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang) %>
+    </font>
+    <hr />
+    <%perl>
+}
+</%perl>
 
 % unless(defined($valid)) {
 
@@ -165,110 +195,102 @@ it. You'll be notified when the word has actually been added.</p>
 doesn't work quite right. I'm going to get around to fixing it sooner or
 later.</p>
 
-% } else {
-
-% $titlestr = "Storing new natural language word";
-
-<p>Here we go...</p>
-
 <%perl>
-my $ok = 1;
-my $langid = $dbh->selectrow_array("SELECT langid FROM languages WHERE
-tag=?", undef, $lang);
-my $query = $dbh->prepare("SELECT * FROM natlangwords WHERE word=? AND
-langid=$langid");
-$query->execute($word);
-$meaning =~ s/^\s+//g;
-$meaning =~ s/\s+$//g;
-while (defined(my $row = $query->fetchrow_hashref) && $ok )
-{
-    if (length($meaning) == 0)
+} else {
+    $titlestr = "Storing new natural language word";
+
+    </%perl>
+    <p>Here we go...</p>
+    <%perl>
+
+    my $ok = 1;
+    my $langid = $dbh->selectrow_array("SELECT langid FROM languages WHERE
+	tag=?", undef, $lang);
+    my $query = $dbh->prepare("SELECT * FROM natlangwords WHERE word=? AND
+	langid=$langid");
+
+    $query->execute($word);
+    $meaning =~ s/^\s+//g;
+    $meaning =~ s/\s+$//g;
+    while (defined(my $row = $query->fetchrow_hashref) && $ok )
     {
-</%perl>
-<h2>Please Read!</h2>
+	if (length($meaning) == 0)
+	{
+	    </%perl>
+	    <h2>Please Read!</h2>
 
-<p>This word is already defined, but you are trying to add a definition
-with a default meaning (i.e. you put nothing in the "in the sense of"
-box).</p>
+	    <p>This word is already defined, but you are trying to add a definition
+	    with a default meaning (i.e. you put nothing in the "in the sense of"
+		box).</p>
 
-<p>The problem here is that the existence of a default meaning implies
-that no differentiation from that meaning is reasonable.  Since another
-definition exists, this is patently false. </p>
+	    <p>The problem here is that the existence of a default meaning implies
+	    that no differentiation from that meaning is reasonable.  Since another
+	    definition exists, this is patently false. </p>
 
-<p>Please go look at <a href="<% $lang %>/<% $word %>">other
-definitions for this word</a>, and see if any of them work for you.</p>
+	    <p>Please go look at <a href="<% $lang %>/<% $word %>">other
+	    definitions for this word</a>, and see if any of them work for you.</p>
 
-<p>If not, you're just going to have to go back and narrow the sense of
-the word.</p>
-<%perl>
-    $ok = 0;
-  } elsif ($row->{'meaning'} eq $meaning )
-  {
-    $m->out("<p>This word already exists with this same meaning...</p>");
-    $ok = 0;
-  }
-}
-
-if($ok) {
-    my $meaningNum = $dbh->selectrow_array("SELECT max(meaningNum) + 1
-	    FROM natlangwords WHERE word=?\n", undef, $word);
-
-    if (! defined($meaningNum))
-    {
-	$meaningNum=1
+	    <p>If not, you're just going to have to go back and narrow the sense of
+	    the word.</p>
+	    <%perl>
+	    $ok = 0;
+	} elsif ($row->{'meaning'} eq $meaning )
+	{
+	    $m->out("<p>This word already exists with this same meaning...</p>");
+	    $ok = 0;
+	}
     }
 
-    if(length($meaning)) {
-	$dbh->do("INSERT INTO natlangwords
+    if($ok) {
+	my $meaningNum = $dbh->selectrow_array("SELECT max(meaningNum) + 1
+	    FROM natlangwords WHERE word=?\n", undef, $word);
+
+	if (! defined($meaningNum))
+	{
+	    $meaningNum=1
+	}
+
+	if(length($meaning)) {
+	    $dbh->do("INSERT INTO natlangwords
 		(langid, word, meaning, notes, meaningNum, userid, time )
 		VALUES ((SELECT langid FROM languages WHERE tag=?), ?,
-		?, ?, ?, ?, ?)",
+		    ?, ?, ?, ?, ?)",
 		undef,
 		$lang, $word, $meaning, $notes, $meaningNum, $session{'userid'}, time() ); 
-    } else {
-	$dbh->do("INSERT INTO natlangwords
+	} else {
+	    $dbh->do("INSERT INTO natlangwords
 		(langid, word, meaning, notes, meaningNum, userid, time )
 		VALUES ((SELECT langid FROM languages WHERE tag=?), ?,
 		    null, ?, ?, ?, ?)",
 		undef,
 		$lang, $word, $notes, $meaningNum, $session{'userid'}, time() );
+	}
     }
+
+    if ($ok) {
+	</%perl>
+
+	<p>No errors? Excellent.</p>
+
+	<%perl>
+	if( ! defined( $stfu ) )
+	{
+	    </%perl>
+	    <p>Go to <a href="<% $lang %>/<% utils::armorurl($word) %>">the page for the word you added</a>.</p>
+	    <%perl>
+	} else {
+	    </%perl>
+	    <p>Go to <a href="../natlang/<% $lang %>/<% utils::armorurl($word) %>">the page for the word you added</a>.</p>
+	    <%perl>
+	}
+
+    } else {
+
+	</%perl>
+	<p>We were unable to add the new word.</p>
+	<%perl>
+
+    }
+
 }
-
 </%perl>
-
-% if ($ok) {
-
-<p>No errors? Excellent.</p>
-
-<p>Go to <a href="<% $lang %>/<% utils::armorurl($word) %>">the page for the word you added</a>.</p>
-
-% } else {
-
-<p>We were unable to add the new word.</p>
-
-% }
-
-% }
-
-<%init>
- our(%session,$dbh);
- use String::Approx 'amatch';
-</%init>
-
-<%shared>
- our $titlestr;
-</%shared>
-
-<%method title>
-<% $titlestr %>
-</%method>
-
-<%args>
-$lang => undef
-$word => undef
-$notes => undef
-$meaning => undef
-$oncethrough => undef
-$valid => undef
-</%args>
