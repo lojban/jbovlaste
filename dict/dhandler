@@ -497,19 +497,6 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
     # If there are no definitions...
     } else {
 	
-</%perl>
-<!--
-Makes no sense; no default language for valsi, so we can't give them an
-'add' link.
-
-	<p>
-	    There are no definitions for the valsi
-	    "<% $m->dhandler_arg %>" in the language
-	    <% $dbh->selectrow_array( "SELECT realname from languages where langid=$langidarg") %>.
-	    Please consider <a href="adddef.html?valsi=<% $dbh->selectrow_array( "SELECT valsiid FROM valsi WHERE word=?", undef, $m->dhandler_arg ) %>;lang=<% $langidarg %>">adding one</a>.
-	</p>		    
--->
-<%perl>
 	if( $bg )
 	{
 </%perl>
