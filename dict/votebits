@@ -1,0 +1,74 @@
+<%args>
+$glossmax => undef
+$placemax => undef
+$langid => undef
+$langtag => undef
+$definition => undef
+</%args>
+
+<%init>
+our($dbh,%session);
+use utils;
+</%init>
+
+<%perl>
+
+my @glosskeywords;
+for(my $i=1; $i<=$glossmax; $i++) #>
+{
+    if( $ARGS{"glossw".$i} )
+    {
+	push @glosskeywords, [ $ARGS{"glossw".$i}, $ARGS{"glossm".$i}, undef ];
+    }
+}
+#print "<pre>".Dumper(\@glosskeywords)."\n</pre>";
+
+my @placekeywords;
+for(my $i=1; $i<=$placemax; $i++) #>
+{
+    if( $ARGS{"placew".$i} )
+    {
+	push @placekeywords, [ $ARGS{"placew".$i}, $ARGS{"placem".$i}, $i ];
+    }
+}
+#print "<pre>".Dumper(\@placekeywords)."\n</pre>";
+
+if( scalar @glosskeywords || scalar @placekeywords )
+{
+    </%perl>
+    <hr />
+    <p><strong>Recording votes for the natural language words.</strong><p>
+    <%perl>
+}
+
+# Vote for everybody
+foreach my $keyword (@glosskeywords,@placekeywords)
+{
+    #print "<pre>".Dumper(\$keyword)."</pre>";
+
+    my $nlwid = $dbh->selectrow_array("SELECT wordid FROM
+	natlangwords WHERE word=? AND meaning=?", undef, 
+	$keyword->[0], $keyword->[1] );
+
+    #print "<pre>$nlwid, $definition\n</pre>";
+
+    # http://jbovlaste.lojban.org/natlang/vote.html?nlw=17196;definitionid=16152;place=0
+    $m->comp( '../natlang/vote.html',
+	nlw => $nlwid,
+	definitionid => $definition,
+	place => (defined( $keyword->[2] ) ? $keyword->[2] : 0),
+	stfu => 1,
+	word => $keyword->[0],
+	meaning => $keyword->[1],
+    );
+}
+
+if( scalar @glosskeywords || scalar @placekeywords )
+{
+    </%perl>
+    <p><strong>Done ecording votes for the natural language words.</strong><p>
+    <hr />
+    <%perl>
+}
+
+</%perl>

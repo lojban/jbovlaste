@@ -1,0 +1,112 @@
+<%args>
+$glossmax => undef
+$placemax => undef
+$langid => undef
+$langtag => undef
+</%args>
+
+<%init>
+our($dbh,%session);
+use utils;
+</%init>
+
+<%perl>
+
+my @glosskeywords;
+for(my $i=1; $i<=$glossmax; $i++) #>
+{
+    if( $ARGS{"glossw".$i} )
+    {
+	push @glosskeywords, [ $ARGS{"glossw".$i},
+	     $ARGS{"glossm".$i}, $ARGS{"glossn".$i} ];
+    }
+}
+#print "<pre>".Dumper(\@glosskeywords)."\n</pre>";
+
+my @placekeywords;
+for(my $i=1; $i<=$placemax; $i++) #>
+{
+    if( $ARGS{"placew".$i} )
+    {
+	push @placekeywords, [ $ARGS{"placew".$i},
+	$ARGS{"placem".$i}, $ARGS{"placen".$i} ];
+    }
+}
+#print "<pre>".Dumper(\@placekeywords)."\n</pre>";
+
+my @words;
+# from 1 to the larger of the two
+for(my $i=1; $i <= ( $placemax > $glossmax ? $placemax : $glossmax); $i++)
+{
+    if( $ARGS{"placew".$i} )
+    {
+	push @words, $ARGS{"placew".$i};
+    }
+    if( $ARGS{"glossw".$i} )
+    {
+	push @words, $ARGS{"glossw".$i};
+    }
+}
+#print "<pre>".Dumper(\@words)."\n</pre>";
+
+my %missingwords;
+
+if(scalar @words) {
+    my $querystr =
+    sprintf('SELECT * FROM natlangwords WHERE word IN (%s) AND langid=?',
+	join(',',('?') x (scalar @words)));
+
+    my $natlangwordsquery = $dbh->prepare($querystr);
+    $natlangwordsquery->execute(@words,$langid);
+
+    my %releventnatlangwords;
+    for(my $i=0; $i<=$natlangwordsquery->rows; $i++) {
+	my $tmp = $natlangwordsquery->fetchrow_hashref;
+	next unless defined $tmp;
+	$releventnatlangwords{$tmp->{'word'}}->{$tmp->{'meaning'}} = $tmp;
+    }
+
+    foreach my $natlangword (@glosskeywords,@placekeywords) {
+	next unless (defined $natlangword && $natlangword->[0]);
+
+	unless(
+	    defined( $releventnatlangwords{ $natlangword->[0] }->{ $natlangword->[1] } )
+	)
+	{
+	    $missingwords{$natlangword->[0]} = [ $natlangword->[1], $natlangword->[2] ];
+	}
+    }
+}
+
+#print "<pre>".Dumper(\%missingwords)."</pre>";
+
+# Handle the new words
+if(scalar %missingwords) {
+    </%perl>
+    <p><strong>Adding natural language words...</strong></p>
+    <%perl>
+    foreach my $word (keys %missingwords)
+    {
+	$m->comp( '../natlang/add.html', 
+	    lang => $langtag,
+	    word => $word,
+	    meaning => $missingwords{$word}->[0],
+	    notes => $missingwords{$word}->[1],
+	    valid => 1,
+	    stfu => 1,
+	);
+    }
+    </%perl>
+    <p><strong>Done adding natural language words.</strong></p>
+    <hr />
+    <%perl>
+}
+</%perl>
+
+<p>I'm sure you'll be glad to know that we identified all of the natural
+language words you provided. Hopefully you didn't make any
+typos!  Moving on...</p>
+
+<%perl>
+return ( \@glosskeywords, \@placekeywords );
+</%perl>

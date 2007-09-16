@@ -1,0 +1,412 @@
+<%args>
+$actionPage => undef
+$definition => undef
+$check => undef
+$final => undef
+$glossmax => 3
+$glossadd => undef
+$placemax => 3
+$placeadd => undef
+$valsiword => undef
+$type => undef
+$valsiid => undef
+$langid => undef
+$definitiontxt => undef
+$notes => undef
+$valsitxt => undef
+$langtag => undef
+$selmaho => undef
+$dollarsok => undef
+</%args>
+
+<%shared>
+our $titlestr;
+our $notready = 0;
+</%shared>
+
+<%method title>
+Adding definition: <% $titlestr %>
+</%method>
+
+<%init>
+our($dbh,%session);
+use utils;
+use Unicode::String;
+use String::Approx 'amatch';
+$r->content_type("text/html; charset=utf-8");
+</%init>
+
+<%perl>
+if( $definition && ! $valsiid )
+{
+    $check = 1;
+    my @dbreturns = $dbh->selectrow_array("SELECT valsiid, langid,
+	    definition, notes FROM
+	    definitions WHERE definitionid=?", undef, $definition);
+    ( $valsiid, $langid, $definitiontxt, $notes ) = @dbreturns;
+}
+
+#print "<pre>".Dumper(\%ARGS)."</pre>";
+#print "<pre>v: $valsiid, $valsiword, $definition, $langid, $type.\n</pre>";
+
+#print "<pre>add: $glossadd, $glossmax, $placeadd, $placemax.\n</pre>";
+
+if( ! defined( $type ) )
+{
+    $type = $dbh->selectrow_array("SELECT descriptor FROM valsitypes where typeid=
+	(SELECT typeid FROM valsi WHERE valsiid=?)", undef, $valsiid);
+}
+
+# Adding a gloss word
+if( defined( $glossadd ))
+{
+    $glossmax++;
+}
+
+# Adding a place word
+if( defined( $placeadd ))
+{
+    $placemax++;
+}
+</%perl>
+
+% unless(defined($session{'username'})) {
+<font size="+3">Not logged in</font>
+<hr />
+You ought not have been able to view this page, as you aren't logged in!
+%    $titlestr = "Not logged in";
+%    return;
+% }
+
+% unless((defined($valsiid) || defined($valsiword)) && defined($langid)) {
+<font size="+3">Must specify valsi and language</font>
+<hr />
+Not enough info to know what to do.
+%   $titlestr = "Must specify valsi and language";
+%   return;
+% }
+
+% if( ! defined($definitiontxt) || defined($check) || defined( $glossadd ) || defined( $placeadd ) ) {
+
+<%perl>
+    # Either the user got here through addvalsi, in which case
+    # valsiword will be set, or they got here through dict/dhandler,
+    # and/or editdef.html, in which case valsiid will be set.
+
+    my($langrealname,$langtag);
+
+    if( defined( $valsiid ))
+    {
+	my @initialresult = $dbh->selectrow_array("SELECT (SELECT word FROM
+	    valsi WHERE valsiid=?), realname, tag FROM languages WHERE langid=?",
+		undef, $valsiid, $langid);
+	($valsiword,$langrealname,$langtag) = @initialresult;
+    } elsif( defined( $valsiword )) {
+	my @initialresult = $dbh->selectrow_array("SELECT 
+		realname, tag FROM languages WHERE langid=?",
+		undef, $langid);
+
+	($langrealname,$langtag) = @initialresult;
+    } else {
+	$m->out("Sorry, couldn't find either the valsi ID you requested, or something else went wrong.");
+	return;
+    }
+
+</%perl>
+
+<p><strong>PLEASE</strong> remember to vote for your new definition,
+otherwise wiki links and Best Guesses listings will be guaranteed to
+*not* include it.</p>
+
+<form method="post" action="<% $actionPage %>">
+ <table>
+  <tr>
+   <td>
+% if( defined( $valsiid ) ) {
+	<input type="hidden" name="valsiid" value="<% $valsiid %>">
+% }
+    <input type="hidden" name="definition" value="<% $definition %>">
+    <input type="hidden" name="valsiword" value="<% $valsiword %>">
+    <input type="hidden" name="langid" value="<% $langid %>">
+    <input type="hidden" name="type" value="<% $type %>">
+    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
+    <input type="hidden" name="langtag" value="<% $langtag %>">
+    <input type="hidden" name="glossmax" value="<% $glossmax %>">
+    <input type="hidden" name="placemax" value="<% $placemax %>">
+   </td>
+  </tr>
+  <tr>
+   <td>Definition</td>
+   <td><input type="text" name="definitiontxt" value="<% $definitiontxt %>" size="80"></td>
+   <td>
+	For information on how to format the definition, see <a
+	href="../help/definitions.html">the definition help file</a>.
+   </td>
+  </tr>
+  <tr>
+   <td colspan="3">
+<%doc>
+Here we check for the required amount of dollar signs, if any, and disallow if
+necessary.
+</%doc>
+<%perl>
+if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
+    !( $type eq "cmavo" || $type eq "cmavo cluster" ||
+	$type eq "experimental cmavo" || $type eq "cmene") ) {
+    $notready = 1;
+</%perl>
+
+    <p><strong><font color="red">WARNING!</font></strong>
+	I see that there are less than two dollar signs in your
+	definition.  This implies that your word has no place
+	structure. This is only okay for cmavo and cmene. However, it
+        appears that your word is of type: <strong><% $type %></strong>.
+	Please <a
+	href="../help/definitions.html">read the instructions</a>.
+    </p>
+% }
+   </td>
+  </tr>
+% if( $type eq "cmavo" || $type eq "cmavo cluster" ||
+% $type eq "experimental cmavo" )
+% {
+  <tr>
+   <td>selma'o</td>
+   <td><input type="text" name="selmaho" value="<% $selmaho %>" size="15"></td>
+    <td>
+	Don't enter a selma'o unless you're sure you understand the
+	implications, please.  Ask people to comment on the word and
+	suggest what might work.
+    </td>
+  </tr>
+% }
+  <tr>
+   <td>Notes</td>
+   <td>
+    <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
+   </td>
+   <td>Yes, you're being given multiple lines. Try not to use them.</td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <h3>Gloss Keywords</h3>
+   <td><input name="glossadd" value="Add A Gloss Keyword" type="submit"></td>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <& keywordList, %ARGS, type => 'gloss', typeName => 'Gloss',
+   max => $glossmax, langtag => $langtag, langid => $langid &>
+   </td>
+   <td>
+    Please read <a href="../help/natlangwords.html">details on the
+    second field</a>. You can look at a <a
+    href="../natlang/listing.html" target="_blank">natlang listing in a
+    new window</a> to see what words already exist.
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <h3>Place Keywords</h3>
+   <td><input name="placeadd" value="Add A Place Keyword" type="submit"></td>
+   </td>
+  </tr>
+  <tr>
+   <td colspan="2">
+   <& keywordList, %ARGS, type => 'place', typeName => 'Place',
+   max => $glossmax, langtag => $langtag, langid => $langid &>
+   </td>
+   <td>
+    Please read <a href="../help/natlangwords.html">details on the
+    second field</a>. You can look at a <a
+    href="../natlang/listing.html" target="_blank">natlang listing in a
+    new window</a> to see what words already exist.  Yes, you can now
+    skip places.  Try not to, though; if less important places are at
+    the front of your valsi, it's probably badly ordered.
+   </td>
+  </tr>
+  <tr>
+   <td><input name="check" value="Check Definition" type="submit"></td>
+<%perl>
+#print "<pre>ready: $notready, $check\n</pre>";
+if( defined( $check ) && ( ! defined( $notready ) || ! $notready ) )
+{
+</%perl>
+   <td><input name="final" value="Submit Definition" type="submit"></td>
+<%perl>
+}
+</%perl>
+  </tr>
+ </table>
+</form>
+
+<!--
+<p>Please note that when you submit this, the values will be checked
+   for consistency just as much as possible. For instance, you cannot
+   provide a keyword for place 3 unless the contents of the definition
+   lead me to believe that your definition includes a third
+   place. (I'll generally be looking for "x3" in that case.)</p>
+-->
+<%perl>
+    return 0;
+} elsif ( $final ) {
+    return 1;
+}
+</%perl>
+
+<%doc>
+    This sub-component does two things:
+
+    1.  It presents a list of input areas to fill in natlang words
+    an their meanings for either glosses or place keywords.
+
+    2.  It checks for similar but not identical words in the
+    database, and displays them if they exist.
+</%doc>
+<%def keywordList>
+    <%perl>
+    for(my $i=1; $i<=$max; $i++) {
+	my $word = $ARGS{$type.'w'.$i};
+	my $sense = $ARGS{$type.'m'.$i};
+	my $notes = $ARGS{$type.'n'.$i};
+	my $checkedname = $type.'c'.$i;
+	my $checked = $ARGS{$type.'c'.$i};
+	# Test comment
+	</%perl>
+	<p>
+	<% $typeName %> Word #<% $i %>: <input type="text" value="<% $word %>" name="<% $type %>w<% $i %>" size="20">
+	In Sense: <input type="text" value="<% $sense %>" name="<% $type %>m<% $i %>" size="30">
+	</p>
+	<%perl>
+
+	# Check to see if this word already exists; if not, do
+	# various other kinds of testing/whining
+	my $exactWord = $dbh->selectrow_array( "SELECT wordid FROM natlangwords
+	    WHERE wordid > 0 AND langid = $langid
+	    AND word = ? AND meaning = ?
+	    ", undef, $word, $sense );
+
+	if( $word && ! $exactWord )
+	{
+	    </%perl>
+	    Notes: <input type="text" value="<% $notes %>" name="<% $type %>n<% $i %>" size="30">
+	    <p><strong>This word doesn't exist</strong>; if you're
+	    sure you want to add it, please check this box: <input
+	    type="checkbox" name="<% $checkedname %>"
+	    <% $checked ? 'checked' : '' %>>
+	    <%perl>
+
+	    # Check for a default sense when it's not appropriate
+	    my $query = $dbh->prepare("SELECT * FROM natlangwords WHERE word=? AND
+		langid=$langid");
+
+	    $query->execute($word);
+	    $sense =~ s/^\s+//g;
+	    $sense =~ s/\s+$//g;
+	    my $bitched=0;
+	    while( defined(my $row = $query->fetchrow_hashref) )
+	    {
+		if( length($sense) == 0 && ! $bitched )
+		{
+		    </%perl>
+		    <h2>Please Read!</h2>
+
+		    <p>This word is already defined, but you are trying to add a definition
+		    with a default meaning (i.e. you put nothing in the "in the sense of"
+			box).</p>
+
+		    <p>The problem here is that the existence of a default meaning implies
+		    that no differentiation from that meaning is reasonable.  Since another
+		    definition exists, this is patently false. </p>
+
+		    <p>Please go look at
+		    <a href="<% $langtag %>/<% $word %>">other definitions for this word</a>,
+			and see if any of them work for you.</p>
+
+		    <p>If not, you're just going to have to go back and narrow the sense of
+		    the word.</p>
+		    <%perl>
+		    $notready = 1;
+		    $bitched = 1;
+		}
+	    }
+
+	    # Suggest similar words
+	    my $words = $dbh->selectall_arrayref( "SELECT word, wordid FROM natlangwords
+		WHERE wordid > 0 AND langid = $langid
+		AND length(?)-2<=length(word) AND length(?)+2>=length(word)
+		", undef, $word, $word );
+
+	    if( $words && ! $checked )
+	    {
+		# Not ready to submit
+		$notready = 1;
+
+		my @mywords = map { $_->[0].":".$_->[1] } @{ $words };
+
+		my @matches;
+
+		# If lang has any words at all...
+		if( $#mywords > 0 )
+		{
+		    @matches = amatch( $word, [ "20%" ], @mywords );
+		}
+
+		#print "<pre>".Dumper(\$words)."</pre>";
+		#print "<pre>".Dumper(\@matches)."</pre>";
+
+		if( scalar( @matches ) )
+		{
+		    </%perl>
+		    <h3><font color="red">Check These Words!</font></h3>
+
+		    <p>
+		    <strong>The following words seem similar to the one you
+		    entered.</strong>
+		    Please check that none of them will work for you:
+		    </p>
+		    <ul>
+		    <%perl>
+
+		    foreach my $match ( @matches )
+		    {
+			# The valsi is pretty much guaranteed not to have : in it.
+			my $matchWord = $match;
+			$matchWord =~ s/:.*//;
+
+			my $matchWordId = $match;
+			$matchWordId =~ s/[^:]*://;
+
+			my $meaning = $dbh->selectrow_array( "SELECT meaning FROM
+			    natlangwords WHERE wordid = ?", undef, $matchWordId);
+
+			</%perl>
+			<li><a href="../natlang/<% $langtag %>/<% $matchWord %>"><% $matchWord %><% $meaning ? ", in the sense of $meaning " : "" %></a></li>
+			<%perl>
+		    }
+		    </%perl>
+		    </ul>
+		    <%perl>
+		}
+	    }
+	}
+    }
+    </%perl>
+
+    <%args>
+    $type
+    $typeName
+    $max
+    $langid
+    $langtag
+    </%args>
+
+    <%init>
+    our($dbh,%session);
+    use utils;
+    use Unicode::String;
+    use String::Approx 'amatch';
+    $r->content_type("text/html; charset=utf-8");
+    </%init>
+
+</%def>
