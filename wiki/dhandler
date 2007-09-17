@@ -11,8 +11,20 @@
 our $pagename = $m->dhandler_arg || "FrontPage";
 </%shared>
 
-IF YOU SEE THIS, please mail lojban@lojban.org with an explaination
-of how you got here.  This page is defunct.
+<p>IF YOU SEE THIS, and you didn't come here via a bookmark or
+something like that, please mail lojban@lojban.org with an
+explaination of how you got here.  This page is defunct.</p>
+
+<p>If you're lucky, clicking "go" below will take you to a page that
+lists the new home of the page you are looking for.  It may have had
+a name change, though, in which case not so much.  The data should
+be somewhere on the main lojban.org site now, though.</p>
+
+<form class="forms" method="post" action="http://lojban.org/tiki/tiki-listpages.php">
+<input name="find" size="14" type="text" accesskey="s" value="<% $pagename %>"/>
+<input type="hidden" name="exact_match" value="On"/>
+<input type="submit" class="wikiaction" name="search" value="go"/> 
+</form>
 
 <%method title>
 Wiki: <% $pagename %>
