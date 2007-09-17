@@ -1,0 +1,37 @@
+<%args>
+$definitionid => undef
+</%args>
+
+<%init>
+our($dbh,%session);
+use utils;
+</%init>
+
+<%perl>
+my %oldcontent;
+
+# Get the old definition
+$oldcontent{definition} = $dbh->selectrow_array("SELECT definition FROM
+    definitions WHERE definitionid = ?", undef, $definitionid);
+
+# Get the old notes
+$oldcontent{notes} = $dbh->selectrow_array("SELECT notes FROM
+    definitions WHERE definitionid = ?", undef, $definitionid);
+
+# Get the old gloss keywords
+$oldcontent{glosses} = $dbh->selectall_arrayref("SELECT nlw.word, nlw.meaning,
+    kwm.place FROM keywordmapping kwm, natlangwords nlw
+    WHERE definitionid=? AND kwm.natlangwordid = nlw.wordid AND place = 0
+    ORDER BY kwm.place",
+    undef, $definitionid);
+
+# Get the old place keywords
+$oldcontent{places} = $dbh->selectall_arrayref("SELECT nlw.word, nlw.meaning,
+    kwm.place FROM keywordmapping kwm, natlangwords nlw
+    WHERE definitionid=? AND kwm.natlangwordid = nlw.wordid AND place != 0
+    ORDER BY kwm.place",
+    undef, $definitionid);
+
+return %oldcontent;
+
+</%perl>

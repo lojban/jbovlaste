@@ -11,6 +11,7 @@ $valsitxt => undef
 $langtag => undef
 $selmaho => undef
 $final => undef
+%oldargs => undef
 </%args>
 
 <%shared>
@@ -129,17 +130,11 @@ if( $editbitsret )
     my @seqvalueresult =
     $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')") or die $dbh->errstr;
 
-    my @curDefNum = $dbh->selectrow_array("SELECT max(definitionNum)
-	FROM definitions WHERE langid=$langid AND valsiid=$valsiid"
-    ) or die $dbh->errstr;
-
-    my $nextDefNum = $curDefNum[0] + 1;
-
     $dbh->do("INSERT INTO definitions ".
 	"(definitionid, langid, valsiid, definitionNum, definition,
 	    selmaho, notes, userid, time) ".
 	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
-	$langid, $valsiid, $nextDefNum, $definitiontxt, $selmaho,
+	$langid, $valsiid, $seqvalueresult[0], $definitiontxt, $selmaho,
 	$notes, $session{'userid'}, time()) or die $dbh->errstr;
 
     for(my $i=0; $i<=$#glosskeywords; $i++) {
@@ -184,39 +179,17 @@ if( $editbitsret )
 
     $dbh->commit or die $dbh->errstr;
 
-    # Send e-mail to the valsi creator, and all definition creators for that valsi
-    my @email;
-    push @email, $dbh->selectrow_array("SELECT u.email FROM
-	valsi v, users u WHERE v.userid = u.userid AND
-	v.valsiid=$valsiid");
+    # Get the current definition data
+    my %newcontent = $m->comp( 'getdef', definitionid => $seqvalueresult[0]);
 
-    my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
-
-    $emailquery->execute($valsiid, $langid);
-    while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
-    {
-	push @email, $emailrow->{'email'};
-    }
-
-    @email = keys %{{ map { $_ => 1 } @email }};
-
-    my $email = join( ' ', @email );
-
-    #print "e: $email, $valsiid.\n";
-
-    utils::sendemail( $email, "Definition Added At Word $valsiword", "
-
-In jbovlaste, the user $session{'username'} has added the following
-definition to $valsiword:
-
-	$definitiontxt
-
-(not all definition information shown above)
-
-You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
-" );
-
+    # Send e-mail to various people
+    $m->comp( 'mailbits',
+	newcontent => \%newcontent,
+	type => "added", typeUpper => "Added",
+	valsiid => $valsiid,
+	langid => $langid,
+	valsiword => $valsitxt,
+    );
 
     # Update valsibestguesses
     my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');

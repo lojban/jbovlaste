@@ -6,7 +6,6 @@ $langid => undef
 $definitiontxt => undef
 $definition => undef
 $notes => undef
-$valsitxt => undef
 $langtag => undef
 $selmaho => undef
 </%args>
@@ -120,9 +119,10 @@ $editbitsret = $m->comp( 'editbits', %ARGS, %glosses, %places,
 }
 
 if( $editbitsret )
-{
-    my $oldcontent = $dbh->selectrow_array("SELECT definition FROM definitions
-	WHERE definitionid = ?", undef, $definition);
+{	
+    # Get the current data, for mail use
+    my %oldcontent = $m->comp( 'getdef', definitionid => $definition );
+    #print "<pre>".Dumper(\%oldcontent)."</pre>";
 
     # Deal with the natural language words.
     my @nlwrets = $m->comp( 'nlwbits', %ARGS );
@@ -203,48 +203,19 @@ if( $editbitsret )
 
     my @result = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?",{},$definition);
 
-    # Send e-mail to the valsi creator, and all definition creators for that valsi
-    my @email;
-    push @email, $dbh->selectrow_array("SELECT u.email FROM
-	valsi v, users u WHERE v.userid = u.userid AND
-	v.valsiid=$valsiid");
+    # Get the current definition data
+    my %newcontent = $m->comp( 'getdef',
+	definitionid => $definition);
 
-    my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
-
-    $emailquery->execute($valsiid, $lang);
-    while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
-    {
-	push @email, $emailrow->{'email'};
-    }
-
-    @email = keys %{{ map { $_ => 1 } @email }};
-
-    my $email = join( ' ', @email );
-
-    #print "e: $email, $valsiid.\n";
-
-    my $valsiword = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
-	valsiid=$valsiid");
-
-    utils::sendemail( $email, "Definition Edited At Word $valsiword", "
-
-In jbovlaste, the user $session{'username'} has edited the following
-definition at $valsiword:
-
-Old Content:
-
-	$oldcontent
-
-New Content:
-
-	$definitiontxt
-
-(not all definition information shown above)
-
-You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
-" );
-
+    # Send e-mail to various people
+    $m->comp( 'mailbits',
+	oldcontent => \%oldcontent,
+	newcontent => \%newcontent,
+	type => "edited", typeUpper => "Edited",
+	valsiid => $valsiid,
+	langid => $langid,
+	valsiword => $result[0],
+    );
 
     if(!defined($errstr)) {
 	</%perl>

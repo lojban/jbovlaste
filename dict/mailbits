@@ -1,0 +1,101 @@
+<%args>
+%oldcontent => undef
+%newcontent => undef
+$type => undef
+$typeUpper => undef
+$valsiid => undef
+$langid => undef
+$valsiword => undef
+</%args>
+
+<%init>
+our($dbh,%session);
+use utils;
+</%init>
+
+<%perl>
+
+sub defdump
+{
+    my $contentref = shift;
+    my %content = %{ $contentref };
+
+    my $rettext;
+    $rettext .= "\tDefinition:\n\t\t".$content{'definition'}."\n\n";
+    $rettext .= "\tNotes:\n\t\t".$content{'notes'}."\n\n";
+
+    # Gloss words
+    if( scalar $content{'glosses'} )
+    {
+	$rettext .= "\tGloss Keywords:\n";
+
+	foreach my $glossref (@{ $content{'glosses'} })
+	{
+	    my @gloss = @{ $glossref };
+	    $rettext .= "\t\tWord: ".$gloss[0].
+	    ", In Sense: ".$gloss[1].
+	    "\n";
+	}
+	$rettext .= "\n";
+    }
+
+    # Place words
+    if( scalar $content{'places'} )
+    {
+	$rettext .= "\tPlace Keywords:\n";
+
+	foreach my $placeref (@{ $content{'places'} })
+	{
+	    my @place = @{ $placeref };
+	    $rettext .= "\t\tWord: ".$place[0].
+	    ", In Sense: ".$place[1].
+	    ", For Place: ".$place[2].
+	    "\n";
+	}
+	$rettext .= "\n";
+    }
+}
+
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+    valsi v, users u WHERE v.userid = u.userid AND
+    v.valsiid=$valsiid");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+    WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+
+$emailquery->execute($valsiid, $langid);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
+
+#print "e: $email, $valsiid.\n";
+
+my $emailtext = "
+
+In jbovlaste, the user $session{'username'} has $type a
+definition of $valsiword.
+
+";
+
+if( scalar( keys %oldcontent) > 1 )
+{
+    $emailtext .= "Old Data:\n\n".defdump(\%oldcontent)."\n\n";
+}
+
+$emailtext .= "New Data:\n\n".defdump(\%newcontent)."
+
+
+You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
+";
+
+utils::sendemail( $email, 
+    "Definition $typeUpper At Word $valsiword",
+    $emailtext );
+
+</%perl>
