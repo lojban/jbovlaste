@@ -1,4 +1,3 @@
-
 <%once>
 use CGI::Cookie;
 use MIME::Base64;
@@ -11,29 +10,6 @@ use utils;
 <font size="+3">jbovlaste Login</font>
 <hr />
 
-<p>So you want to login, hmm?</p>
-<p>If you don't already have an account, you'll need to
- <a href="accountrequest.html">request one</a>.</p>
-
-<p>Since jbovlaste is moving towards public testing, you can get <a
-href="personal/listing.html">a listing of all user
-accounts</a>. I'll be making accounts for people who I know are
-interested in jbovlaste. Your password will be the same as your
-username. If I havn't already made you an account, just use guest. You
-can ask for one, too. Please don't use other people's. That wouldn't
-be nice.</p>
-
-<p>Please note that while I occasionally use IRC nicks or aliases for
-jbovlaste usernames, with the production version I'll only assign
-usernames which are a recognizable function of one's realname, for
-easiest recognition by those who aren't "in the know" and such.</p>
-
-<p>
-<strong>The guest account is now locked.</strong>
-A form to create your own accounts will be made eventually.  In the
-meantime, please submit your request as a bug.
-</p>
-
 <& loginform &>
 
 % } else {
@@ -42,6 +18,8 @@ meantime, please submit your request as a bug.
  use Digest::MD5 qw(md5_hex);
  our $dbh;
  my $userquery = $dbh->prepare("SELECT * FROM users WHERE username=? AND password=?");
+ # If you change this munging, change changepass.html and new
+ # account.html
  $password =~ y/A-Za-z/N-ZA-Mn-za-m/;
  $userquery->execute($username, md5_hex($password));
  my $userresult = $userquery->fetchrow_hashref;
@@ -53,8 +31,10 @@ meantime, please submit your request as a bug.
 %  if(defined($userresult) && defined($session{'username'})) {
 
 <p>Ah, welcome back <% $userresult->{'realname'} %>.</p>
+
 <p>We're trying to set a cookie in your browser, now. Please accept it,
-as, otherwise I'm not going to think you're logged in after this page.</p>
+as otherwise I'm not going to think you're logged in after this page.</p>
+
 <p>I promise to be really nice with the cookie. It is set to expire in
 48 hours, and will only be relayed to exactly this host. The only thing
 I'm tracking with it is your user ID, and the time of your login. Of

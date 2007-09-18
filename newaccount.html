@@ -1,0 +1,142 @@
+<%args>
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
+$username => undef
+$realname => undef
+$email => undef
+</%args>
+
+% unless(defined($email)) {
+
+<font size="+3">
+New Account Creation
+</font>
+
+<hr />
+
+<form method="post" action="newaccount.html">
+<%perl>
+# reCaptcha Output form
+# Public key
+    print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
+</%perl>
+ <table>
+ <tr>Please use simple alphanumeric characters only.</tr>
+  <tr>
+   <td>User Name</td>
+   <td><input type="text" name="username" size="80"></td>
+  </tr>
+  <tr>
+   <td>Real Name</td>
+   <td><input type="text" name="realname" size="80"></td>
+  </tr>
+  <tr>
+   <td>E-Mail Address</td>
+   <td><input type="text" name="email" size="80"></td>
+  </tr>
+  <tr>
+   <td><input type="submit"></td>
+  </tr>
+ </table>
+</form>
+
+<%perl>
+# Check the form results (both of them)
+} else {
+    # Verify ReCaptcha submission
+    my $result = $c->check_answer(
+	# Private key
+        '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
+        $recaptcha_challenge_field, $recaptcha_response_field
+    );
+
+    # Munge the input
+    $username =~ s/[^a-zA-Z0-9]//g;
+    $realname =~ s/[^a-zA-Z0-9]//g;
+    $email =~ s/[^a-zA-Z0-9@._-]//g;
+
+    #print "<pre>".Dumper(\$result)."</pre>";
+    #print "<pre> $username, $realname, $email.\n</pre>";
+
+    if ( $result->{is_valid} && $username && $realname && $email ) {
+</%perl>
+
+	<font size="+3">
+	Account Created
+	</font>
+
+	<p>You will get a mail shortly with your password in it; please
+	use that to log in.  You will be automatically in the
+	jbovlaste mailing list using the address you just
+	entered.</p>
+
+	<p>Please let
+	<a href="mailto:<% $m->base_comp->attr('admin_email') %>">the admins</a>
+	know if you need any help.</p>
+
+<%perl>
+	# Make up a password
+	my $password = chr(int(rand(62))+60) . chr(int(rand(62))+60)
+	. chr(int(rand(62))+60) . chr(int(rand(62))+60) .
+	chr(int(rand(62))+60) . chr(int(rand(62))+60) .
+	chr(int(rand(62))+60) . chr(int(rand(62))+60);
+
+	# Munge it the same way the login form does
+	my $dbpassword = $password;
+	$dbpassword =~ y/A-Za-z/N-ZA-Mn-za-m/;
+
+	$dbh->do("INSERT INTO users
+	    (username, password, email, realname, votesize)
+	    VALUES (?, ?, ?, ?, ?)", undef,
+	    $username, md5_hex($dbpassword), $email, $realname, 1);
+
+	#Now send mail to the user
+	utils::sendemail( $email, "New jbovlaste Account", "
+
+Someone from the IP address $ENV{'REMOTE_ADDR'} registered the
+following account on jbovlaste.lojban.org:
+
+User Name: $username
+Real Name: $realname
+Password:  $password
+
+If this means nothing to you, please discard this e-mail.
+
+" );
+
+
+    } else {
+	if( $result->{is_valid} )
+	{
+	    </%perl>
+	    <font size="+3">
+	    ReCaptcha correct, but input invalid, sorry.  Try again.
+	    </font>
+	    <%perl>
+	} else {
+	    </%perl>
+	    <font size="+3">
+	    ReCaptcha failed, sorry.  Try again.
+	    </font>
+	    <%perl>
+	}
+    }
+}
+</%perl>
+
+<%method title>
+New Account Creation
+</%method>
+
+
+<%init>
+our($dbh,%session);
+use utils;
+use Unicode::String;
+use Digest::MD5 qw(md5_hex);
+$r->content_type("text/html; charset=utf-8");
+
+use Captcha::reCAPTCHA;
+
+my $c = Captcha::reCAPTCHA->new;
+</%init>

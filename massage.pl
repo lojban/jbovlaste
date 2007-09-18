@@ -36,8 +36,10 @@
 $date = `date`;
 chomp $date;
 
-$version = $origversion;
-$version =~ s/\.[A-Z].*//;
+#$version = $origversion;
+#$version =~ s/\.[A-Z].*//;
+$version = `svn info $infile | grep Revision | awk '{ print \$2 }'`;
+chomp $version;
 
 print "$origversion, $version, $infile, $outfile\n";
 

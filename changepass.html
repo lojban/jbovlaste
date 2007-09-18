@@ -1,0 +1,126 @@
+<%args>
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
+$current => undef
+$new1 => undef
+$new2 => undef
+</%args>
+
+<%perl>
+#print "<pre> $current, $new1, $new2\n</pre>";
+
+if( ! defined($session{'userid'}) ) {
+</%perl>
+    <font size="+3">
+    Bad User!
+    </font>
+
+    <p>You can't change your password if you're not logged in!</p>
+    <%perl>
+    <font size="+3">
+} else {
+    unless( defined($new2) && defined($new1) && defined($current) ) {
+	</%perl>
+	<font size="+3">
+
+	<font size="+3">
+	Password Change
+	</font>
+
+	<hr />
+
+	<form method="post" action="changepass.html">
+	<%perl>
+	# reCaptcha Output form
+	# Public key
+	print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
+	</%perl>
+	<table>
+	    <tr>
+		<td>Current Password</td>
+		<td><input name="current" type="password" size="80"></td>
+	    </tr>
+	    <tr>
+		<td>New Password</td>
+		<td><input name="new1" type="password" size="80"></td>
+	    </tr>
+	    <tr>
+		<td>New Password (Confirm)</td>
+		<td><input name="new2" type="password" size="80"></td>
+	    </tr>
+	    <tr>
+		<td><input type="submit"></td>
+	    </tr>
+	</table>
+	</form>
+
+	<%perl>
+	# Check the form results (both of them)
+    } else {
+	# Verify ReCaptcha submission
+	my $result = $c->check_answer(
+	    # Private key
+	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
+	    $recaptcha_challenge_field, $recaptcha_response_field
+	);
+
+	# Munge just like login.html
+	$current =~ y/A-Za-z/N-ZA-Mn-za-m/;
+
+	my $current_check = $dbh->selectrow_array("SELECT userid FROM
+	    users WHERE username=? AND password=?", undef,
+	    $session{'username'}, md5_hex($current));
+
+	#print "<pre> $current_check\n</pre>";
+
+	if ( $current_check && ($new1 eq $new2) ) {
+	    </%perl>
+
+	    <font size="+3">
+	    Password Changed
+	    </font>
+
+	    <%perl>
+	    # Munge it the same way the login form does
+	    my $dbpassword = $new1;
+	    $dbpassword =~ y/A-Za-z/N-ZA-Mn-za-m/;
+
+	    $dbh->do("UPDATE users SET password = ? WHERE userid = ?",
+		undef,
+		md5_hex($dbpassword), $current_check );
+	} else {
+	    if( $result->{is_valid} )
+	    {
+		</%perl>
+		<font size="+3">
+		ReCaptcha correct, but input invalid, sorry.  Try again.
+		</font>
+		<%perl>
+	    } else {
+		</%perl>
+		<font size="+3">
+		ReCaptcha failed, sorry.  Try again.
+		</font>
+		<%perl>
+	    }
+	}
+    }
+}
+</%perl>
+
+<%method title>
+Password Change
+</%method>
+
+
+<%init>
+our($dbh,%session);
+use utils;
+use Unicode::String;
+use Digest::MD5 qw(md5_hex);
+$r->content_type("text/html; charset=utf-8");
+
+use Captcha::reCAPTCHA;
+
+my $c = Captcha::reCAPTCHA->new;
+</%init>
