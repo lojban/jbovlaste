@@ -4,7 +4,7 @@
  my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
  my @langshtml;
 
- my $format = '<a href="dictionary.xml?lang=%s">%s</a>';
+ my $format = '<a href="xml-export.html?lang=%s">%s</a>';
  foreach my $curlang (@langs) {
    my $vislang = $mapping{$curlang};
    $vislang =~ s/\s+/&nbsp;/g;

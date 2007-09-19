@@ -19,16 +19,11 @@ $lang => undef
 </%args>
 
 <%perl>
+our $unofficialwarning = 'unofficial="true" ';
 my $langrealname = $dbh->selectrow_array("SELECT realname FROM
     languages WHERE tag=?", undef, $lang);
 my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
     tag=?", undef, $lang);
-
-# Get the valsi best guesses list.
-my $valsibestguesses = $dbh->selectall_hashref("SELECT v.word, vbg.* from
-    valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
-    AND v.valsiid=vbg.valsiid
-    ORDER BY v.word", "word" );
 
 #print Dumper( $valsibestguesses );
 
@@ -37,9 +32,21 @@ my @lojbanToNatLangEntries;
 my $natLangToLojban;
 my @natLangToLojbanEntries;
 
+print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
+print qq{<dictionary>\n};
+print qq{<direction from="lojban" to="$langrealname">};
+
+
+# Get the valsi best guesses list.
+my $valsiquery = $dbh->prepare("SELECT v.word, vbg.* from
+    valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
+    AND v.valsiid=vbg.valsiid
+    ORDER BY v.word");
+
+$valsiquery->execute;
+
 # Print the lojban -> foo section
-our $unofficialwarning = 'unofficial="true" ';
-foreach my $valsirow ( values %{$valsibestguesses} )
+while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
 {
     my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
 	FROM convenientdefinitions
@@ -81,8 +88,8 @@ foreach my $valsirow ( values %{$valsibestguesses} )
     if( ${$convenientDefinition}{'selmaho'} )
     {
 	$entry .= "<selmaho>" .
-	    massage(${$convenientDefinition}{'selmaho'})
-	    . "</selmaho>";
+	massage(${$convenientDefinition}{'selmaho'})
+	. "</selmaho>";
     }
 
     $entry .= "<definition>" .
@@ -92,17 +99,26 @@ foreach my $valsirow ( values %{$valsibestguesses} )
     if( ${$convenientDefinition}{'notes'} )
     {
 	$entry .= "<notes>".
-	    massage(${$convenientDefinition}{'notes'})
-	    ."</notes>";
+	massage(${$convenientDefinition}{'notes'})
+	."</notes>";
     }
 
     # Close the entry
     $entry .= "</valsi>";
 
-    push @lojbanToNatLangEntries, $entry;
+    #push @lojbanToNatLangEntries, $entry;
+
+    print $entry;
 }
 
-foreach my $valsirow ( values %{$valsibestguesses} )
+#print $lojbanToNatLang;
+print qq{</direction>};
+print qq{<direction from="$langrealname" to="lojban">};
+
+$valsiquery->execute;
+
+# Print the foo -> lojban section
+while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
 {
     #print Dumper( $valsirow );
     my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
@@ -120,8 +136,8 @@ foreach my $valsirow ( values %{$valsibestguesses} )
 	if( ${$nlwbgrow}{'meaning'} )
 	{
 	    $entry .= " sense=\"".
-		    massage(${$nlwbgrow}{'meaning'})
-		    ."\"";
+	    massage(${$nlwbgrow}{'meaning'})
+	    ."\"";
 	}
 
 	my $defvalsi = $dbh->selectrow_array("SELECT word
@@ -138,8 +154,10 @@ foreach my $valsirow ( values %{$valsibestguesses} )
 	# Close the entry
 	$entry .= " />";
 
-	push @natLangToLojbanEntries, $entry;
+	#push @natLangToLojbanEntries, $entry;
 	#print Dumper( $nlwbgrow );
+
+	print $entry;
     }
 }
 
@@ -152,16 +170,10 @@ sub dictcollate {
     lc($temp_a) cmp lc($temp_b);
 }
 
-$lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
-$natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
+#$lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
+#$natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
 
-print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
-print qq{<dictionary>\n};
-print qq{<direction from="lojban" to="$langrealname">};
-print $lojbanToNatLang;
-print qq{</direction>};
-print qq{<direction from="$langrealname" to="lojban">};
-print $natLangToLojban;
+#print $natLangToLojban;
 print qq{</direction>};
 print qq{</dictionary>\n};
 

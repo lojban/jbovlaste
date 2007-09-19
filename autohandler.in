@@ -13,6 +13,13 @@ know just as soon as you can. Please include a concise description of
 what happened leading up to this. Just in case.
 ';
   }
+
+  # Some pages get to skip all the shiny menu bits.
+  if( $m->fetch_next->name =~ m/^xml-export\.html$/ )
+  {
+      $output =~ s/^\s*//s;
+      print "$output";
+  } else {
 </%perl>
 
 <?xml version="1.0" encoding="utf-8"?>
@@ -106,6 +113,8 @@ what happened leading up to this. Just in case.
  </body>
 </html>
 
+% }
+
 <%once>
  use MIME::Base64;
  use Data::Dumper;
@@ -137,7 +146,8 @@ what happened leading up to this. Just in case.
     [ "valsi - Preferred Only", "$base_url/dict/listing.html?bg=1" ],
     [ "natlang - All", "$base_url/natlang/listing.html" ],
     [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
-    [ "Dictionary Production", "$base_url/latex/index.html" ],
+    [ "Dictionary Production", "$base_url/export/latex.html" ],
+    [ "XML Export", "$base_url/export/xml.html" ],
     [ "user Listing", "$base_url/personal/listing.html" ],
     [ "Report Bugs", "mailto:rt-jvs\@lojban.org" ],
     [ "Utilities", "$base_url/util/index.html" ],
