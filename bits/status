@@ -18,7 +18,7 @@
 % if(defined($session{'username'})) {
   You are logged in as: <% $session{'username'} %>
 % } else {
-  You are not logged in.
+  You are not <a href="<% $base_url %>/login.html">logged in</a>.
 % }
  </td></tr>
 </table>
