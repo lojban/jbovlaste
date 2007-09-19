@@ -164,7 +164,7 @@ sub generatemissingwordlink {
 sub sendemail {
     my ($address, $subject, $contents) = @_;
     $subject =~ s/"/'/g;
-    open( MAILX, qq{| /usr/bin/mailx -b jbovlaste-admin\@lojban.org-s "$subject" $address});
+    open( MAILX, qq{| /usr/bin/mailx -b jbovlaste-admin\@lojban.org -s "$subject" $address});
 
     print MAILX $contents;
 
