@@ -88,28 +88,21 @@ about you go to the right page and follow the link instead of playing around?
 	undef,
 	$valsi, $content, time(), $session{'userid'}, $definition, $exampleNum);
 
-    # Send e-mail to the definition creator.
-    my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM example WHERE
-	exampleid = ?", undef, $exampleNum);
-
-    my $definitionid = $dbh->selectrow_array("SELECT definitionid FROM example WHERE
-	exampleid = ?", undef, $exampleNum);
-
     # Send e-mail to the valsi creator, and all definition creators for that valsi
     my @email;
     push @email, $dbh->selectrow_array("SELECT u.email FROM
 	valsi v, users u WHERE v.userid = u.userid AND
-	v.valsiid=$valsiid");
+	v.valsiid=$valsi");
 
     # And the example creator(s) too!
     push @email, $dbh->selectrow_array("SELECT u.email FROM
 	example e, users u WHERE e.userid = u.userid AND
-	e.valsiid=$valsiid");
+	e.valsiid=$valsi");
 
     my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
 	WHERE d.userid = u.userid AND d.valsiid=?" );
 
-    $emailquery->execute($valsiid);
+    $emailquery->execute($valsi);
     while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
     {
 	push @email, $emailrow->{'email'};
