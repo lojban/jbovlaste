@@ -82,7 +82,7 @@ my $email = join( ' ', @email );
 my $emailtext = "
 
 In jbovlaste, the user $session{'username'} has $type a
-definition of "$valsiword" in the language "$lang".
+definition of \"$valsiword\" in the language \"$lang\".
 
 ";
 
