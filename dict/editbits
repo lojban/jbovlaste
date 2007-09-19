@@ -214,7 +214,7 @@ if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
   <tr>
    <td colspan="2">
    <& keywordList, %ARGS, type => 'place', typeName => 'Place',
-   max => $glossmax, langtag => $langtag, langid => $langid &>
+   max => $placemax, langtag => $langtag, langid => $langid &>
    </td>
    <td>
     Please read <a href="../help/natlangwords.html">details on the
@@ -281,10 +281,22 @@ if( defined( $check ) && ( ! defined( $notready ) || ! $notready ) )
 
 	# Check to see if this word already exists; if not, do
 	# various other kinds of testing/whining
-	my $exactWord = $dbh->selectrow_array( "SELECT wordid FROM natlangwords
-	    WHERE wordid > 0 AND langid = $langid
-	    AND word = ? AND meaning = ?
-	    ", undef, $word, $sense );
+	my $exactWord;
+
+	if( $sense )
+	{
+	    $exactWord = $dbh->selectrow_array( "SELECT wordid FROM natlangwords
+		WHERE wordid > 0 AND langid = $langid
+		AND word = ? AND meaning = ?
+		", undef, $word, $sense );
+	} else {
+	    # No sense/meaning given; search for blank ones.
+	    $exactWord = $dbh->selectrow_array( "SELECT wordid FROM natlangwords
+		WHERE wordid > 0 AND langid = $langid
+		AND word = ? AND (meaning = '' OR meaning IS NULL)
+		", undef, $word );
+	}
+
 
 	if( $word && ! $exactWord )
 	{

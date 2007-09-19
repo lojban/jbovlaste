@@ -64,6 +64,9 @@ push @email, $dbh->selectrow_array("SELECT u.email FROM
 my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
     WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
 
+my $lang = $dbh->selectrow_array("SELECT realname FROM languages
+    WHERE langid = ?", undef, $langid);
+
 $emailquery->execute($valsiid, $langid);
 while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
 {
@@ -79,7 +82,7 @@ my $email = join( ' ', @email );
 my $emailtext = "
 
 In jbovlaste, the user $session{'username'} has $type a
-definition of $valsiword.
+definition of "$valsiword" in the language "$lang".
 
 ";
 

@@ -118,11 +118,7 @@ Entered by <a href="../../personal/<% $username %>"><% $username %></a>.
 <b>Notes</b>: <% $notes %>
 
 
-% if(defined($session{'userid'}) &&
-%    $natlangword->{'userid'}==$session{'userid'}) {
     <br /><a href="../edit.html?wordid=<% $natlangword->{'wordid'} %>"><font size="-1">[edit]</font></a>
-% }
-
 
 <%perl>
  # Check for comments, generate post new comment message

@@ -144,13 +144,9 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
    <td valign="top" align="right">
     (by <% userlink($examplerow->{'username'}) %>)
    </td>
-% if(defined($session{'userid'}) &&
-%    $examplerow->{'userid'}==$session{'userid'})
-% {
    <td valign="top" align="right">
     <a href="editexample.html?example=<% $examplerow->{'exampleid'} %>"><font size="-1">[edit]</font></a>
    </td>
-% }
 
   </tr></table>
  </dd>
@@ -295,10 +291,7 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
 		- Preferred
 %	}
 	</font>
-%        if($session{'userid'}==$defrow->{'userid'})
-%        {
            <a href="editdef.html?definition=<% $defrow->{'definitionid'} %>">[edit]</a>
-%        }
     </tr>
       <tr>
         <td width="10%">&nbsp;</td>
@@ -467,12 +460,9 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
 		<td valign="top" align="right">
 		    (by <% userlink($examplerow->{'username'}) %>)
 		</td>
-% if(defined($session{'userid'}) &&
-%    $examplerow->{'userid'}==$session{'userid'}) {
 		<td valign="top" align="right">
 		    <a href="editexample.html?example=<% $examplerow->{'exampleid'} %>;definition=<% $defrow->{'definitionid'} %>"><font size="-1">[edit]</font></a>
 		</td>
-% }
 	    </table>
 	</dd>
 %  } while(defined($examplerow=$examplequery->fetchrow_hashref));
@@ -547,11 +537,7 @@ sub listetymology {
      my @parts = (['left',&userlink($etymology->{'username'})],
                   ['left',SimpleLaTeX::interpret($etymology->{'content'})]);
 
-     if(defined($session{'userid'}) &&
-        $etymology->{'userid'}==$session{'userid'})
-     {
-        push @parts, ['right',sprintf('<a href="editetymology.html?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
-     }
+     push @parts, ['right',sprintf('<a href="editetymology.html?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
 
      my @wrappedparts =
         map { sprintf('<td valign="top" align="%s">%s</td>', @{$_}) }

@@ -63,8 +63,13 @@ push @email, $dbh->selectrow_array("SELECT u.email FROM
         valsi v, users u WHERE v.userid = u.userid AND
         v.valsiid=$valsiid");
 
+# And the etymology creator(s) too!
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        etymology e, users u WHERE e.userid = u.userid AND
+        e.valsiid=$valsiid");
+
 my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
-WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
+	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
 
 $emailquery->execute($valsiid, $langid);
 while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
@@ -88,11 +93,11 @@ etymology at $word:
 
 Old Content:
 
-    $oldcontent
+$oldcontent
 
 New Content:
 
-    $content
+$content
 
 You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
 " );

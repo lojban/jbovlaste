@@ -265,6 +265,39 @@ later.</p>
 		undef,
 		$lang, $word, $notes, $meaningNum, $session{'userid'}, time() );
 	}
+
+    # Send e-mail to the word creator(s)
+    my @email;
+    push @email, $dbh->selectrow_array("SELECT u.email FROM
+	natlangwords nlw, users u WHERE nlw.userid = u.userid AND
+	nlw.word=? AND nlw.langid = ?", undef, $word, $langid );
+
+    # Get language info
+    my $langtag = $dbh->selectrow_array("SELECT tag FROM languages WHERE
+	langid = ?", undef, $langid);
+    my $langname = $dbh->selectrow_array("SELECT realname FROM languages WHERE
+	langid = ?", undef, $langid);
+
+    @email = keys %{{ map { $_ => 1 } @email }};
+
+    my $email = join( ' ', @email );
+
+    utils::sendemail( $email, "New NatLang Word $word", "
+
+In jbovlaste, the user $session{'username'} has added the following
+natural language word:
+
+    Word:        $word
+
+    In Sense:    $meaning
+
+    Notes:       $notes
+
+    In Language: $langname
+
+You can go to <http://jbovlaste.lojban.org/natlang/$langtag/$word> to see it.
+" );
+
     }
 
     if ($ok) {

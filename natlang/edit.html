@@ -1,3 +1,26 @@
+<%args>
+$meaning => undef
+$notes => undef
+$wordid => undef
+$valid => undef
+</%args>
+
+<%init>
+ our(%session,$dbh);
+ my $word = $dbh->selectrow_array("SELECT word FROM natlangwords where
+ wordid=$wordid");
+ my $lang = $dbh->selectrow_array("SELECT tag FROM languages l,
+ natlangwords nlw where nlw.wordid=$wordid AND l.langid=nlw.langid");
+</%init>
+
+<%shared>
+ our $titlestr;
+</%shared>
+
+<%method title>
+<% $titlestr %>
+</%method>
+
 % unless(defined($session{'username'})) {
 <font size="+3">Not logged in</font>
 <hr />
@@ -129,20 +152,64 @@ the word.</p>
 
 
 if($ok) {
-  if(length($meaning)) {
-    $dbh->do("UPDATE natlangwords SET meaning=?, notes=? WHERE wordid=?",
-    undef, $meaning, $notes, $wordid);
-  } else {
-    $dbh->do("UPDATE natlangwords SET meaning=null, notes=? WHERE wordid=?",
-    undef, $notes, $wordid);
-  }
+
+    # Get the old info
+    my $oldmeaning = $dbh->selectrow_array("SELECT meaning FROM
+	natlangwords WHERE wordid = ?", undef, $wordid);
+    my $oldnotes = $dbh->selectrow_array("SELECT notes FROM
+	natlangwords WHERE wordid = ?", undef, $wordid);
+
+    if(length($meaning)) {
+	$dbh->do("UPDATE natlangwords SET meaning=?, notes=? WHERE wordid=?",
+	    undef, $meaning, $notes, $wordid);
+    } else {
+	$dbh->do("UPDATE natlangwords SET meaning=null, notes=? WHERE wordid=?",
+	    undef, $notes, $wordid);
+    }
+
+    # Send e-mail to the word creator(s)
+    my @email;
+    push @email, $dbh->selectrow_array("SELECT u.email FROM
+	natlangwords nlw, users u WHERE nlw.userid = u.userid AND
+	nlw.word=? AND nlw.langid = ?", undef, $word, $langid );
+
+    # Get language info
+    my $langtag = $dbh->selectrow_array("SELECT tag FROM languages WHERE
+	langid = ?", undef, $langid);
+    my $langname = $dbh->selectrow_array("SELECT realname FROM languages WHERE
+	langid = ?", undef, $langid);
+
+    @email = keys %{{ map { $_ => 1 } @email }};
+
+    my $email = join( ' ', @email );
+
+    utils::sendemail( $email, "Edited NatLang Word $word", "
+
+In jbovlaste, the user $session{'username'} has edited the natural
+language word $word in the language $langname:
+
+Old Content:
+
+    In Sense: $oldmeaning
+
+    Notes:    $oldnotes
+
+New Content:
+
+    In Sense: $meaning
+
+    Notes:    $notes
+
+You can go to <http://jbovlaste.lojban.org/natlang/$langtag/$word> to see it.
+" );
+
 }
 
 </%perl>
 
 % if ($ok) {
 
-<p>No errors? Excellent.</p>
+    <p>No errors? Excellent.</p>
 
 <p>Go to <a href="<% $lang %>/<% utils::armorurl($word) %>">the page for the word you edited</a>.</p>
 
@@ -153,26 +220,3 @@ if($ok) {
 % }
 
 % }
-
-<%init>
- our(%session,$dbh);
- my $word = $dbh->selectrow_array("SELECT word FROM natlangwords where
- wordid=$wordid");
- my $lang = $dbh->selectrow_array("SELECT tag FROM languages l,
- natlangwords nlw where nlw.wordid=$wordid AND l.langid=nlw.langid");
-</%init>
-
-<%shared>
- our $titlestr;
-</%shared>
-
-<%method title>
-<% $titlestr %>
-</%method>
-
-<%args>
-$meaning => undef
-$notes => undef
-$wordid => undef
-$valid => undef
-</%args>

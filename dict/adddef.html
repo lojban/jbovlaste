@@ -177,7 +177,7 @@ if( $editbitsret )
     # Deal with the voting
     $m->comp( 'votebits', %ARGS, definition => $seqvalueresult[0] );
 
-    $dbh->commit or die $dbh->errstr;
+    $dbh->commit;
 
     # Get the current definition data
     my %newcontent = $m->comp( 'getdef', definitionid => $seqvalueresult[0]);
@@ -198,9 +198,8 @@ if( $editbitsret )
 
     <p>If you're seeing this, it probably worked. Please go to
     <a href="<% $valsitxt %>">the definition you added</a> and check
-    on things.  Also <strong>make sure to click on and vote for all the
-    natural language words</strong>.  A vote for you on the definition you
-    just added has already been recorded.</p>
+    on things. A vote for you on the definition you just added has
+    already been recorded.</p>
 
     <%perl>
 }

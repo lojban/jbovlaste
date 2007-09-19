@@ -1,3 +1,13 @@
+<%init>
+ our($dbh,%session);
+</%init>
+
+<%args>
+$example => undef
+$content => undef
+$word => undef
+</%args>
+
 % unless(defined($session{'username'})) {
 You ought not have been able to view this page, as you aren't logged in!
 %    return;
@@ -63,9 +73,29 @@ my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM example WHERE
 my $definitionid = $dbh->selectrow_array("SELECT definitionid FROM example WHERE
 	exampleid = ?", undef, $example);
 
-my $email = $dbh->selectrow_array("SELECT u.email FROM
-	definitions d, users u WHERE d.userid = u.userid AND
-	d.definitionid=$definitionid");
+# Send e-mail to the valsi creator, and all definition creators for that valsi
+my @email;
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        valsi v, users u WHERE v.userid = u.userid AND
+        v.valsiid=$valsiid");
+
+# And the example creator(s) too!
+push @email, $dbh->selectrow_array("SELECT u.email FROM
+        example e, users u WHERE e.userid = u.userid AND
+        e.valsiid=$valsiid");
+
+my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+	WHERE d.userid = u.userid AND d.valsiid=?" );
+
+$emailquery->execute($valsiid);
+while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+{
+    push @email, $emailrow->{'email'};
+}
+
+@email = keys %{{ map { $_ => 1 } @email }};
+
+my $email = join( ' ', @email );
 
 my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
 	valsiid=$valsiid");
@@ -97,13 +127,3 @@ $dbh->do("UPDATE example SET content = ?, time = ? WHERE exampleid = ?", { },
 <p>Return to <a href="<% $word %>">where you were</a>.</p>
 
 % }
-
-<%init>
- our($dbh,%session);
-</%init>
-
-<%args>
-$example => undef
-$content => undef
-$word => undef
-</%args>

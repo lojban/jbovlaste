@@ -68,7 +68,7 @@
 %   for(my $column=0; $column<$columns; $column++) {
   <td width="25%" valign="top" align="left">
 %      my $thiscolcount=$percolumn;
-%      while(defined(my $listingrow = $listingquery->fetchrow_hashref)) {
+%      while($listingquery->{Active} && defined(my $listingrow = $listingquery->fetchrow_hashref)) {
 %	my $bgstring = $bg ? "?bg=1;wordidarg=$listingrow->{'wordid'}" : "";
 -&nbsp;<a href="<%$lang%>/<%
 &utils::armorutf8forurl($listingrow->{'word'}) %><% $bgstring %>"><% $listingrow->{'word'} %></a><br />

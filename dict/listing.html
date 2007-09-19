@@ -192,7 +192,7 @@ new words from here.</p>
 %   for(my $column=0; $column<$columns; $column++) {
   <td width="25%" valign="top" align="left">
 %      my $thiscolcount=$percolumn;
-%      while(defined(my $listingrow = $listingquery->fetchrow_hashref)) {
+%      while($listingquery->{Active} && defined(my $listingrow = $listingquery->fetchrow_hashref)) {
 %	if( $bg )
 %	{
 %	    my $bgstring="?bg=1;langidarg=$listingrow->{'langid'}";
