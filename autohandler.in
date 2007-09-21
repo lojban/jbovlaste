@@ -15,7 +15,8 @@ what happened leading up to this. Just in case.
   }
 
   # Some pages get to skip all the shiny menu bits.
-  if( $m->fetch_next->name =~ m/^xml-export\.html$/ )
+  if( $m->fetch_next->name =~ m/^xml-export\.html$/ ||
+      $m->fetch_next->name =~ m/^recent.atom/ )
   {
       $output =~ s/^\s*//s;
       print "$output";
