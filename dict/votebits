@@ -75,7 +75,7 @@ foreach my $keyword (@glosskeywords,@placekeywords)
 if( scalar @glosskeywords || scalar @placekeywords )
 {
     </%perl>
-    <p><strong>Done ecording votes for the natural language words.</strong><p>
+    <p><strong>Done recording votes for the natural language words.</strong><p>
     <hr />
     <%perl>
 }

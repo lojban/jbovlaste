@@ -114,10 +114,6 @@ Not enough info to know what to do.
 
 </%perl>
 
-<p><strong>PLEASE</strong> remember to vote for your new definition,
-otherwise wiki links and Best Guesses listings will be guaranteed to
-*not* include it.</p>
-
 <form method="post" action="<% $actionPage %>">
  <table>
   <tr>
