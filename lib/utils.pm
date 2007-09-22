@@ -162,13 +162,58 @@ sub generatemissingwordlink {
 }
 
 sub sendemail {
-    my ($address, $subject, $contents) = @_;
+    use Encode qw/encode decode/;
+
+    my ($address, $subject, $contents, $username ) = @_;
     $subject =~ s/"/'/g;
-    open( MAILX, qq{| /usr/bin/mailx -b jbovlaste-admin\@lojban.org -s "$subject" $address});
+
+    # Add a sort of header to the subject
+    if( defined($username) ) {
+	$subject = "[jvs-watch] Per $username: $subject";
+    } else {
+	$subject = "[jvs-watch] Per unknown user: $subject";
+    }
+
+    # Be a nice mail person
+    my $encsubj = encode("MIME-Header", $subject);
+
+    open( MAILX, qq{| /usr/bin/mailx -b jbovlaste-admin\@lojban.org -a "Content-type: text/plain;charset=UTF-8" -s "$encsubj" $address});
 
     print MAILX $contents;
 
     close( MAILX );
+}
+
+sub mydiff {
+    use Algorithm::Diff;
+
+    my ( $seq1, $seq2 ) = @_;
+
+    my $diff = Algorithm::Diff->new( $seq1, $seq2 );
+
+    my $rettext;
+
+    $diff->Base( 1 );   # Return line numbers, not indices
+	while(  $diff->Next()  ) {
+	    next   if  $diff->Same();
+	    my $sep = '\n';
+	    if(  ! $diff->Items(2)  ) {
+		$rettext .= sprintf "%d,%dd%d\n",
+			$diff->Get(qw( Min1 Max1 Max2 ));
+	    } elsif(  ! $diff->Items(1)  ) {
+		$rettext .= sprintf "%da%d,%d\n",
+			$diff->Get(qw( Max1 Min2 Max2 ));
+	    } else {
+		$sep = "---\n";
+		$rettext .= sprintf "%d,%dc%d,%d\n",
+			$diff->Get(qw( Min1 Max1 Min2 Max2 ));
+	    }
+	    $rettext .= "< $_\n"   for  $diff->Items(1);
+	    $rettext .= $sep;
+	    $rettext .= "> $_\n"   for  $diff->Items(2);
+	}
+
+    return $rettext;
 }
 
 1;

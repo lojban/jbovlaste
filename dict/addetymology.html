@@ -94,7 +94,7 @@ etymology to $word:
 $content
 
 You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
-" );
+", $session{'username'} );
 
 $dbh->do("INSERT INTO etymology (valsiid, langid, content, time, userid) VALUES (?, ?, ?, ?, ?)", { }, $valsi, $langid, $content, time(), $session{'userid'});
 </%perl>

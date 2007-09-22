@@ -1,3 +1,26 @@
+<%args>
+$request_type => undef
+$details => undef
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
+</%args>
+
+<%method title>
+Sending A Moderation Request
+</%method>
+
+
+<%init>
+  our($dbh,%session);
+  use utils;
+  use Unicode::String;
+  $r->content_type("text/html; charset=utf-8");
+
+  use Captcha::reCAPTCHA;
+
+  my $c = Captcha::reCAPTCHA->new;
+</%init>
+
 % unless(defined($request_type)) {
 
 <font size="+3">
@@ -8,9 +31,12 @@ Writing A Moderation Request
 
 <form method="post" action="moderation.html">
 <%perl>
-# reCaptcha Output form
-# Public key
+# Don't bother making logged in users captcha
+if( ! defined($session{'userid'}) ) {
+    # reCaptcha Output form
+    # Public key
     print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
+}
 </%perl>
 
  <table>
@@ -45,25 +71,28 @@ Writing A Moderation Request
 # Check the form results (both of them)
 } else {
 
-    # Verify submission
-    my $result = $c->check_answer(
-    # Private key
-        '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
-        $recaptcha_challenge_field, $recaptcha_response_field
-    );
+    my $result;
 
-    if ( $result->{is_valid} ) {
-</%perl>
+    # Verify submission
+    # Don't bother making logged in users captcha
+    if( ! defined($session{'userid'}) ) {
+	$result = $c->check_answer(
+	    # Private key
+	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
+	    $recaptcha_challenge_field, $recaptcha_response_field
+	);
+    }
+
+    if ( $result->{is_valid} || defined($session{'userid'}) ) {
+	</%perl>
 	<font size="+3">
 	Thank you for submitting your request.
 	</font>
-<%perl>
+	<%perl>
 
-my $recipient = $m->base_comp->attr('admin_email');
+	my $recipient = $m->base_comp->attr('admin_email');
 
-#Now send mail to $recipient
-utils::sendemail( $recipient, "jbovlaste Moderation Request", "
------------------------------
+	my $mailtext = "
 
 Request Type: $request_type
 
@@ -71,41 +100,21 @@ Remote IP address: $ENV{'REMOTE_ADDR'}
 
 Details: $details
 
-" );
+	";
 
+	#Now send mail to $recipient
+	utils::sendemail( $recipient, "jbovlaste Moderation Request",
+	    $mailtext, $session{'username'} );
 
     } else {
-</%perl>
+	</%perl>
 	<font size="+3">
 	Captcha failed.
 	<% $recaptcha_challenge_field %>,
 	<% $recaptcha_response_field %>
 	</font>
-<%perl>
-	
+	<%perl>
+
     }
 }
 </%perl>
-
-<%method title>
-Sending A Moderation Request
-</%method>
-
-
-<%init>
-  our($dbh,%session);
-  use utils;
-  use Unicode::String;
-  $r->content_type("text/html; charset=utf-8");
-
-  use Captcha::reCAPTCHA;
-
-  my $c = Captcha::reCAPTCHA->new;
-</%init>
-
-<%args>
-$request_type => undef
-$details => undef
-$recaptcha_challenge_field => undef
-$recaptcha_response_field => undef
-</%args>

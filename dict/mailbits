@@ -88,6 +88,18 @@ definition of \"$valsiword\" in the language \"$lang\".
 
 if( scalar( keys %oldcontent) > 1 )
 {
+    my @seq1 = split( /\n/, defdump(\%oldcontent) );
+    my @seq2 = split( /\n/, defdump(\%newcontent) );
+
+    #print "<pre>";
+    #print Dumper(\@seq1);
+    #print Dumper(\@seq2);
+    #print Dumper(utils::mydiff(\@seq1, \@seq2));
+    #print "</pre>";
+
+    $emailtext .= "Differences:\n\n".utils::mydiff( \@seq1, \@seq2 )."\n\n";
+
+
     $emailtext .= "Old Data:\n\n".defdump(\%oldcontent)."\n\n";
 }
 
@@ -99,6 +111,6 @@ You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
 
 utils::sendemail( $email, 
     "Definition $typeUpper At Word $valsiword",
-    $emailtext );
+    $emailtext, $session{'username'} );
 
 </%perl>

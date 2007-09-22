@@ -117,7 +117,7 @@ New content:
     $content
 
 You can go to <http://jbovlaste.lojban.org/dict/$word> to see it.
-" );
+", $session{'username'} );
 $dbh->do("UPDATE example SET content = ?, time = ? WHERE exampleid = ?", { },
           $content, time(), $example);
 </%perl>

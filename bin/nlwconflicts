@@ -36,7 +36,8 @@ The following words in the given languages have a null definition *AND* a not nu
 	$mailtext .= Dumper( $word )."\n\n";
     }
 
-    utils::sendemail( "jbovlaste\@lojban.org", "Bad NatLangWords Report", $mailtext );
+    utils::sendemail( "jbovlaste\@lojban.org", "Bad NatLangWords
+	    Report", $mailtext, $session{'username'} );
 }
 
 $dbh->disconnect;
