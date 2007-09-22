@@ -51,8 +51,8 @@ New Account Creation
     );
 
     # Munge the input
-    $username =~ s/[^a-zA-Z0-9]//g;
-    $realname =~ s/[^a-zA-Z0-9]//g;
+    $username =~ s/[^a-zA-Z0-9_-]//g;
+    $realname =~ s/[^a-zA-Z0-9 _-]//g;
     $email =~ s/[^a-zA-Z0-9@._-]//g;
 
     #print "<pre>".Dumper(\$result)."</pre>";
