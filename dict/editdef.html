@@ -90,10 +90,17 @@ if( ! defined( $check ) )
 	$places{'placew'.$place->[2]} = $place->[0];
 	$places{'placem'.$place->[2]} = $place->[1];
     }
-    $glossmax = 1 + (scalar @glosswords);
-    $placemax = 1 + (scalar @placewords);
-#print "<pre>".Dumper(\%glosses)."</pre>";
-#print "<pre>".Dumper(\%places)."</pre>";
+    
+    if( ! defined( $glossmax ) )
+    {
+	$glossmax = 1 + (scalar @glosswords);
+    }
+    if( ! defined( $placemax ) )
+    {
+	$placemax = 1 + (scalar @placewords);
+    }
+    #print "<pre>".Dumper(\%glosses)."</pre>";
+    #print "<pre>".Dumper(\%places)."</pre>";
     </%perl>
 
 <font size="+3">
