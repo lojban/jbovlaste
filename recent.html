@@ -114,7 +114,7 @@ SWITCH:
 		$row->{'type'} eq 'definition' ||
 		$row->{'type'} eq 'etymology')
 	{
-	    $m->out(sprintf('%s - %s update by <a href="personal/%s">%s</a>; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
+	    $m->out(sprintf('%s - %s originally entered by <a href="personal/%s">%s</a> was updated; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
 			$row->{'username'}, $row->{'username'},
 			$row->{'word'}, $row->{'word'}, $langreal
 			));
