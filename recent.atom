@@ -111,7 +111,7 @@ while(defined(my $row = $query->fetchrow_hashref))
     }
 
     $m->out(sprintf("<entry><updated>%s</updated>" .
-                    "<author><name>%s</name><uri>personal/%s</uri></author>", 
+                    "<!--<author><name>%s</name><uri>personal/%s</uri></author>-->", 
                     $m->interp->apply_escapes($updated, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'u', 'h')));
@@ -137,7 +137,7 @@ SWITCH:
 	{
 	
             $m->out(sprintf('<link href="dict/%s"/>', $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
-	    $m->out(sprintf('<title type="text">%s "%s"%s modified by %s</title>' . "\n", $row->{'type'},
+	    $m->out(sprintf('<title type="text">%s "%s"%s originally created by %s</title>' . "\n", $row->{'type'},
 			$row->{'word'}, $langreal, $row->{'username'}
 			));
 	    $m->out(sprintf('<summary type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">%s update by <a href="personal/%s">%s</a>; see <a href="dict/%s">%s</a>%s</div></summary>' . "\n", $row->{'type'},
