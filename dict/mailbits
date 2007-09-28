@@ -23,6 +23,7 @@ sub defdump
     my $rettext;
     $rettext .= "\tDefinition:\n\t\t".$content{'definition'}."\n\n";
     $rettext .= "\tNotes:\n\t\t".$content{'notes'}."\n\n";
+    $rettext .= "\tJargon:\n\t\t".$content{'jargon'}."\n\n";
 
     # Gloss words
     if( scalar $content{'glosses'} )

@@ -6,6 +6,7 @@ $langid => undef
 $definitiontxt => undef
 $definition => undef
 $notes => undef
+$jargon => undef
 $langtag => undef
 $selmaho => undef
 </%args>
@@ -146,9 +147,10 @@ if( $editbitsret )
 	WHERE definitionid = ?", undef, $definition);
 
 
-    $dbh->do("UPDATE definitions SET definition=?, notes=?, time=?, selmaho=?
+    $dbh->do("UPDATE definitions SET definition=?, notes=?,
+	jargon=?, time=?, selmaho=?
 	WHERE definitionid=?", undef,
-	$definitiontxt, $notes, time(), $selmaho, $definition);
+	$definitiontxt, $notes, $jargon, time(), $selmaho, $definition);
 
     $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", { },
 	$definition);

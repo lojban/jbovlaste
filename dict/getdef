@@ -18,6 +18,10 @@ $oldcontent{definition} = $dbh->selectrow_array("SELECT definition FROM
 $oldcontent{notes} = $dbh->selectrow_array("SELECT notes FROM
     definitions WHERE definitionid = ?", undef, $definitionid);
 
+# Get the old jargon
+$oldcontent{jargon} = $dbh->selectrow_array("SELECT jargon FROM
+    definitions WHERE definitionid = ?", undef, $definitionid);
+
 # Get the old gloss keywords
 $oldcontent{glosses} = $dbh->selectall_arrayref("SELECT nlw.word, nlw.meaning,
     kwm.place FROM keywordmapping kwm, natlangwords nlw

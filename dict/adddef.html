@@ -7,6 +7,7 @@ $valsiid => undef
 $langid => undef
 $definitiontxt => undef
 $notes => undef
+$jargon => undef
 $valsitxt => undef
 $langtag => undef
 $selmaho => undef
@@ -132,10 +133,10 @@ if( $editbitsret )
 
     $dbh->do("INSERT INTO definitions ".
 	"(definitionid, langid, valsiid, definitionNum, definition,
-	    selmaho, notes, userid, time) ".
-	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
+	    selmaho, notes, jargon, userid, time) ".
+	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", undef, $seqvalueresult[0],
 	$langid, $valsiid, $seqvalueresult[0], $definitiontxt, $selmaho,
-	$notes, $session{'userid'}, time()) or die $dbh->errstr;
+	$notes, $jargon, $session{'userid'}, time()) or die $dbh->errstr;
 
     for(my $i=0; $i<=$#glosskeywords; $i++) {
 	next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);

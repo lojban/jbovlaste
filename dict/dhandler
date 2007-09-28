@@ -356,6 +356,12 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
 	<td><% Wiki::mini($defrow->{'notes'}, $defrow->{'tag'}) %></td>
      </tr>
 % }
+% if(defined($defrow->{'jargon'}) && length($defrow->{'jargon'})) {
+     <tr>
+      <td>jargon type</td>
+	<td><% Wiki::mini($defrow->{'jargon'}, $defrow->{'tag'}) %></td>
+     </tr>
+% }
 <%perl>
     my $glosswordsref = $dbh->selectall_arrayref(
                             "SELECT nlw.word, nlw.meaning, nlw.wordid ".

@@ -17,6 +17,8 @@ $valsitxt => undef
 $langtag => undef
 $selmaho => undef
 $dollarsok => undef
+$jargon => undef
+$jargonadd => undef
 </%args>
 
 <%shared>
@@ -47,9 +49,9 @@ if( $definition && ! $valsiid )
 	$notyet = 1;
     }
     my @dbreturns = $dbh->selectrow_array("SELECT valsiid, langid,
-	    definition, notes FROM
+	    definition, notes, jargon FROM
 	    definitions WHERE definitionid=?", undef, $definition);
-    ( $valsiid, $langid, $definitiontxt, $notes ) = @dbreturns;
+    ( $valsiid, $langid, $definitiontxt, $notes, $jargon ) = @dbreturns;
 }
 
 #print "<pre>".Dumper(\%ARGS)."</pre>";
@@ -92,9 +94,9 @@ Not enough info to know what to do.
 %   return;
 % }
 
-% if( ! defined($definitiontxt) || defined($check) || defined( $glossadd ) || defined( $placeadd ) ) {
-
 <%perl>
+if( ! defined($definitiontxt) || defined($check) || 
+    defined( $jargonadd ) || defined( $glossadd ) || defined( $placeadd ) ) {
     # Either the user got here through addvalsi, in which case
     # valsiword will be set, or they got here through dict/dhandler,
     # and/or editdef.html, in which case valsiid will be set.
@@ -182,12 +184,27 @@ if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
     </td>
   </tr>
 % }
+% if( defined $jargon || defined $jargonadd ) {
+  <tr>
+   <td>Jargon</td>
+   <td>
+    <textarea rows="1" cols="60" name="jargon"><% $jargon %></textarea>
+   </td>
+   <td>Briefly describe the activity or group that uses this word.</td>
+  </tr>
+% } else {
+  <tr>
+   <td><input name="jargonadd" value="This Is A Jargon Word" type="submit"></td>
+   </td>
+  </tr>
+% }
   <tr>
    <td>Notes</td>
    <td>
     <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
    </td>
-   <td>Yes, you're being given multiple lines. Try not to use them.</td>
+   <td>Please do not insert any newlines.  <strong>Please link to 
+   other valsi you use! (wrap them in {...})</strong></td>
   </tr>
   <tr>
    <td colspan="2">

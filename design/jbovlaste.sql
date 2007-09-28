@@ -163,6 +163,12 @@ CREATE TABLE definitions (
                                      -- place structure for all selbri
   notes text,                        -- little bits of additional, non-def
                                      -- info
+
+  jargon text,			     -- not null if this is
+				     -- domain-specific jargon;
+				     -- value is the type of jargon
+				     -- it is
+
   userId int4 not null,              -- contributing user
   time int4 not null,                -- time of contribution
   selmaho text,		      	     -- What selma'o this word belongs to, if any 
@@ -399,7 +405,7 @@ CREATE VIEW convenientdefinitions AS
     SELECT nd.definitionid, l.realname as langrealname, l.tag,
     l.langid, v.valsiid, v.word, nd.definition, nd.notes,
     u.username, u.userid, nd."time", nd.definitionNum, v.rafsi,
-    nd.selmaho
+    nd.selmaho, nd.jargon
     FROM definitions nd, languages l, valsi v, users u
     WHERE nd.langid = l.langid AND nd.valsiid = v.valsiid
 	AND nd.userid = u.userid;
