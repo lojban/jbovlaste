@@ -63,7 +63,7 @@ push @email, $dbh->selectrow_array("SELECT u.email FROM
 # And the etymology creator(s) too!
 push @email, $dbh->selectrow_array("SELECT u.email FROM
 	etymology e, users u WHERE e.userid = u.userid AND
-	e.valsiid=$valsiid");
+	e.valsiid=$valsi");
 
 my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
 	WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
