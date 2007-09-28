@@ -19,6 +19,7 @@ $selmaho => undef
 $dollarsok => undef
 $jargon => undef
 $jargonadd => undef
+$jargondrop => undef
 </%args>
 
 <%shared>
@@ -52,6 +53,12 @@ if( $definition && ! $valsiid )
 	    definition, notes, jargon FROM
 	    definitions WHERE definitionid=?", undef, $definition);
     ( $valsiid, $langid, $definitiontxt, $notes, $jargon ) = @dbreturns;
+}
+
+if( defined( $jargondrop ) )
+{
+    undef $jargon;
+    undef $jargonadd;
 }
 
 #print "<pre>".Dumper(\%ARGS)."</pre>";
@@ -96,7 +103,8 @@ Not enough info to know what to do.
 
 <%perl>
 if( ! defined($definitiontxt) || defined($check) || 
-    defined( $jargonadd ) || defined( $glossadd ) || defined( $placeadd ) ) {
+    defined( $jargonadd ) || defined( $jargondrop ) || 
+    defined( $glossadd ) || defined( $placeadd ) ) {
     # Either the user got here through addvalsi, in which case
     # valsiword will be set, or they got here through dict/dhandler,
     # and/or editdef.html, in which case valsiid will be set.
@@ -190,7 +198,9 @@ if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
    <td>
     <textarea rows="1" cols="60" name="jargon"><% $jargon %></textarea>
    </td>
-   <td>Briefly describe the activity or group that uses this word.</td>
+   <td>Briefly describe the activity or group that uses this word,
+       or: 
+   <input name="jargondrop" value="This Is Not A Jargon Word" type="submit"></td>
   </tr>
 % } else {
   <tr>
