@@ -297,48 +297,6 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
         <td width="10%">&nbsp;</td>
 	<td width="90%">&nbsp;</td>
      </tr>
-     <tr>
-      <td>created by</td>
-      <td><% &userlink($defrow->{'username'}) %></td>
-     </tr>	
-     <tr>
-      <td>vote information</td>
-      <td><% $dbh->selectrow_array(
-	      "select sum(value) from definitionvotes where definitionid=?;",
-	      undef,
-	      $defrow->{'definitionid'} ) || 0 %>
-%     if(defined($session{'userid'})) 
-%     {
-<%perl>
-	# Check to see if this is the user's vote, and it's a
-	# for-vote (positive)
-	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
-	    WHERE userid=? AND definitionid=?", undef,
-	    $session{'userid'}, $defrow->{'definitionid'} ) > 0 )
-	{
-</%perl>
-	<img tag: style="border: none" src="../images/already-voted-up.png" alt="[you've voted for this definition]" />
-%       } else {
-         <a href="vote.html?definition=<% $defrow->{'definitionid'} %>"><img tag: style="border: none" src="../images/voteup.png" alt="[vote for this definition]" /></a>
-%      }
-<%perl>
-	# Check to see if this is the user's vote, and it's a
-	# downvote (negative)
-	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
-	    WHERE userid=? AND definitionid=?", undef,
-	    $session{'userid'}, $defrow->{'definitionid'} ) < 0 )
-	{
-</%perl>
-	<img tag: style="border: none" src="../images/already-voted-down.png" alt="[you've voted against this definition]" />
-%       } else {
-         <a href="vote.html?downvote=1&definition=<% $defrow->{'definitionid'} %>"><img tag: style="border: none" src="../images/votedown.png" alt="[vote against this definition]" /></a>
-%      }
-%     }
-     </tr>
-     <tr>
-      <td>time</td>
-      <td><% scalar localtime $defrow->{'time'} %></td>
-     </tr>
 % if( $defrow->{'selmaho'} )
 % {
      <tr>
@@ -415,6 +373,52 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
        </tr>
 %     }
 
+     <tr>
+      <td>created by</td>
+      <td><% &userlink($defrow->{'username'}) %></td>
+     </tr>	
+     <tr>
+      <td>vote information</td>
+      <td><% $dbh->selectrow_array(
+	      "select sum(value) from definitionvotes where definitionid=?;",
+	      undef,
+	      $defrow->{'definitionid'} ) || 0 %>
+%     if(defined($session{'userid'})) 
+%     {
+<%perl>
+	# Check to see if this is the user's vote, and it's a
+	# for-vote (positive)
+	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
+	    WHERE userid=? AND definitionid=?", undef,
+	    $session{'userid'}, $defrow->{'definitionid'} ) > 0 )
+	{
+</%perl>
+	<img tag: style="border: none; width: 2em; height: 2em;" src="../images/already-voted-up.png" alt="[you've voted for this definition]" />
+%       } else {
+         <a href="vote.html?definition=<% $defrow->{'definitionid'}
+	 %>"><img tag: style="border: none; width: 2em; height:
+	 %2em;" src="../images/voteup.png" alt="[vote for this definition]" /></a>
+%      }
+<%perl>
+	# Check to see if this is the user's vote, and it's a
+	# downvote (negative)
+	if( $dbh->selectrow_array( "SELECT value FROM definitionvotes
+	    WHERE userid=? AND definitionid=?", undef,
+	    $session{'userid'}, $defrow->{'definitionid'} ) < 0 )
+	{
+</%perl>
+	<img tag: style="border: none; width: 2em; height: 2em;" src="../images/already-voted-down.png" alt="[you've voted against this definition]" />
+%       } else {
+         <a href="vote.html?downvote=1&definition=<%
+	 $defrow->{'definitionid'} %>"><img tag: style="border:
+	 none; width: 2em; height: 2em;" src="../images/votedown.png" alt="[vote against this definition]" /></a>
+%      }
+%     }
+     </tr>
+     <tr>
+      <td>time</td>
+      <td><% scalar localtime $defrow->{'time'} %></td>
+     </tr>
     <tr>
         <td></td>
 	<td>
