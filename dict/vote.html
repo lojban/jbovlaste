@@ -55,7 +55,7 @@ if( ! $errstr )
 
 </%perl>
 
-<p>Your vote should've be recorded.</p>
+<p>Your vote should've been recorded.</p>
 
 % my @wordvotedfor = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?", { }, $definition);
 
