@@ -1,14 +1,13 @@
 <%args>
 $meaning => undef
 $notes => undef
+$word => undef
 $wordid => undef
 $valid => undef
 </%args>
 
 <%init>
  our(%session,$dbh);
- my $word = $dbh->selectrow_array("SELECT word FROM natlangwords where
- wordid=$wordid");
  my $lang = $dbh->selectrow_array("SELECT tag FROM languages l,
  natlangwords nlw where nlw.wordid=$wordid AND l.langid=nlw.langid");
 </%init>
@@ -21,7 +20,14 @@ $valid => undef
 <% $titlestr %>
 </%method>
 
-% unless(defined($session{'username'})) {
+<%perl>
+ if( ! defined( $word ) )
+ {
+     $word = $dbh->selectrow_array("SELECT word FROM natlangwords where
+	 wordid=$wordid");
+ }
+ unless(defined($session{'username'})) {
+</%perl>
 <font size="+3">Not logged in</font>
 <hr />
 Sorry, you've got to be logged in to edit words.
@@ -84,7 +90,7 @@ words</a>.</p>
 <table>
  <tr>
   <td>Word Or Phrase</td>
-  <td><% $word %></td>
+  <td><input size="100" name="word" value="<% $word %>"></td>
  </tr>
  <tr>
   <td>In The Sense Of</td>
@@ -160,11 +166,11 @@ if($ok) {
 	natlangwords WHERE wordid = ?", undef, $wordid);
 
     if(length($meaning)) {
-	$dbh->do("UPDATE natlangwords SET meaning=?, notes=? WHERE wordid=?",
-	    undef, $meaning, $notes, $wordid);
+	$dbh->do("UPDATE natlangwords SET word=?, meaning=?, notes=? WHERE wordid=?",
+	    undef, $word, $meaning, $notes, $wordid);
     } else {
-	$dbh->do("UPDATE natlangwords SET meaning=null, notes=? WHERE wordid=?",
-	    undef, $notes, $wordid);
+	$dbh->do("UPDATE natlangwords SET word=?, meaning=null, notes=? WHERE wordid=?",
+	    undef, $word, $notes, $wordid);
     }
 
     # Send e-mail to the word creator(s)
