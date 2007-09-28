@@ -320,6 +320,7 @@ if( ! $notyet && defined( $check ) && ( ! defined( $notready ) || ! $notready ) 
 	if( $word && ! $exactWord )
 	{
 	    </%perl>
+	    <div class="form-notice">
 	    Notes: <input type="text" value="<% $notes %>" name="<% $type %>n<% $i %>" size="30">
 	    <p><strong>This word doesn't exist</strong>; if you're
 	    sure you want to add it, please check this box: <input
@@ -420,6 +421,9 @@ if( ! $notyet && defined( $check ) && ( ! defined( $notready ) || ! $notready ) 
 		    <%perl>
 		}
 	    }
+	    </%perl>
+	    </div>
+	    <%perl>
 	}
     }
     </%perl>

@@ -28,6 +28,7 @@ what happened leading up to this. Just in case.
  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//<% uc($lang) %>"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%$lang%>" lang="<%$lang%>">
+ <head>
  <STYLE type="text/css">
   <!--
     BODY { /*background-image:url(<% $base_url %>/images/gaufarvica.jpg);*/
@@ -35,8 +36,8 @@ what happened leading up to this. Just in case.
            background-repeat:no-repeat;
            background-position:bottom right; }
     -->
+    .form-notice { border: .1em solid red; background: #FCC; color: black; padding: .5em;  }
  </STYLE>
- <head>
   <meta name="keywords" content="jbovlaste lojban dictionary" />
   <!-- Don't bitch about my XHTML, and I won't gnaw off your head.
        Besides, it is all pieced together from a half dozen files.
