@@ -11,13 +11,8 @@
  my @result;
  my $valsiquery = $dbh->prepare("SELECT * FROM convenientvalsi WHERE word=?");
  $valsiquery->execute($m->dhandler_arg());
- my $row = $valsiquery->fetchrow_hashref;
 
- if(defined($valsiquery->fetchrow_hashref)) {
-   $m->out("Integrity of the relational database has been ".
-           "violated, constraints have failed. Logging the error ".
-           "and halting the database.");
- }
+ my $row = $valsiquery->fetchrow_hashref;
 </%perl>
 
 <%method title>
