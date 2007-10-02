@@ -26,10 +26,18 @@ Dictionary Record: <% $m->dhandler_arg %>
 % if( $bg )
 % {
 <p>
-    This is a "best guess" listing for the word "<% $m->dhandler_arg %>" in
+    This is a "best guess" listing for the word "<% $m->dhandler_arg %>"
+% if( defined( $langidarg ) ) {
+    in
     language <% $dbh->selectrow_array( "SELECT realname from
-    languages where langid=$langidarg") %>, meaning that only one of
-    the definitions for this word will be shown (the one with the
+    languages where langid=$langidarg") %>, 
+% }
+    meaning that only one of
+    the definitions for this word will be shown 
+% if( ! defined( $langidarg ) ) {
+    for each language
+% }
+    (the one with the
     highest total votes).
     See <a href="../dict/<% $m->dhandler_arg %>">all the definitions for
     <% $m->dhandler_arg %></a>.
