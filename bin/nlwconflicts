@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w -I ./lib
+#!/usr/bin/perl -w -I /var/www/jbovlaste/current/lib
 #
 # Used to seach for natlang words with both a default and non-default
 # definition.
@@ -36,8 +36,7 @@ The following words in the given languages have a null definition *AND* a not nu
 	$mailtext .= Dumper( $word )."\n\n";
     }
 
-    utils::sendemail( "jbovlaste\@lojban.org", "Bad NatLangWords
-	    Report", $mailtext, $session{'username'} );
+    utils::sendemail( "jbovlaste\@lojban.org", "Bad NatLangWords Report", $mailtext, `id -un` );
 }
 
 $dbh->disconnect;
