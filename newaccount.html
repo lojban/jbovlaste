@@ -9,10 +9,20 @@ $email => undef
 % unless(defined($email)) {
 
 <font size="+3">
-New Account Creation
+Register As A Jbovlaste Editor
 </font>
 
 <hr />
+<p>
+<strong>You do not need to register if you only want to read the data that's already here.</strong>
+</p>
+<p>
+Thanks for your interest in becoming an editor. <a href="http://jbovlaste.lojban.org/help/howtohelp.html">There is plenty of work to do</a>, and we welcome all experienced Lojbanists. If you create an account, you can add words and definitions, change existing words and definitions, and cast votes that will be used for ranking words and definitions.
+</p>
+<p>
+After your account is created, you will be added to the Jbovlaste mailing list at <em>jbovlaste@lojban.org</em>. This list will be used for important announcements and (occasionally) discussions that are relevant for the project. Reading this mailing list is <strong>mandatory</strong> for all Jbovlaste editors.
+</p>
+
 
 <form method="post" action="newaccount.html">
 <%perl>
@@ -70,9 +80,13 @@ New Account Creation
 	jbovlaste mailing list using the address you just
 	entered.</p>
 
-	<p>Please let
+        <p>Please read all of
+        <a href="http://jbovlaste.lojban.org/help/index.html">the help
+        section</a> before you start entering data.</p>
+
+	<p>If you need any help, please let
 	<a href="mailto:<% $m->base_comp->attr('admin_email') %>">the admins</a>
-	know if you need any help.</p>
+	know.</p>
 
 <%perl>
 	# Make up a password
