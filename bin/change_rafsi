@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ ! $2 ]
+then
+	echo "Needs two args; valsiid, rafsi field."
+	exit 1
+fi
+
+psql -U jbovlaste -c "select * from valsi where valsiid=$1;"
+
+echo "Updating that entry with rafsi field "$2".
+Make sure any ' are doubled.
+Ctrl-c to abort, anything else to continue."
+
+read crap
+
+psql -U jbovlaste -c "update valsi set rafsi='$2' where valsiid=$1;"
