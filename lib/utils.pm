@@ -169,9 +169,9 @@ sub sendemail {
 
     # Add a sort of header to the subject
     if( defined($username) ) {
-	$subject = "[jvs-watch] Per $username: $subject";
+	$subject = "[jvsw] $subject -- By $username";
     } else {
-	$subject = "[jvs-watch] Per unknown user: $subject";
+	$subject = "[jvsw] $subject -- By $username";
     }
 
     # Be a nice mail person
