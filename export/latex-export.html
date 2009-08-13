@@ -1,6 +1,6 @@
 <%perl>
     # Make a temp directory and file.
-    my $dir = tempdir( DIR => "/home/www/tmp/" );
+    my $dir = tempdir( DIR => "/var/www/tmp/" );
     my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
     open(TMP, ">$filename") or die "Couldn't open a temporary file.\n";
@@ -40,7 +40,7 @@
 #    my $joinedwords=join("",@words);
 
     my $shortfilename=$filename;
-    $shortfilename =~ s#/home/www##;
+    $shortfilename =~ s#/var/www/tmp#/tmp;
 
     # Get the valsi best guesses list.
     my $valsibestguesses = $dbh->selectall_hashref("SELECT v.word, vbg.* from
@@ -194,14 +194,13 @@
 \documentclass[notitlepage,twocolumn,letter,a4paper]{book}
 
 \usepackage{ucs}
-\usepackage[utf8]{inputenc}
+\usepackage[utf8x]{inputenc}
 
 %% These apply to A4 paper only
 \pdfpagewidth 210mm
 \pdfpageheight 297mm
 
 \usepackage{fancyhdr} % important, lets us actually pull this stuff off.
-\usepackage{fixmarks} % unbreaks some stuff.
 \pagestyle{fancy}     % turns on the magic provided by fancyhdr
 \usepackage{palatino}
 
