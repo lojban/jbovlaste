@@ -205,7 +205,7 @@ what happened leading up to this. Just in case.
 
 <%attr>
 admin_email => "jbovlaste-admin\@lojban.org"
-jbovlaste_dir => "/home/jbovlaste/current"
+jbovlaste_dir => "/var/www/jbovlaste/current"
 </%attr>
 
 <%method title>

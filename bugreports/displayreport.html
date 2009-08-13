@@ -9,7 +9,7 @@ You've got to tell me what report to display!
 <%perl>
  $report =~ s/\.\.//g;
  $report =~ s#/##g;
- my $filename = sprintf("/home/jbovlaste/current/bugreports/%s",$report);
+ my $filename = sprintf("/var/www/jbovlaste/current/bugreports/%s",$report);
  my $reportdata = do $filename;
 </%perl>
 

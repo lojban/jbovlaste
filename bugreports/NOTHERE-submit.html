@@ -52,7 +52,7 @@ Thanks!
 Return to the <a href="../bugreports/">bug reports</a>.
 
 <%perl>
-open(REPORT,sprintf(">/home/jbovlaste/current/bugreports/%s.%i",
+open(REPORT,sprintf(">/var/www/jbovlaste/current/bugreports/%s.%i",
                     $session{'username'}, time()));
 print REPORT Dumper({username => $session{'username'},
                      time => time(),

@@ -6,7 +6,7 @@
 
 <%perl>
  my @reports;
- opendir(REPORTS,"/home/jbovlaste/current/bugreports");
+ opendir(REPORTS,"/var/www/jbovlaste/current/bugreports");
  while(defined(my $foo=readdir(REPORTS))) {
    next unless $foo =~ /^\w+\.\d+$/;
    push @reports, $foo;
@@ -17,7 +17,7 @@
 <dl>
 % @reports = sort { my@a=split/\./,$a;my@b=split/\./,$b;$b[1]<=>$a[1] } @reports;
 % foreach my $report (@reports) {
-% my $tmp = do "/home/jbovlaste/current/bugreports/$report";
+% my $tmp = do "/var/www/jbovlaste/current/bugreports/$report";
   <dt>
     <a href="displayreport.html?report=<% $report %>"><% $report %></a>
     <code><% join("/",$tmp->{'type'},$tmp->{'area'}) %></code>
