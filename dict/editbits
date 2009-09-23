@@ -50,9 +50,9 @@ if( $definition && ! $valsiid )
 	$notyet = 1;
     }
     my @dbreturns = $dbh->selectrow_array("SELECT valsiid, langid,
-	    definition, notes, jargon FROM
+	    definition, notes, selmaho, jargon FROM
 	    definitions WHERE definitionid=?", undef, $definition);
-    ( $valsiid, $langid, $definitiontxt, $notes, $jargon ) = @dbreturns;
+    ( $valsiid, $langid, $definitiontxt, $notes, $selmaho, $jargon ) = @dbreturns;
 }
 
 if( defined( $jargondrop ) )
