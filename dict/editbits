@@ -221,6 +221,25 @@ if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~
 	href="../help/definitions.html">read the instructions</a>.
     </p>
 % }
+<%perl>
+# Slightly different thing: {...} in notes.
+#
+# Strip out all the simple {...} pairs; complain if there's
+# something left.
+$stripped=$notes;
+$stripped =~ s/{(\w|:|\|)+}//g;
+
+if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ /\$/ ) ) {
+</%perl>
+    <p><strong><font color="red">WARNING!</font></strong>
+    IN THE NOTES FIELD: 
+    I've stripped out everything that looks like cross references
+    (i.e. {klama}), but I still see {, } or $.  This will break
+    LaTeX.  Please fix it. Please check dictionary export when
+    you're done. If you're confused, please <a
+	href="../help/definitions.html">read the instructions</a>.
+    </p>
+% }
    </td>
   </tr>
 % if( $type eq "cmavo" || $type eq "cmavo cluster" ||
