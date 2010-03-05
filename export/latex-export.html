@@ -1,6 +1,7 @@
 <%perl>
     # Make a temp directory and file.
-    my $dir = tempdir( DIR => "/var/www/tmp/" );
+    mkdir "/tmp/jbovlaste_export/";
+    my $dir = tempdir( DIR => "/tmp/jbovlaste_export/" );
     my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
     open(TMP, ">$filename") or die "Couldn't open a temporary file.\n";
@@ -40,7 +41,7 @@
 #    my $joinedwords=join("",@words);
 
     my $shortfilename=$filename;
-    $shortfilename =~ s#/var/www/tmp#/tmp;
+    $shortfilename =~ s{/tmp/jbovlaste_export}{/jbovlaste_export};
 
     # Get the valsi best guesses list.
     my $valsibestguesses = $dbh->selectall_hashref("SELECT v.word, vbg.* from
@@ -54,7 +55,7 @@
     my $natLangToLojban;
     my @natLangToLojbanEntries;
 
-    # Print the lojban -> foo section
+# Print the lojban -> foo section
     our $unofficialwarning = '$\\triangle$ ';
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
@@ -243,7 +244,7 @@ $natLangToLojban. '
     sub inserthyphenations{
     # Suggest LaTeX linebreak points after slashes.
         my ($line) = @_;
-        $line =~ s,/,/\\linebreak[0],g;
+        while( s#(^\{[^{}]\}.*)/#/\\linebreak[0]#g ) {};
         return $line;
     }
 
