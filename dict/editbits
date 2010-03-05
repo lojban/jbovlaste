@@ -181,11 +181,35 @@ if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
 # Strip out all the simple $a_1=b_2$ pairs; complain if there's
 # something left.
 my $stripped=$definitiontxt;
-$stripped =~ s/\$[a-z]_?\d(=[a-z]_?\d)?\$//g;
+$stripped =~ s{\$[a-z]+_?\d+(=[a-z]+_?\d+)?\$}{}g;
 
 if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~ /=/ ) ) {
 </%perl>
     <p><strong><font color="red">WARNING!</font></strong>
+    IN THE DEFINITION FIELD: 
+    I've stripped out everything that looks like place structure
+    markup (i.e. $a1$ or $a_1=b_2$ or similar), but I still see
+    dollar signs or underscores or equal signs.  Extraneous dollar
+    signs or underscores, in particular, will break LaTeX, and hence
+    the dictionary production.  If you're not absolutely sure you
+    know how LaTeX markup works, please remove them.  Regardless,
+    please check dictionary export when you're done.
+	If you're confused, please <a
+	href="../help/definitions.html">read the instructions</a>.
+    </p>
+% }
+<%perl>
+# Same thing, but with $notes.  Yay for code re-use.
+#
+# Strip out all the simple $a_1=b_2$ pairs; complain if there's
+# something left.
+$stripped=$notes;
+$stripped =~ s{\$[a-z]+_?\d+(=[a-z]+_?\d+)?\$}{}g;
+
+if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~ /=/ ) ) {
+</%perl>
+    <p><strong><font color="red">WARNING!</font></strong>
+    IN THE NOTES FIELD: 
     I've stripped out everything that looks like place structure
     markup (i.e. $a1$ or $a_1=b_2$ or similar), but I still see
     dollar signs or underscores or equal signs.  Extraneous dollar
