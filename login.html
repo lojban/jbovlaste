@@ -36,13 +36,9 @@ use utils;
 as otherwise I'm not going to think you're logged in after this page.</p>
 
 <p>I promise to be really nice with the cookie. It is set to expire in
-48 hours, and will only be relayed to exactly this host. The only thing
-I'm tracking with it is your user ID, and the time of your login. Of
-course, I have to encrypt so that you can't trick me into thinking you're
-someone else. I will occasionally change the key I use to encrypt
-cookies, so you might come back after a day or two and find that you
-have to log back in. I'm sorry about that, but I take security very
-seriously. (And so should you!)</p>
+30 days, and will only be relayed to exactly this host. The only thing
+I'm tracking with it is your user ID, and the time of your
+login.</p>
 
 % if(length($backto)>1) {
 <p><a href="<% $backto %>">Return to where you were</a>.</p>
@@ -64,7 +60,7 @@ my $wrappeddata = encode_base64(utils::encrypt($data), '');
 
 my $cookie = new CGI::Cookie(-name => 'jbovlastesessionid',
                              -value => $wrappeddata,
-                             -expires => '+48h',
+                             -expires => '+30d',
                              -domain => 'lojban.org'
 			     );
 $r->headers_out->add('Set-cookie' => $cookie);
