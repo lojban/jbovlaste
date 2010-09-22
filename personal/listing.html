@@ -1,13 +1,15 @@
-% my $usersquery = $dbh->prepare("SELECT username, realname FROM users ORDER BY userid DESC");
+% my $usersquery = $dbh->prepare("SELECT username, realname, password FROM users ORDER BY userid DESC");
 % $usersquery->execute;
 
 <font size="+3">jbovlaste user list</font>
 <hr />
 
 <ul>
-%   while(defined(my $userrow=$usersquery->fetchrow_hashref)) {
+% while(defined(my $userrow=$usersquery->fetchrow_hashref)) {
+%   if( $userrow->{'password'} !~  'DISABLED' ) {
   <li><% $userrow->{'realname'} %> (<a href="<% $userrow->{'username'} %>"><code><% $userrow->{'username'} %></code></a>)</li>
 %   }
+% }
 </ul>
 
 <%init>
