@@ -2,6 +2,8 @@
  my $personalquery = $dbh->prepare("SELECT * FROM users WHERE username = ?");
  $personalquery->execute( $m->dhandler_arg );
  my $result = $personalquery->fetchrow_hashref;
+ my $email_fixed = $result->{'email'};
+ $email_fixed =~ s/@/[this would be an amphora symbol but we don't like spambots]/;
 </%perl>
 
 <p>User data for <% $result->{'username'} %>.  You can also see a
@@ -11,7 +13,7 @@
  <tr><td>Internal User ID</td><td><% $result->{'userid'} %></td></tr>
  <tr><td>Username</td><td><% $result->{'username'} %></td></tr>
  <tr><td>Real name</td><td><% $result->{'realname'} %></td></tr>
- <tr><td>Email address</td><td><% $result->{'email'} %></td></tr>
+ <tr><td>Email address</td><td><% $email_fixed %></td></tr>
  <tr><td>URL</td><td><a href="<%$result->{'url'}%>"><%$result->{'url'}%></a></tr></tr>
 </table>
 
