@@ -5,7 +5,7 @@ use IPC::Open2;
 use utf8;
 
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 
 my $time = time();
 

@@ -171,7 +171,7 @@ what happened leading up to this. Just in case.
     };
 
  my $lang = "en";
- our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste",
+ our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji",
  "jbovlaste", "makfa", { RaiseError => 1 } );
 
  my $cookie = $r->headers_in->{'Cookie'};

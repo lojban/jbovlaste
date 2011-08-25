@@ -4,7 +4,7 @@ use DBI;
 use Compress::Zlib;
 use MIME::Base64;
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste",
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji",
 		       "jbovlaste", "makfa");
 $dbh->begin_work;
 $sth = $dbh->prepare("SELECT content FROM pages WHERE pagename=? AND version=? AND langId=?");

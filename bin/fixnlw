@@ -8,7 +8,7 @@ $| = 1;
 use DBI;
 use Data::Dumper;
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste", "jbovlaste", "makfa");
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 
 # Prepare searches
 my $voteSearch = $dbh->prepare("select count(word), word, meaning, langid from

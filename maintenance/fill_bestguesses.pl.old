@@ -3,7 +3,7 @@
 use strict;
 use DBI;
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste",
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji",
 			"jbovlaste", "makfa");
 
 $dbh->begin_work;
