@@ -142,7 +142,7 @@ what happened leading up to this. Just in case.
  my $menu =
   [ [ "Home", "$base_url/" ],
     [ "Get A Printable Dictionary", "$base_url/export/latex.html" ],
-    [ "Search Best Words", "http://www.lojban.org/cgi-bin/dict.pl" ],
+    [ "Search Best Words", "http://jbovlaste.lojban.org/lookup" ],
     [ "Recent Changes", "$base_url/recent.html" ],
     [ "How You Can Help", "$base_url/help/howtohelp.html" ],
     [ "valsi - All", "$base_url/dict/listing.html" ],
