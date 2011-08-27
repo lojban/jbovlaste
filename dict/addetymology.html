@@ -76,17 +76,13 @@ while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
 
 @email = keys %{{ map { $_ => 1 } @email }};
 
-my $email = join( ' ', @email );
-
-#print "e: $email, $valsi.\n";
-
 my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
         valsiid=$valsi");
 
 #my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
 #        exampleid = ?", undef, $example);
 
-utils::sendemail( $email, "Etymology Added At Word $word", "
+utils::sendemail( \@email, "Etymology Added At Word $word", "
 
 In jbovlaste, the user $session{'username'} has added the following
 etymology to $word:

@@ -103,7 +103,7 @@ Details: $details
 	";
 
 	#Now send mail to $recipient
-	utils::sendemail( $recipient, "jbovlaste Moderation Request",
+	utils::sendemail( [ $recipient ], "jbovlaste Moderation Request",
 	    $mailtext, $session{'username'} );
 
     } else {

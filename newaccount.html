@@ -119,7 +119,7 @@ After your account is created, you will be added to the Jbovlaste mailing list a
 	    $username, md5_hex($dbpassword), $email, $realname, 1);
 
 	#Now send mail to the user
-	utils::sendemail( $email, "New jbovlaste Account", "
+	utils::sendemail( [ $email ], "New jbovlaste Account", "
 
 Someone from the IP address $ENV{'REMOTE_ADDR'} registered the
 following account on jbovlaste.lojban.org:

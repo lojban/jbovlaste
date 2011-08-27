@@ -150,7 +150,7 @@ if( $definition )
     my $natlangwordword = $dbh->selectrow_array("SELECT word FROM natlangwords WHERE wordid=$natlangword");
     my $word = $valsiwordword ? $valsiwordword : $natlangwordword;
 
-    utils::sendemail( $email, "Comment Response At Word $word", "
+    utils::sendemail( [ $email ], "Comment Response At Word $word", "
 
 A jbovlaste thread you have commented in has had a reply added!
 
@@ -281,7 +281,7 @@ foreach my $email (@{$emails})
 	next;
     }
 
-    utils::sendemail( @{$email}[0], "Comment Response At Word $word", "
+    utils::sendemail( [ @{$email}[0] ], "Comment Response At Word $word", "
 
 A jbovlaste thread you have commented in has had a reply added!
 

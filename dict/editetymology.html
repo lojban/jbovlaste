@@ -79,14 +79,10 @@ while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
 
 @email = keys %{{ map { $_ => 1 } @email }};
 
-my $email = join( ' ', @email );
-
-#print "e: $email, $valsiid.\n";
-
 my $oldcontent = $dbh->selectrow_array("SELECT content FROM etymology WHERE
         etymologyid = ?", undef, $etymology);
 
-utils::sendemail( $email, "Etymology Edited At Word $word", "
+utils::sendemail( \@email, "Etymology Edited At Word $word", "
 
 In jbovlaste, the user $session{'username'} has edit the following
 etymology at $word:

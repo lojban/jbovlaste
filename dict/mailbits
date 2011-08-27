@@ -76,10 +76,6 @@ while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
 
 @email = keys %{{ map { $_ => 1 } @email }};
 
-my $email = join( ' ', @email );
-
-#print "e: $email, $valsiid.\n";
-
 my $emailtext = "
 
 In jbovlaste, the user $session{'username'} has $type a
@@ -110,7 +106,7 @@ $emailtext .= "New Data:\n\n".defdump(\%newcontent)."
 You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
 ";
 
-utils::sendemail( $email, 
+utils::sendemail( \@email, 
     "Definition $typeUpper At Word $valsiword",
     $emailtext, $session{'username'} );
 

@@ -110,12 +110,10 @@ about you go to the right page and follow the link instead of playing around?
 
     @email = keys %{{ map { $_ => 1 } @email }};
 
-    my $email = join( ' ', @email );
-
     my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
 	valsiid=$valsi");
 
-    utils::sendemail( $email, "Example Added To Word $word", "
+    utils::sendemail( \@email, "Example Added To Word $word", "
 
 In jbovlaste, the user $session{'username'} has added the following
 example to $word:

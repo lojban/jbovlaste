@@ -95,15 +95,13 @@ while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
 
 @email = keys %{{ map { $_ => 1 } @email }};
 
-my $email = join( ' ', @email );
-
 my $word = $dbh->selectrow_array( "SELECT word FROM valsi WHERE
 	valsiid=$valsiid");
 
 my $oldcontent = $dbh->selectrow_array("SELECT content FROM example WHERE
 	exampleid = ?", undef, $example);
 
-utils::sendemail( $email, "Example Edited At Word $word", "
+utils::sendemail( \@email, "Example Edited At Word $word", "
 
 In jbovlaste, the user $session{'username'} has edited the following
 example at $word:

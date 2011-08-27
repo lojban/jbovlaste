@@ -164,7 +164,7 @@ sub generatemissingwordlink {
 sub sendemail {
     use Encode qw/encode decode/;
 
-    my ($address, $subject, $contents, $username ) = @_;
+    my ($addresslist, $subject, $contents, $username ) = @_;
     $subject =~ s/"/'/g;
 
     # Add a sort of header to the subject
@@ -177,11 +177,23 @@ sub sendemail {
     # Be a nice mail person
     my $encsubj = encode("MIME-Header", $subject);
 
-    open( MAILX, qq{| /usr/bin/mailx -b jbovlaste-admin\@lojban.org -a "Content-type: text/plain;charset=UTF-8" -s "$encsubj" $address});
+    open( SENDMAIL, qq{| /usr/lib/sendmail -t } );
 
-    print MAILX $contents;
+    my $addresses=join(', ', @$addresslist);
+    my $fullmail=qq{To: $addresses
+Bcc: jbovlaste-admin\@lojban.org
+Content-type: text/plain;charset=UTF-8
+Subject: $encsubj
 
-    close( MAILX );
+
+$contents
+};
+
+    print SENDMAIL $fullmail;
+
+# print "<pre>$fullmail</pre>\n";
+
+    close( SENDMAIL );
 }
 
 sub mydiff {

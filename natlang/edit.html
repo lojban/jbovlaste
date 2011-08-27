@@ -187,9 +187,7 @@ if($ok) {
 
     @email = keys %{{ map { $_ => 1 } @email }};
 
-    my $email = join( ' ', @email );
-
-    utils::sendemail( $email, "Edited NatLang Word $word", "
+    utils::sendemail( \@email, "Edited NatLang Word $word", "
 
 In jbovlaste, the user $session{'username'} has edited the natural
 language word $word in the language $langname:
