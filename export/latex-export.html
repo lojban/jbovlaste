@@ -236,7 +236,9 @@ $natLangToLojban. '
 
     chdir $dir;
 
-    `pdflatex $filename`;
+    my $output = qx{cd $dir ; pdflatex $filename};
+
+    # print "<pre>In dir $dir, ran pdflatex $filename with output: $output</pre>\n";
 
     # Get the pdflatex generated file's name.
     my $pdffilename=$shortfilename;
@@ -263,11 +265,6 @@ your dictionary.</a>
 
 <a href="http://jbovlaste.lojban.org<% $pdffilename %>">Here's
 your dictionary in pdf.</a>
-
-<%perl>
-#print "Running /usr/local/bin/dict_clean $dir.\n";
-system( "/usr/local/bin/dict_clean $dir &" );
-</%perl>
 
 <%shared>
     our $titlestr;
