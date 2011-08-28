@@ -181,7 +181,7 @@ if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
 # Strip out all the simple $a_1=b_2$ pairs; complain if there's
 # something left.
 my $stripped=$definitiontxt;
-$stripped =~ s{\$[a-z]+_?\d+(=[a-z]+_?\d+)?\$}{}g;
+$stripped =~ s{\$[a-z]+_?\d+(=[a-z]+_?\d+)*\$}{}g;
 
 if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~ /=/ ) ) {
 </%perl>
