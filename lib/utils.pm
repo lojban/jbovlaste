@@ -69,7 +69,7 @@ sub vlatai {
 
     $safevalsi =~ s/[^\'\w,]//g;
     $safevalsi =~ s/\'/\\\'/g;
-    open(VLATAI, "vlatai $safevalsi|");
+    open(VLATAI, "/usr/local/bin/vlatai $safevalsi|");
     my $result = <VLATAI>;
     $result =~ s/\s+$//g;
     close(VLATAI);
