@@ -6,11 +6,13 @@ then
 	exit 1
 fi
 
-psql -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where userid = $1;"
+export PGPASSWORD='makfa'
+
+psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where userid = $1;"
 
 echo "Disabling that user.
 Ctrl-c to abort, anything else to continue."
 
 read crap
 
-psql -U jbovlaste -c "update users set password='DISABLED' where userid = $1;"
+psql -h morji -U jbovlaste -c "update users set password='DISABLED' where userid = $1;"
