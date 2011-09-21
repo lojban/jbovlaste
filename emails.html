@@ -1,0 +1,22 @@
+<%init>
+ our($dbh,%session);
+ $r->content_type("text/html; charset=utf-8");
+</%init>
+
+% my $usersquery = $dbh->prepare("SELECT email, password FROM users ORDER BY userid DESC");
+% $usersquery->execute;
+
+<pre>
+========START HERE==========
+% while(defined(my $userrow=$usersquery->fetchrow_hashref)) {
+%   if( $userrow->{'password'} !~  'DISABLED' ) {
+  <% $userrow->{'email'} %>
+%   }
+% }
+========END HERE==========
+</pre>
+
+<%method title>
+
+</%method>
+
