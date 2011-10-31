@@ -107,22 +107,6 @@ while( my @voteInfo = $voteSearch->fetchrow_array )
     }
     else
     {
-	if( $definitionid != 0 && $natlangwordid != 0 )
-	{
-	    print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
-
-	    $dbh->begin_work;
-
-	    $dbh->do("DELETE FROM natlangwordbestguesses WHERE natlangwordid=?",
-		    undef,
-		    $natlangwordid );
-
-	    $dbh->do("INSERT INTO natlangwordbestguesses (natlangwordid, place, definitionid) VALUES (?, ?, ?)",
-		    undef,
-		    $natlangwordid, $place, $definitionid );
-	    $dbh->commit;
-	}
-
 	$definitionid=$voteInfo[0];
 	$place=$voteInfo[1];
 	$natlangwordid=$voteInfo[2];
@@ -135,7 +119,22 @@ while( my @voteInfo = $voteSearch->fetchrow_array )
 #
 # For the very last definition.
 #
-print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
+if( $definitionid != 0 && $natlangwordid != 0 )
+{
+  print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
+
+  $dbh->begin_work;
+
+  $dbh->do("DELETE FROM natlangwordbestguesses WHERE natlangwordid=?",
+    undef,
+    $natlangwordid );
+
+  $dbh->do("INSERT INTO natlangwordbestguesses (natlangwordid, place, definitionid) VALUES (?, ?, ?)",
+    undef,
+    $natlangwordid, $place, $definitionid );
+  $dbh->commit;
+}
+
 
 $dbh->begin_work;
 

@@ -64,13 +64,15 @@ my $userid = 1; # officialdata
 #####
 
 # Prepare searches
-my $voteSearch = $dbh->prepare("SELECT valsiid, langid, definitionid, sum(value)
+my $votequery = "SELECT valsiid, langid, definitionid, sum(value)
     FROM definitionvotes
     WHERE valsiid=$inpvalsiid AND definitionid <> 0
     GROUP BY valsiid, langid, definitionid
     HAVING sum(value) >= 1.0
     ORDER BY valsiid, langid, definitionid
-    ");
+    ";
+print "vq: $votequery";
+my $voteSearch = $dbh->prepare( $votequery );
 
 #my $langSearch = $dbh->prepare("SELECT langid FROM languages WHERE langid > 0 ORDER BY langid");
 my $valsiSearch = $dbh->prepare("
@@ -100,11 +102,13 @@ my $at_least_one=0;
 
 while( my @voteInfo = $voteSearch->fetchrow_array )
 {
+  print "seen one\n";
     # We've seen at least one >= 1.0 vote
     $at_least_one=1;
 
     my @tieDefns=();
-    #print( "vi: @voteInfo\n");
+    print( "vi: @voteInfo\n");
+    print( "$valsiid == $voteInfo[0] && $langid == $voteInfo[1]\n");
 
     if( $valsiid == $voteInfo[0] && $langid == $voteInfo[1] )
     {
@@ -124,34 +128,33 @@ while( my @voteInfo = $voteSearch->fetchrow_array )
     }
     else
     {
-	if( $valsiid != 0 && $langid != 0 ) # etc..
-	{
-	    print "No other def'n found; record def'n $definitionid.\n";
-
-	    $dbh->begin_work;
-
-	    $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
-		undef,
-		$valsiid, $langid );
-
-	    $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
-		undef,
-		$valsiid, $langid, $definitionid );
-	    $dbh->commit;
-	}
-
 	$valsiid=$voteInfo[0];
 	$langid=$voteInfo[1];
 	$definitionid=$voteInfo[2];
 	$sum=$voteInfo[3];
     }
 
-    #print "v: $valsiid, l: $langid, d: $definitionid, s: $sum\n";
+    print "v: $valsiid, l: $langid, d: $definitionid, s: $sum\n";
 }
 
 # Last item
 
-#print "No other def'n found; record def'n $definitionid.\n";
+if( $valsiid != 0 && $langid != 0 ) # etc..
+{
+  print "No other def'n found; record def'n $definitionid.\n";
+
+  $dbh->begin_work;
+
+  $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
+    undef,
+    $valsiid, $langid );
+
+  $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
+    undef,
+    $valsiid, $langid, $definitionid );
+  $dbh->commit;
+}
+
 
 $dbh->begin_work;
 
