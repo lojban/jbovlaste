@@ -4,7 +4,8 @@
 
 <%perl>
 
- my $html = Wiki::interpret($wikitext, $lang);
+  my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+ my $html = Wiki::interpret($wikitext, $lang, $jbovlastedir);
 
 </%perl>
 

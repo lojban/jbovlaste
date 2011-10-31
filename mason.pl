@@ -4,7 +4,9 @@
 #
 # For something a little more involved, check out session_handler.pl
 
-push @INC, "/var/www/jbovlaste/current/lib";
+my $basedir="/srv/jbovlaste/current";
+
+push @INC, "$basedir/lib";
 
 package HTML::Mason;
 
@@ -38,8 +40,8 @@ use strict;
 #
 my $parser = new HTML::Mason::Parser;
 my $interp = new HTML::Mason::Interp (parser=>$parser,
-                                      comp_root=>'/var/www/jbovlaste/current',
-                                      data_dir=>'/var/www/jbovlaste/current/mason');
+                                      comp_root=>"$basedir",
+                                      data_dir=>"$basedir/mason");
 my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
 
 # Activate the following if running httpd as root (the normal case).

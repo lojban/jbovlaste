@@ -60,7 +60,8 @@
 
   $m->out("<li><a href=\"../comments.html?valsi=$thres->{'valsiid'};" .
    "natlangword=$thres->{'natlangwordid'};commentid=$rec->{'commentid'};definition=$thres->{'definitionid'}\">");
-  $m->out(Wiki::interpret( $rec->{'subject'}, undef, 1 ));
+   my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+  $m->out(Wiki::interpret( $rec->{'subject'}, undef, $jbovlastedir, 1 ));
   $m->out("</a></li>\n");
  }
  $m->out("</ul>");

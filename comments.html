@@ -41,6 +41,8 @@ for which to retrieve the thread.
    my $mynatlangword = shift;
    my $mydefinition = shift;
 
+   my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
+
    my $content = $comment->{'content'};
    # let wiki keep the lines proper; make sure not to double up
    # any existing %%% that a user manually entered.
@@ -56,7 +58,7 @@ for which to retrieve the thread.
      "commentid=$comment->{'commentid'};" . 
      "definition=$mydefinition" .
      "\">" .
-     Wiki::interpret( $comment->{'subject'}, undef, 1 ) .
+     Wiki::interpret( $comment->{'subject'}, undef, $jbovlastedir, 1 ) .
     "</a>
    </td>
   </tr>
@@ -69,7 +71,7 @@ for which to retrieve the thread.
   </tr>
   <tr>
    <td valign=\"top\" align=\"left\">
-   " . Wiki::interpret( $content )
+   " . Wiki::interpret( $content, undef, $jbovlastedir )
      . (defined($session{'username'}) ?
         sprintf("<font size=\"-2\"><a href=\"post.html?respond=1;comment=%i;
 	valsi=$myvalsi;

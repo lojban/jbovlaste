@@ -56,7 +56,7 @@ sub interpret {
 	$InputText=$OrigInputText;
 
 	# Make a temp directory and file.
-	my $dir = tempdir( DIR => "/var/www/tmp/", CLEANUP => 1 );
+	my $dir = tempdir( DIR => "/tmp/", CLEANUP => 1 );
 	my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
 	open(TMP, ">$filename") or return "Couldn't open a temporary file; check your definition for unbalanced dollar signs or other wierd characters.\n";
@@ -83,10 +83,10 @@ sub interpret {
 	close(TMP2);
 
 	# Re-write the image links.
-	$dir =~ s!/var/www/tmp!/tmp!;
+	$dir =~ s!/tmp!/tmp!;
 	$tmpout =~ s/.*<BODY[^>]*>//s;
 	$tmpout =~ s/<BR[^>]*><HR[^>]*>.*//s;
-	$tmpout =~ s/SRC="/SRC="http:\/\/www.digitalkingdom.org$dir\//gs;
+	$tmpout =~ s/SRC="/SRC="http:\/\/jbovlaste.lojban.org$dir\//gs;
 
 	$InputText=$tmpout;
     }

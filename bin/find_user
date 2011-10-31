@@ -1,5 +1,7 @@
 #!/bin/sh
 
-psql -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(email) like lower('%$1%');"
-psql -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(username) like lower('%$1%');"
-psql -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(realname) like lower('%$1%');"
+export PGPASSWORD='makfa'
+
+psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(email) like lower('%$1%');"
+psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(username) like lower('%$1%');"
+psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(realname) like lower('%$1%');"

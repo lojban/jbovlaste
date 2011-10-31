@@ -1,4 +1,4 @@
-#!/usr/bin/perl -I/var/www/jbovlaste/current/lib
+#!/usr/bin/perl -I/srv/jbovlaste/current/lib
 
 use urlbase64;
 use Compress::Zlib;

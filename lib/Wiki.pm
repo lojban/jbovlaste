@@ -351,9 +351,10 @@ sub chgmode {
 
 # Accepts a Wiki-style-plain-text string, answers HTML equivalent.
 sub interpret {
-    open(FILE, ">/tmp/wikirender.log");  
+    my ($text, $lang, $jbovlastedir, $noformat) = @_;
 
-    my ($text, $lang, $noformat) = @_;
+    open(FILE, ">$jbovlastedir/../../mason-data-dir/wikirender.log");  
+
     my @lines = split("\n", $text);
     my $size = @lines;
     my $mode = "";
