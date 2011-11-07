@@ -3,6 +3,9 @@
 # Used to update valsibestguesses entries
 #
 
+use strict;
+use warnings;
+
 $| = 1;
 
 ######
@@ -19,7 +22,7 @@ $| = 1;
 #
 #################
 
-my ($inplangid, $jbovalstedir, $inpvalsiid, $inpuserid, $inpdefinitionid);
+my ($jbovlastedir, $inplangid, $inpvalsiid, $inpuserid, $inpdefinitionid);
 
 # Five arguments; perl counts from 0.
 if( $#ARGV != 4 )

@@ -3,6 +3,9 @@
 # Used to update natlangwordbestguesses entries
 #
 
+use strict;
+use warnings;
+
 $| = 1;
 
 ######
@@ -19,7 +22,7 @@ $| = 1;
 #
 #################
 
-my ($jbovalstedir, $inpnlwid, $inpplace, $inpuserid, $inpdefinitionid);
+my ($jbovlastedir, $inpnlwid, $inpplace, $inpuserid, $inpdefinitionid);
 
 # Five arguments; perl counts from zero.
 if( $#ARGV != 4 )

@@ -49,8 +49,12 @@ if( ! $errstr )
 {
 # Update valsibestguesses
     my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-    #print "<pre>$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition \&</pre>\n";
+    print "<pre>$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition</pre>\n";
     system( "$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition \&" );
+    # Use this when you need the output:
+    #print "<pre>output:";
+    #print qx{$jbovlastedir/bin/updatevbg $jbovlastedir ${$resultref->[0]}[1] ${$resultref->[0]}[0] $session{'userid'} $definition 2>&1 &};
+    #print "</pre>";
 }
 
 </%perl>
