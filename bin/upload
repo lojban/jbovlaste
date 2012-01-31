@@ -19,7 +19,7 @@
 
 use strict;
 use warnings;
-use WWW::Curl::Easy;
+use LWP::Simple;
 use Getopt::Long 2.24 qw(GetOptions :config gnu_getopt);
 
 # Define help and usage procs.
@@ -41,6 +41,8 @@ Usage: $PROG [options] [FILE]
      -D, --definitions        Check/update the definitions.
      -U, --update             Make the update of the online dictionary.
      -L URL, --url=URL        Dictionary URL.
+     -P, --plain-http         Do not use HTTPS.
+     -N, --ignore-cert        Ignore SSL host certificate problems.
      -v, --verbose            Print more messages about the process.
      -q, --quiet              Do not output anything.
      -h, --help,--usage       Print this screen.
@@ -60,10 +62,12 @@ EOF
 
 GetOptions
 	"u|user=s"	=> \my $user,
-	"p|passwd" => \my $pass,
+	"p|passwd=s" => \my $pass,
 	"D|definitions" => \my $use_definitions,
 	"U|update" => \my $make_update,
-	"L|url" => \my $url,
+	"L|url=s" => \my $url,
+        "P|plain-http" => \my $plain_http,
+        "N|ignore-cert" => \my $ignore_cert,
 	"v|verbose+"    => \my $verbose,
         "q|quiet" => \my $quiet,
 	"h|help|usage"	=> sub { help(0) }
@@ -71,59 +75,42 @@ GetOptions
 
 # Clean/fix the parameters.
 my $ret = 0;
-$url = "http://jbovlaste.lojban.org" unless $url;
+$url = "https://jbovlaste.lojban.org" unless $url;
 $url =~ s/\/+$//;
 $user = "officialdata" unless $user;
 $pass = "" unless $pass;
+$ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0 if $ignore_cert;
+$url =~ s/^https/http/i if $plain_http;
 
 # Connect to the dictionary, log in.
 
 my $loggedin = 0;
-
-my $curl = WWW::Curl::Easy->new;
-$curl->setopt(CURLOPT_HEADER, 1);
-$curl->setopt(CURLOPT_HTTPHEADER, ["Expect:"]);
-$curl->setopt(CURLOPT_VERBOSE, $verbose - 3) if $verbose > 3;
+my $browser = LWP::UserAgent->new;
+if ($verbose > 3) {
+    $browser->add_handler("request_send",  sub { shift->dump(); return });
+    $browser->add_handler("response_done", sub { shift->dump(); return });
+}
 
 my $currurl = "$url/login.html";
-$curl->setopt(CURLOPT_URL, $currurl);
-
-my $curlf = WWW::Curl::Form->new;
-$curlf->formadd("username", "$user");
-$curlf->formadd("password", "$pass");
-$curl->setopt(CURLOPT_HTTPPOST, $curlf);
-
-my $response;
-$curl->setopt(CURLOPT_WRITEDATA, \$response);
-
 print STDERR "Try to log in to $currurl as $user\n" if $verbose > 1;
-my $retcode = $curl->perform;
-if ($retcode == 0) {
-    print STDERR "Transfer OK\n" if $verbose > 2;
-    my $respcode = $curl->getinfo(CURLINFO_HTTP_CODE);
-    if ($respcode == 200) {
-	print STDERR "Response 200 OK\n" if $verbose > 1;
-	if ($response =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
-	    $loggedin = 1;
-	    if ($1 ne $user) {
-		print "Error: Logged in as an other user: $1\n" unless $quiet;
-		$ret = 1;
-	    } else {
-		print "Logged in as $1\n" unless $quiet;
-	    }
+my $response = $browser->post ($currurl, [ 'username' => "$user", 'password' => "$pass" ]);
+print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+if ($response->is_success()) {
+    if ($response->content() =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
+	$loggedin = 1;
+	if ($1 ne $user) {
+	    print "Error: Logged in as an other user: $1\n" unless $quiet;
+	    $ret = 1;
 	} else {
-	    print "Error: Unable to log in\n" unless $quiet;
-	    print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
-	    $ret = 2;
+	    print "Logged in as $1\n" unless $quiet;
 	}
     } else {
-	print STDERR "Response: $respcode, NOT OK\n" if $verbose > 1;
-	print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
-	$ret = 3;
+	print "Error: Unable to log in\n" unless $quiet;
+	$ret = 2;
     }
 } else {
-    print STDERR "Transfer FAILED ($retcode)\n" if $verbose > 2;
-    $ret = 4;
+    $ret = 3;
 }
 
 # TODO: Read and process the file entries.
@@ -135,31 +122,19 @@ sleep 5;
 END {
     if ($loggedin) {
 	$currurl = "$url/logout.html";
-	$curl->setopt(CURLOPT_URL, $currurl);
-	$curl->setopt(CURLOPT_WRITEDATA, \$response);
-
 	print STDERR "Try to log out from $currurl\n" if $verbose > 1;
-	my $retcode = $curl->perform;
-	if ($retcode == 0) {
-	    print STDERR "Transfer OK\n" if $verbose > 2;
-	    my $respcode = $curl->getinfo(CURLINFO_HTTP_CODE);
-	    if ($respcode == 200) {
-		print STDERR "Response 200 OK\n" if $verbose > 1;
-		if ($response =~ /You\s+are\s+not\s+.*logged\s+in/) {
-		    print "Log out successful\n" unless $quiet;
-		} else {
-		    print "Error: problems with loging out\n" unless $quiet;
-		    print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
-		    $ret = 5;
-		}
+	$response = $browser->get ($currurl);
+	print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+	print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+	if ($response->is_success()) {
+	    if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
+		print "Log out successful\n" unless $quiet;
 	    } else {
-		print STDERR "Response: $respcode, NOT OK\n" if $verbose > 1;
-		print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
-		$ret = 3;
+		print "Error: problems with loging out\n" unless $quiet;
+		$ret = 5;
 	    }
 	} else {
-	    print STDERR "Transfer FAILED ($retcode)\n" if $verbose > 2;
-	    $ret = 4;
+	    $ret = 3;
 	}
     } else {
 	print STDERR "Not logged in: not bother to log out.\n" if $verbose > 1;
