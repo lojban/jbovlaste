@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2012  Paul Wolneykien <manowar@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+use strict;
+use warnings;
+use WWW::Curl::Easy;
+use Getopt::Long 2.24 qw(GetOptions :config gnu_getopt);
+
+# Define help and usage procs.
+# Process the command line  options.
+
+(my $PROG = $0) =~ s#.*/##;
+sub help {
+    print STDERR <<EOF;
+$PROG reads the given file with dictionary entries and for each entry
+it sends a request to the jbovlaste-based online dictionary for check
+and/or update.
+
+Usage: $PROG [options] [FILE]
+
+ * Options *
+
+     -u NAME, --user=NAME     Name of the jbovlaste user to log in with.
+     -p PASS, --passwd=PASS   User password.
+     -D, --definitions        Check/update the definitions.
+     -U, --update             Make the update of the online dictionary.
+     -L URL, --url=URL        Dictionary URL.
+     -v, --verbose            Print more messages about the process.
+     -q, --quiet              Do not output anything.
+     -h, --help,--usage       Print this screen.
+
+If FILE is omitted, then standard input is used.
+EOF
+	exit $_;
+}
+
+sub usage {
+	print STDERR <<EOF;
+Usage: $PROG [options] [FILE]
+Pass -h, --help or --usage to see brief help screen.
+EOF
+	exit $_;
+}
+
+GetOptions
+	"u|user=s"	=> \my $user,
+	"p|passwd" => \my $pass,
+	"D|definitions" => \my $use_definitions,
+	"U|update" => \my $make_update,
+	"L|url" => \my $url,
+	"v|verbose+"    => \my $verbose,
+        "q|quiet" => \my $quiet,
+	"h|help|usage"	=> sub { help(0) }
+	or usage(2);
+
+# Clean/fix the parameters.
+my $ret = 0;
+$url = "http://jbovlaste.lojban.org" unless $url;
+$url =~ s/\/+$//;
+$user = "officialdata" unless $user;
+$pass = "" unless $pass;
+
+# Connect to the dictionary, log in.
+
+my $loggedin = 0;
+
+my $curl = WWW::Curl::Easy->new;
+$curl->setopt(CURLOPT_HEADER, 1);
+$curl->setopt(CURLOPT_HTTPHEADER, ["Expect:"]);
+$curl->setopt(CURLOPT_VERBOSE, $verbose - 3) if $verbose > 3;
+
+my $currurl = "$url/login.html";
+$curl->setopt(CURLOPT_URL, $currurl);
+
+my $curlf = WWW::Curl::Form->new;
+$curlf->formadd("username", "$user");
+$curlf->formadd("password", "$pass");
+$curl->setopt(CURLOPT_HTTPPOST, $curlf);
+
+my $response;
+$curl->setopt(CURLOPT_WRITEDATA, \$response);
+
+print STDERR "Try to log in to $currurl as $user\n" if $verbose > 1;
+my $retcode = $curl->perform;
+if ($retcode == 0) {
+    print STDERR "Transfer OK\n" if $verbose > 2;
+    my $respcode = $curl->getinfo(CURLINFO_HTTP_CODE);
+    if ($respcode == 200) {
+	print STDERR "Response 200 OK\n" if $verbose > 1;
+	if ($response =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
+	    $loggedin = 1;
+	    if ($1 ne $user) {
+		print "Error: Logged in as an other user: $1\n" unless $quiet;
+		$ret = 1;
+	    } else {
+		print "Logged in as $1\n" unless $quiet;
+	    }
+	} else {
+	    print "Error: Unable to log in\n" unless $quiet;
+	    print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
+	    $ret = 2;
+	}
+    } else {
+	print STDERR "Response: $respcode, NOT OK\n" if $verbose > 1;
+	print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
+	$ret = 3;
+    }
+} else {
+    print STDERR "Transfer FAILED ($retcode)\n" if $verbose > 2;
+    $ret = 4;
+}
+
+# TODO: Read and process the file entries.
+print "Sleep for 5 secs.\n" unless $quiet;
+sleep 5;
+
+
+# Log out before exit.
+END {
+    if ($loggedin) {
+	$currurl = "$url/logout.html";
+	$curl->setopt(CURLOPT_URL, $currurl);
+	$curl->setopt(CURLOPT_WRITEDATA, \$response);
+
+	print STDERR "Try to log out from $currurl\n" if $verbose > 1;
+	my $retcode = $curl->perform;
+	if ($retcode == 0) {
+	    print STDERR "Transfer OK\n" if $verbose > 2;
+	    my $respcode = $curl->getinfo(CURLINFO_HTTP_CODE);
+	    if ($respcode == 200) {
+		print STDERR "Response 200 OK\n" if $verbose > 1;
+		if ($response =~ /You\s+are\s+not\s+.*logged\s+in/) {
+		    print "Log out successful\n" unless $quiet;
+		} else {
+		    print "Error: problems with loging out\n" unless $quiet;
+		    print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
+		    $ret = 5;
+		}
+	    } else {
+		print STDERR "Response: $respcode, NOT OK\n" if $verbose > 1;
+		print STDERR "---HTTP RESPONSE BEGIN---\n$response\n---HTTP RESPONSE END---\n" if $verbose > 3;
+		$ret = 3;
+	    }
+	} else {
+	    print STDERR "Transfer FAILED ($retcode)\n" if $verbose > 2;
+	    $ret = 4;
+	}
+    } else {
+	print STDERR "Not logged in: not bother to log out.\n" if $verbose > 1;
+    }
+}
+
+exit $ret;
