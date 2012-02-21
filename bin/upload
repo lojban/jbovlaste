@@ -229,6 +229,25 @@ if ($use_definitions) {
     usage (2);
 }
 
+    
+unless ($quiet) {
+    print "---\n";
+    if ($defs > 0) {
+	print "$defsubms of $defs definitions sumbitted\n";
+	print "Valsi checks failed: $valsierrs\n";
+	print "Definition checks failed: $deferrs\n";
+    }
+    if ($malforms > 0) {
+	print "Malformed entries: $malforms\n";
+    }
+}
+
+if ($ret == 0 && $errs > 0) {
+    $ret = 127;
+}
+exit $ret;
+
+
 # Log out before exit.
 END {
     if ($loggedin) {
@@ -252,24 +271,6 @@ END {
     }
     close (INFILE);
 }
-    
-unless ($quiet) {
-    print "---\n";
-    if ($defs > 0) {
-	print "$defsubms of $defs definitions sumbitted\n";
-	print "Valsi checks failed: $valsierrs\n";
-	print "Definition checks failed: $deferrs\n";
-    }
-    if ($malforms > 0) {
-	print "Malformed entries: $malforms\n";
-    }
-}
-
-if ($ret == 0 && $errs > 0) {
-    $ret = 127;
-}
-exit $ret;
-
 
 sub actionurl {
     my ($url, $action) = @_;
