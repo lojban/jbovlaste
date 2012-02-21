@@ -38,7 +38,7 @@ Usage: $PROG [options] [FILE]
 
      -u NAME, --user=NAME     Name of the jbovlaste user to log in with.
      -p PASS, --passwd=PASS   User password.
-     -D, --definitions        Check/update the definitions.
+     -D LANG, --definitions=LANG    Check/update the definitions.
      -U, --update             Make the update of the online dictionary.
      -L URL, --url=URL        Dictionary URL.
      -P, --plain-http         Do not use HTTPS.
@@ -63,7 +63,7 @@ EOF
 GetOptions
 	"u|user=s"	=> \my $user,
 	"p|passwd=s" => \my $pass,
-	"D|definitions" => \my $use_definitions,
+	"D|definitions=s" => \my $use_definitions,
 	"U|update" => \my $make_update,
 	"L|url=s" => \my $url,
         "P|plain-http" => \my $plain_http,
@@ -113,7 +113,102 @@ if ($response->is_success()) {
     $ret = 3;
 }
 
-# TODO: Read and process the file entries.
+$infile = $ARGV[0] || "-";
+if (not open (INFILE, "< $infile")) {
+    if ($infile == "-") {
+	die "Unable to open standard input for reading";
+    } else {
+	die "Unable to open file '$infile' for reading";
+    }
+}
+
+my $ln = 1;
+my $errs = 0;
+if ($use_definitions) {
+    my $lang = $use_definitions;
+    if ($verbose) {
+	if ($infile == "-") {
+	    print STDERR "Read definitions from standard input\n" if $verbose;
+	} else {
+	    print STDERR "Read definitions from '$infile'\n" if $verbose;
+	}
+    }
+    while ($ret == 0 && <INFILE>) {
+	if (/^([A-Za-z']+)\t([^\t]+)(\t(.*))?$/) {
+	    my $valsi = "$1";
+	    my $def = "$2";
+	    my $notes = "$4";
+	    print "$1: valsi check" unless $quiet;
+	    my $currurl = "$url/dict/$valsi";
+	    print STDERR "Try to access $currurl\n" if $verbose > 1;
+	    my $response = $browser->get ($currurl);
+	    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+	    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+	    if ($response->is_success()) {
+		if ($response->content() =~ /Word\s+not\s+found!/) {
+		    print " FAILED" unless $quiet;
+		    $errs++;
+		} else {
+		    print "OK syntax check" unless $quiet;
+		}
+		my $valsiid;
+		my $langid;
+		my $action;
+		$ret = getdefids ($response->content(), $lang, \$action, \$valsiid, \$langid);
+		if ($ret == 0) {
+		    $currurl = "$url/$action";
+		    print STDERR "Try to check valsi and language at $currurl\n" if $verbose > 1;
+		    $response = $browser->post ($currurl, [ 'valsiid' => "$valsiid", 'langid' => "$langid" ]);
+		    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+		    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+		    if ($response->is_success()) {
+			if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/) {
+			    my %hidden = ();
+			    $ret = gethidden ($response->content(), 1, \$action, \%hidden);
+			    if ($ret == 0) {
+				$currurl = "$url/$action";
+				print STDERR "Try to check the definition at $currurl\n" if $verbose > 1;
+				$response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'check' => "Check Definition", %hidden ]);
+				print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+				print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+				if ($response->is_success()) {
+				    if ($response->is_success() =~ /WARNING/ || 
+					$response->is_success() !~ /name="final"\s+value="Submit Definition"/) {
+					print " OK" unless $quiet;
+					# TODO: Submit the definition
+				    } else {
+					print "FAILED" unless $quiet;
+				    }
+				} else {
+				    print " ERROR" unless $quiet;
+				    ret = 3;
+				}
+			    } else {
+				print " ERROR" unless $quiet;
+			    }
+			} else {
+			    print " ERROR" unless $quiet;
+			    ret = 6;
+			}
+		    } else {
+			print " ERROR" unless $quiet;
+			$ret = 3;
+		    }
+		}
+	    } else {
+		print " ERROR" unless $quiet;
+		$ret = 3;
+	    }
+	    print "\n" unless $quiet;
+	} else {
+	    print "Malformed definition on line $ln\n" unless $quiet;
+	    $errs++;
+	}
+    }
+} else {
+    usage (2);
+}
+
 print "Sleep for 5 secs.\n" unless $quiet;
 sleep 5;
 
@@ -139,6 +234,77 @@ END {
     } else {
 	print STDERR "Not logged in: not bother to log out.\n" if $verbose > 1;
     }
+    if (INFILE) {
+	close (INFILE);
+    }
 }
 
+if ($ret == 0 && $errs > 0) {
+    $ret = 127;
+}
 exit $ret;
+
+
+sub gethidden {
+    my ($page, $formnumber, $action, $hidden) = @_;
+
+    my $i = 0;
+    while ($i < $formnumber && $page =~ /<form\s+action="([^"]+)"(.*)$/s) {
+	$i++;
+	print STDERR "Read action URL value: $1\n" if $verbose > 2;
+	$$action = $1;
+	$page = $2;
+    }
+    if ($i != $formnumber) {
+	print STDERR "Unable to find form number $formnumber\n" unless $quiet;
+	return 7;
+    } else {
+	while ($page =~ /(.*)<\/form>.*$/s) {
+	    $page = $1;
+	}
+	while ($page =~ /<input\s+type="hidden"\s+name="([^"]+)"\s+value="([^"]+)"\s*>(.*)$/s) {
+	    print STDERR "Add hidden field: '$1' = '$2'\n" if $verbose > 2;
+	    $$hidden{$1} = $2;
+	    $page = $3;
+	}
+	return 0;
+    }
+}
+
+sub getdefids {
+    my ($page, $lang, $action, $valsiid, $langid) = @_;
+
+    if ($page =~ /form\s+action="(adddef\.html)"(.*)$/s) {
+	print STDERR "Read action URL value: $1\n" if $verbose > 2;
+	$$action = $1;
+	$page = $2;
+	if ($page =~ /value="(\d+)"\s+name="valsiid"(.*)$/s) {
+	    print STDERR "Read valsi ID value: $1\n" if $verbose > 2;
+            $$valsiid = $1;
+	    $page = $2;
+            if ($page =~ /<select\s+name="langid">(.*)$/s) {
+		$page = $1;
+		while ($page =~ /(.*)<\/select>.*$/s) {
+		    $page = $1;
+		}
+	        while ($page =~ /<option\s+value="(\d+)">([^<]\+)<\/option>(.*)$/s) {
+		    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
+		    if ($2 == $lang) {
+			$$langid = $1;
+			return 0;
+		    }
+		    $page = $3;
+		}
+	    }
+	    print STDERR "Unable to find ID for the language '$lang'\n" unless $quiet;
+	    return 7;
+        } else {
+            print STDERR "Unable to find the valsiid value\n" unless $quiet;
+            return 7;
+        }
+	return 0;
+    } else {
+	print STDERR "Unable to find 'adddef' form\n" unless $quiet;
+	return 7;
+    }
+}
