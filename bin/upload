@@ -167,52 +167,52 @@ if ($use_definitions) {
 		    $valsierrs++;
 		} else {
 		    print " OK definition check" unless $quiet;
-		}
-		my $valsiid;
-		my $langid;
-		my $action;
-		$ret = getdefids ($response->content(), $lang, \$currurl, \$valsiid, \$langid);
-		if ($ret == 0) {
-		    print STDERR "Try to check valsi and language at $currurl\n" if $verbose > 1;
-		    $response = $browser->post ($currurl, [ 'valsiid' => "$valsiid", 'langid' => "$langid" ]);
-		    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-		    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-		    if ($response->is_success()) {
-			if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/) {
-			    my %hidden = ();
-			    $ret = gethidden ($response->content(), 1, \$currurl, \%hidden);
-			    if ($ret == 0) {
-				print STDERR "Try to check the definition at $currurl\n" if $verbose > 1;
-				$response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'check' => "Check Definition", %hidden ]);
-				print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-				print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-				if ($response->is_success()) {
-				    if ($response->content() !~ /WARNING/ || 
-					$response->content() =~ /name="final"\s+value="Submit Definition"/) {
-					print " OK" unless $quiet;
-					# TODO: Submit the definition
+		    my $valsiid;
+		    my $langid;
+		    my $action;
+		    $ret = getdefids ($response->content(), $lang, \$currurl, \$valsiid, \$langid);
+		    if ($ret == 0) {
+			print STDERR "Try to check valsi and language at $currurl\n" if $verbose > 1;
+			$response = $browser->post ($currurl, [ 'valsiid' => "$valsiid", 'langid' => "$langid" ]);
+			print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+			print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+			if ($response->is_success()) {
+			    if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/) {
+				my %hidden = ();
+				$ret = gethidden ($response->content(), 1, \$currurl, \%hidden);
+				if ($ret == 0) {
+				    print STDERR "Try to check the definition at $currurl\n" if $verbose > 1;
+				    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'check' => "Check Definition", %hidden ]);
+				    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+				    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+				    if ($response->is_success()) {
+					if ($response->content() !~ /WARNING/ || 
+					    $response->content() =~ /name="final"\s+value="Submit Definition"/) {
+					    print " OK" unless $quiet;
+					    # TODO: Submit the definition
+					} else {
+					    print " FAILED" unless $quiet;
+					    $errs++;
+					    $deferrs++;
+					}
 				    } else {
-					print " FAILED" unless $quiet;
-					$errs++;
-					$deferrs++;
+					print " ERROR" unless $quiet;
+					$ret = 3;
 				    }
 				} else {
 				    print " ERROR" unless $quiet;
-				    $ret = 3;
 				}
 			    } else {
 				print " ERROR" unless $quiet;
+				$ret = 6;
 			    }
 			} else {
 			    print " ERROR" unless $quiet;
-			    $ret = 6;
+			    $ret = 3;
 			}
 		    } else {
 			print " ERROR" unless $quiet;
-			$ret = 3;
 		    }
-		} else {
-		    print " ERROR" unless $quiet;
 		}
 	    } else {
 		print " ERROR" unless $quiet;
