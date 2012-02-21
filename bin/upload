@@ -22,6 +22,9 @@ use warnings;
 use LWP::Simple;
 use Getopt::Long 2.24 qw(GetOptions :config gnu_getopt);
 
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
+
 # Define help and usage procs.
 # Process the command line  options.
 
@@ -49,7 +52,7 @@ Usage: $PROG [options] [FILE]
 
 If FILE is omitted, then standard input is used.
 EOF
-	exit $_;
+	exit $_[0];
 }
 
 sub usage {
@@ -57,7 +60,7 @@ sub usage {
 Usage: $PROG [options] [FILE]
 Pass -h, --help or --usage to see brief help screen.
 EOF
-	exit $_;
+	exit $_[0];
 }
 
 GetOptions
@@ -114,6 +117,10 @@ if ($response->is_success()) {
     $ret = 3;
 }
 
+if ($ret != 0) {
+    exit $ret;
+}
+
 my $infile = $ARGV[0] || "-";
 if (not open (INFILE, "< $infile")) {
     if ($infile == "-") {
@@ -121,10 +128,6 @@ if (not open (INFILE, "< $infile")) {
     } else {
 	die "Unable to open file '$infile' for reading";
     }
-}
-
-if ($ret != 0) {
-    exit $ret;
 }
 
 my $ln = 0;
