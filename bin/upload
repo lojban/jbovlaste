@@ -189,7 +189,32 @@ if ($use_definitions) {
 					if ($response->content() !~ /WARNING/ || 
 					    $response->content() =~ /name="final"\s+value="Submit Definition"/) {
 					    print " OK" unless $quiet;
-					    # TODO: Submit the definition
+					    if ($make_update) {
+						print " submit" unless $quiet;
+						%hidden = ();
+						$ret = gethidden ($response->content(), 1, \$currurl, \%hidden);
+						if ($ret == 0) {
+						    print STDERR "Try to submit the definition at $currurl\n" if $verbose > 1;
+						    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'final' => "Submit Definition", %hidden ]);
+						    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+						    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+						    if ($response->is_success()) {
+							if ($response->content() =~ /Processing\s+new\s+definition\s+for\s+"$valsi"/ &&
+							    $response->content() =~ /If\s+you're\s+seeing\s+this,\s+it\s+probably\s+worked/) {
+							    print " OK" unless $quiet;
+							    $defsubms++;
+							} else {
+							    print " FAILED" unless $quiet;
+							    $errs++;
+							}
+						    } else {
+							print " ERROR" unless $quiet;
+							$ret = 3;
+						    }
+						} else {
+						    print " ERROR" unless $quiet;
+						}
+					    }
 					} else {
 					    print " FAILED" unless $quiet;
 					    $errs++;
