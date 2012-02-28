@@ -179,20 +179,20 @@ if ($use_definitions) {
 			if ($response->is_success()) {
 			    if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/) {
 				my %hidden = ();
-				$ret = gethidden ($response->content(), 1, \$currurl, \%hidden);
+				$ret = gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
 				if ($ret == 0) {
 				    print STDERR "Try to check the definition at $currurl\n" if $verbose > 1;
 				    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'check' => "Check Definition", %hidden ]);
 				    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
 				    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
 				    if ($response->is_success()) {
-					if ($response->content() !~ /WARNING/ || 
+					if ($response->content() !~ /WARNING/ && 
 					    $response->content() =~ /name="final"\s+value="Submit Definition"/) {
 					    print " OK" unless $quiet;
 					    if ($make_update) {
 						print " submit" unless $quiet;
 						%hidden = ();
-						$ret = gethidden ($response->content(), 1, \$currurl, \%hidden);
+						$ret = gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
 						if ($ret == 0) {
 						    print STDERR "Try to submit the definition at $currurl\n" if $verbose > 1;
 						    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'final' => "Submit Definition", %hidden ]);
@@ -311,22 +311,11 @@ sub actionurl {
 }
 
 sub gethidden {
-    my ($page, $formnumber, $url, $hidden) = @_;
+    my ($page, $formname, $url, $hidden) = @_;
 
-    my $i = 0;
-    while ($i < $formnumber && $page =~ /<form\s+[^>]*action="([^"]+)"[^>]*>(.*)$/s) {
-	$i++;
-	print STDERR "Read action URL value: $1\n" if $verbose > 2;
+    if ($page =~ /<form\s+[^>]*action="($formname)"[^>]*>(.*)$/s) {
 	$$url = actionurl ($$url, $1);
-	$page = $2;
-    }
-    if ($i != $formnumber) {
-	print STDERR "Unable to find form number $formnumber\n" unless $quiet;
-	return 7;
-    } else {
-	while ($page =~ /(.*)<\/?form>.*$/s) {
-	    $page = $1;
-	}
+	
 	while ($page =~ /(<input\s+[^>]*type="hidden"\s+[^>]*>)(.*)$/s) {
 	    my $tag = $1;
 	    $page = $2;
@@ -342,8 +331,13 @@ sub gethidden {
 		print STDERR "Malformed hidden field: $tag\n" unless $quiet;
 	    }
 	}
-	return 0;
+$page = $2;
+    } else {
+	print STDERR "Unable to find form '$formname'\n" unless $quiet;
+	return 7;
     }
+
+    return 0;
 }
 
 sub getdefids {
