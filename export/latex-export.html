@@ -238,7 +238,7 @@ $natLangToLojban. '
 
     my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
 
-    print "<pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre>\n";
+    # print "<pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre>\n";
 
     # Get the xelatex generated file's name.
     my $pdffilename=$shortfilename;
@@ -266,11 +266,9 @@ $natLangToLojban. '
 
 </%perl>
 
-<a href="http://jbovlaste.lojban.org<% $shortfilename %>">Here's
-your dictionary.</a>
+<a href="http://jbovlaste.lojban.org<% $shortfilename %>">Here's your dictionary in LaTeX.</a>
 
-<a href="http://jbovlaste.lojban.org<% $pdffilename %>">Here's
-your dictionary in pdf.</a>
+<a href="http://jbovlaste.lojban.org<% $pdffilename %>">Here's your dictionary in PDF.</a>
 
 <%shared>
     our $titlestr;
