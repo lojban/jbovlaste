@@ -194,9 +194,7 @@
     print TMP '
 \documentclass[notitlepage,twocolumn,letter,a4paper]{book}
 
-\usepackage{ucs}
-\usepackage[utf8x]{inputenc}
-\usepackage{eurosym}
+\usepackage{underscore}
 
 %% These apply to A4 paper only
 \pdfpagewidth 210mm
@@ -204,7 +202,9 @@
 
 \usepackage{fancyhdr} % important, lets us actually pull this stuff off.
 \pagestyle{fancy}     % turns on the magic provided by fancyhdr
-\usepackage{palatino}
+
+\usepackage{fontspec}
+\setromanfont{Code2000}
 
 \fancyhead{}          % empty out the header
 \fancyfoot{}          % empty out the footer
@@ -236,11 +236,11 @@ $natLangToLojban. '
 
     chdir $dir;
 
-    my $output = qx{cd $dir ; pdflatex $filename};
+    my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
 
-    # print "<pre>In dir $dir, ran pdflatex $filename with output: $output</pre>\n";
+    print "<pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre>\n";
 
-    # Get the pdflatex generated file's name.
+    # Get the xelatex generated file's name.
     my $pdffilename=$shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
 
@@ -254,7 +254,13 @@ $natLangToLojban. '
     sub massage
     {
 	my $input=shift(@_);
+        # Protect special characters
 	$input =~ s/([&%#\\])/\\$1/g;
+
+        # Allow breaking at /
+        # FIXME: There's probably a better way to do this (breaking
+        # at slash)
+	$input =~ s{/}{/\\-}g;
 	return $input;
     }
 
