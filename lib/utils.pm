@@ -177,11 +177,12 @@ sub sendemail {
     # Be a nice mail person
     my $encsubj = encode("MIME-Header", $subject);
 
-    open( SENDMAIL, qq{| /usr/lib/sendmail -t -f webmaster\@lojban.org } );
+    open( SENDMAIL, qq{| /bin/mailx -v -t -r webmaster\@lojban.org } );
 
     my $addresses=join(', ', @$addresslist);
     my $fullmail=qq{To: $addresses
 From: webmaster\@lojban.org
+To: webmaster\@lojban.org
 Bcc: jbovlaste-admin\@lojban.org
 Content-type: text/plain;charset=UTF-8
 Subject: $encsubj
