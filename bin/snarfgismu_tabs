@@ -1,0 +1,317 @@
+#!/usr/bin/perl
+
+# All input files must match the following format.
+# 1. All values must be seperated by Tabs
+# 2. rafsi should not be included
+# 3. The four columns should be in the following order:
+# #  a) gismu
+# #  b) glossword
+# #  c) definition
+# #  d) notes
+# 4. The definition and the notes must already be jbovlaste-ified;
+# this means that the definition must have LaTeX-style $x_1$ places
+# in it, and the notes field must have cross-references like
+# {bacru}.
+#
+# The import will fail if the above conditions are not met.
+#
+
+use strict;
+use warnings;
+
+use DBI;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
+$dbh->{RaiseError} = 1;
+
+my $time = time();
+
+# I can imagine wanting to change this, but not enough to make it a
+# parameter
+my $votevalue = 1;
+
+use Getopt::Long;
+my $file = undef;
+my $userid = undef;
+my $lang = undef;
+my $result = GetOptions ("file=s" => \$file, "userid=i" => \$userid, "lang=i"   => \$lang );
+
+if( ! $userid || ! $lang || ! $file ) {
+  print "Need data file, userid and langid.\n";
+  exit 1;
+}
+
+
+open(GISMU,"<", $file);
+while(<GISMU>) {
+	chomp;
+	my @columns = split(/\t/);
+
+        if( (scalar @columns) != 4 ) {
+          print "Too many or too few columns. The document does not meet the specification criteria (which are in the header of this script). Please check the document.\n";
+          exit 1;
+        }
+
+	my($gismu,$glossword,$definition,$notes) = @columns;
+
+	$gismu =~ s/\s+$|\{|\}//g;
+	$glossword =~ s/\s+$//;
+	$definition =~ s/\s+$//;
+	$notes =~ s/\s+$//;
+
+	$gismu =~ s/^\.//g;
+	$gismu =~ s/^\s+//g;
+
+        #####
+        #Check for proper definition and notes formatting.
+        #####
+        if (  $definition !~ /\$x_(\{1\}|1)\$/ ) {
+          print "The definition for \"$gismu\", \"$definition\" is not properly jbovlaste-ified. It should have places of the format \$x_{1}\$ or similar. SKIPPING.\n";
+          next;
+        }
+
+        if ( $notes !~ /\{.....\}/) {
+          print "The gismu cross references in the notes for \"$gismu\", \"$notes\", are not formatted properly. Please see that all gismu are enclosed in braces. e.g {basti}.  SKIPPING.\n";
+          next;
+        }
+
+	next if $gismu =~ /\d/;
+
+	#print "GOING!\n";
+	print "$gismu###$glossword###$definition###$notes\n";
+
+        $notes =~ s/\s+$//;
+
+        #print "!#!#! $notes\n\n";
+        print "$gismu###$glossword###$definition###$notes\n\n";
+
+        ####
+        # Retrieve the basic valsi information (should already be in the
+        # DB)
+        ####
+
+        my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $gismu);
+
+        if( ! $valsiid )
+        {
+          print "This script is not designed to add new gismu (or any valsi, for that matter), but I can't find an entry for $valsiid ; bailing.\n";
+          exit 1
+        }
+
+        ####
+        # Delete old versions
+        ####
+
+        $dbh->begin_work;
+
+        my $definitionidsref = $dbh->selectall_arrayref("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?",
+          undef,
+          $lang, $valsiid, $userid );
+
+        foreach my $definitionidref (@{$definitionidsref}) {
+          my $defid = @{$definitionidref}[0];
+
+          print "\nDefinition id $defid found for valsi id $valsiid, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+
+          $dbh->do("DELETE FROM valsibestguesses WHERE definitionid=?", undef, $defid );
+          $dbh->do("DELETE FROM natlangwordbestguesses WHERE definitionid=?", undef, $defid );
+          $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", undef, $defid );
+          $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=?", undef, $defid);
+          $dbh->do("DELETE FROM definitionvotes WHERE definitionid=?", undef, $defid);
+          $dbh->do("DELETE FROM definitions WHERE definitionid=?", undef, $defid );
+        }
+
+        my $nlwidsref = $dbh->selectall_arrayref("SELECT wordid from natlangwords WHERE word=? AND langid=? AND userid=?",
+          undef,
+          $glossword, $lang, $userid );
+
+        foreach my $nlwidref (@{$nlwidsref}) {
+          my $nlwid = @{$nlwidref}[0];
+
+          print "\nNatlang word id $nlwid found for word id $glossword, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+
+          $dbh->do("DELETE FROM keywordmapping WHERE natlangwordid=?", undef, $nlwid );
+          $dbh->do("DELETE FROM natlangwordvotes WHERE natlangwordid=?", undef, $nlwid);
+          $dbh->do("DELETE FROM natlangwords WHERE wordid=?", undef, $nlwid); 
+        }
+
+        $dbh->commit;
+
+
+	####
+	# Enter the definition information.
+	####
+	$dbh->begin_work;
+        #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
+        #currval pulls the latest value in a session safe manner.
+	$dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time) VALUES
+	    (?, ?, ?, ?, ?, ?, ?)",
+	    undef, $lang, $valsiid, 1, $definition, $notes, $userid, $time);
+
+	# Retrieve the DefinitionID that got generated above.
+	my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
+        
+        # print("SELECT currval ('definitions_definitionid_seq')");
+        # print "$valsiid, $defid\n";
+
+	$dbh->commit;
+
+	## print("SELECT definitionId FROM definitions where langid=$lang
+	##    AND valsiId=$valsiid AND definitionNum=1" );
+	## print "DEFID: $defid\n";
+
+	####
+	# Enter the vote information.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
+            VALUES
+                (?,
+		?,
+		?,
+                ?,
+                ?,
+                ?)",
+                { },
+                $lang,
+                $valsiid,
+		$defid,
+                $votevalue,
+                $userid,
+                $time);
+	$dbh->commit;
+
+	####
+	# Enter the basic natlang word information for the gloss word.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+                undef,
+		$lang, $glossword, 1, $userid, $time );
+	$dbh->commit;
+
+	####
+	# Retrieve the WordID that got generated above.
+	####
+	my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
+
+        # print "nlw: $valsiid, $defid, $wordid\n";
+
+	####
+	# Enter the vote information.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
+            VALUES
+                (?,
+		?,
+		?,
+                ?,
+                ?,
+                ?)",
+                undef,
+                $defid,
+		$wordid,
+                0,
+                $votevalue,
+                $userid,
+                $time);
+	$dbh->commit;
+
+	####
+	# Enter the mapping from the gloss word to the definition.
+	####
+	$dbh->begin_work;
+        $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
+		(
+		?,
+		?,
+		0
+		)",
+                undef,
+		$defid, $wordid );
+	$dbh->commit;
+
+}
+
+$dbh->disconnect;
+
+#***************************
+# OLD to-LaTeX/Wiki conversion bits.
+#***************************
+#
+# These are no longer used, but may provide assistance if a user
+# needs help with data formatting.  These were used to convert raw
+# English gismu formatting into the stuff that jbovlaste needs.
+#
+#	# Turn x1 into LaTex format $x_{1}$.  The HTML output engine
+#	# should turn that LaTeX pattern into nice HTML.
+#	$definition =~ s/x(\d)/\$x_{$1}\$/g;
+#
+#        ####
+#        # Now we try to turn the notes into something that approximates
+#        # valid Wiki text.
+#        ####
+#        # ka[ ... ],
+#        $notes =~ s/([a-z'])\[([^][]*)\]([,.])/$1 <$2>$3/g;
+#        # [x3 sides/surfaces should ... ],
+#        $notes =~ s/\[(x[^][]*)\][;, ]/$1. /g;
+#        # [indicates a subjective greatness, ... ; terrible (mabla)];
+#        $notes =~ s/\[(.)([^][]*)\][;, ]/uc($1).$2.". "/ge;
+#        # [ x3 ... ](
+#        $notes =~ s/\[(x[^][]*)\]\(/$1 (/g;
+#        # [ foo ... ](
+#        $notes =~ s/\[(.)([^][]*)\]\(/uc($1).$2." ("/ge;
+#        # [ x3 ... ]<EOL>
+#        $notes =~ s/\[(x[^][]*)\]$/$1. /g;
+#        # [ foo ... ]<EOL>
+#        $notes =~ s/\[(.)([^][]*)\]$/uc($1).$2.". "/ge;
+#	# Remaning []s.
+#	$notes =~ s/\[/\(/g;
+#	$notes =~ s/\]/\)/g;
+#
+#	#####
+#	# Handle x1 things.
+#	#####
+#	$notes =~ s/x(\d)(\W)/\$x_$1\$$2/g;
+#	$notes =~ s/(\W)x(\d)/$1\$x_$2\$/g;
+#
+#        # This version assumes that the user has done the {...} in
+#        # and "see also" and such themselves; massage the input data
+#        # as needed in vim or something.
+#
+#        my $lastnotes="";
+#
+#        while( $lastnotes ne $notes )
+#        {
+#            $lastnotes = $notes;
+#
+#            # (= foo, foo, foo, ...  )
+#            if( $notes =~ s/\(\s*=\s+([a-z', ]+)\)/(= ####)/ )
+#            {
+#             my $notespart = $1;
+#
+#                # manci,
+#                $notespart =~ s/([a-z']+), /{$1}, /g;
+#
+#                # manci
+#                $notespart =~ s/([a-z']+)\s*$/{$1}/g;
+#
+#                $notes =~ s/####/$notespart/;
+#            }
+#        }
+#
+#        # (cf. foo, foo, foo, ...  )
+#        if( $notes =~ s/\(kp\.\s+([a-z', ]+)\)/Vidu ankaŭ ####./ )
+#        {
+#            my $notespart = $1;
+#
+#            # manci,
+#            $notespart =~ s/([a-z']+), /{$1}, /g;
+#
+#            # manci
+#            $notespart =~ s/([a-z']+)\s*$/{$1}/g;
+#
+#            $notes =~ s/####/$notespart/;
+#        }
+#
