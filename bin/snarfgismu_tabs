@@ -13,6 +13,8 @@
 # this means that the definition must have LaTeX-style $x_1$ places
 # in it, and the notes field must have cross-references like
 # {bacru}.
+# 5. The header line must have a digit of some kind in the first
+# column.
 #
 # The import will fail if the above conditions are not met.
 #
@@ -42,206 +44,200 @@ if( ! $userid || ! $lang || ! $file ) {
   exit 1;
 }
 
-
 open(GISMU,"<", $file);
 while(<GISMU>) {
-	chomp;
-	my @columns = split(/\t/);
+  chomp;
+  my @columns = split(/\t/);
 
-        if( (scalar @columns) < 4 ) {
-          print "Too few columns. The document does not meet the specification criteria (which are in the header of this script). Please check the document.\n";
-          exit 1;
-        }
+  if( (scalar @columns) < 4 ) {
+    print "Too few columns. The document does not meet the specification criteria (which are in the header of this script). Please check the document.\n";
+    exit 1;
+  }
 
-	my($gismu,$glossword,$definition,$notes,@keywords) = @columns;
+  # Clean out spaces.
+  map { s/^\s+// } (map { s/\s+$// } @columns);
 
-        # treat the glossword as a keyword with place 0
-        unshift @keywords, $glossword;
+  my($gismu,$glossword,$definition,$notes,@keywords) = @columns;
 
-        map { s/\s+$// } @keywords;
+  # treat the glossword as a keyword with place 0
+  unshift @keywords, $glossword;
 
-	$gismu =~ s/\s+$|\{|\}//g;
-	$definition =~ s/\s+$//;
-	$notes =~ s/\s+$//;
+  $gismu =~ tr/{}//d;
+  $gismu =~ s/^\.//g;
 
-	$gismu =~ s/^\.//g;
-	$gismu =~ s/^\s+//g;
+  #####
+  #Check for proper definition and notes formatting.
+  #####
+  if (  $definition !~ /\$x_(\{1\}|1)\$/ ) {
+    print "The definition for \"$gismu\", \"$definition\" is not properly jbovlaste-ified. It should have places of the format \$x_{1}\$ or similar. SKIPPING.\n";
+    next;
+  }
 
-        #####
-        #Check for proper definition and notes formatting.
-        #####
-        if (  $definition !~ /\$x_(\{1\}|1)\$/ ) {
-          print "The definition for \"$gismu\", \"$definition\" is not properly jbovlaste-ified. It should have places of the format \$x_{1}\$ or similar. SKIPPING.\n";
-          next;
-        }
+  if ( $notes !~ /\{.....\}/) {
+    print "The gismu cross references in the notes for \"$gismu\", \"$notes\", are not formatted properly. Please see that all gismu are enclosed in braces. e.g {basti}.  SKIPPING.\n";
+    next;
+  }
 
-        if ( $notes !~ /\{.....\}/) {
-          print "The gismu cross references in the notes for \"$gismu\", \"$notes\", are not formatted properly. Please see that all gismu are enclosed in braces. e.g {basti}.  SKIPPING.\n";
-          next;
-        }
+  next if $gismu =~ /\d/;
 
-	next if $gismu =~ /\d/;
+  print "$gismu###$keywords[0]###$definition###$notes\n\n";
 
-        $notes =~ s/\s+$//;
+  ####
+  # Retrieve the basic valsi information (should already be in the
+  # DB)
+  ####
 
-        print "$gismu###$keywords[0]###$definition###$notes\n\n";
+  my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $gismu);
 
-        ####
-        # Retrieve the basic valsi information (should already be in the
-        # DB)
-        ####
+  if( ! $valsiid )
+  {
+    print "This script is not designed to add new gismu (or any valsi, for that matter), but I can't find an entry for $gismu ; bailing.\n";
+    exit 1
+  }
 
-        my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $gismu);
+  ####
+  # Delete old versions
+  ####
 
-        if( ! $valsiid )
-        {
-          print "This script is not designed to add new gismu (or any valsi, for that matter), but I can't find an entry for $valsiid ; bailing.\n";
-          exit 1
-        }
+  $dbh->begin_work;
 
-        ####
-        # Delete old versions
-        ####
+  my $definitionidsref = $dbh->selectall_arrayref("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?",
+    undef,
+    $lang, $valsiid, $userid );
 
-        $dbh->begin_work;
+  foreach my $definitionidref (@{$definitionidsref}) {
+    my $defid = @{$definitionidref}[0];
 
-        my $definitionidsref = $dbh->selectall_arrayref("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?",
-          undef,
-          $lang, $valsiid, $userid );
+    print "\nDefinition id $defid found for valsi id $valsiid, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
 
-        foreach my $definitionidref (@{$definitionidsref}) {
-          my $defid = @{$definitionidref}[0];
+    $dbh->do("DELETE FROM valsibestguesses WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM natlangwordbestguesses WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=?", undef, $defid);
+    $dbh->do("DELETE FROM definitionvotes WHERE definitionid=?", undef, $defid);
+    $dbh->do("DELETE FROM definitions WHERE definitionid=?", undef, $defid );
+  }
 
-          print "\nDefinition id $defid found for valsi id $valsiid, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+  foreach my $keyword (@keywords) {
+    my $nlwidsref = $dbh->selectall_arrayref("SELECT wordid from natlangwords WHERE word=? AND langid=? AND userid=?",
+      undef,
+      $keyword, $lang, $userid );
 
-          $dbh->do("DELETE FROM valsibestguesses WHERE definitionid=?", undef, $defid );
-          $dbh->do("DELETE FROM natlangwordbestguesses WHERE definitionid=?", undef, $defid );
-          $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", undef, $defid );
-          $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=?", undef, $defid);
-          $dbh->do("DELETE FROM definitionvotes WHERE definitionid=?", undef, $defid);
-          $dbh->do("DELETE FROM definitions WHERE definitionid=?", undef, $defid );
-        }
+    foreach my $nlwidref (@{$nlwidsref}) {
+      my $nlwid = @{$nlwidref}[0];
 
-        foreach my $keyword (@keywords) {
-          my $nlwidsref = $dbh->selectall_arrayref("SELECT wordid from natlangwords WHERE word=? AND langid=? AND userid=?",
-            undef,
-            $keyword, $lang, $userid );
+      print "\nNatlang word id $nlwid found for word id $keyword, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
 
-          foreach my $nlwidref (@{$nlwidsref}) {
-            my $nlwid = @{$nlwidref}[0];
+      $dbh->do("DELETE FROM keywordmapping WHERE natlangwordid=?", undef, $nlwid );
+      $dbh->do("DELETE FROM natlangwordvotes WHERE natlangwordid=?", undef, $nlwid);
+      $dbh->do("DELETE FROM natlangwords WHERE wordid=?", undef, $nlwid); 
+    }
+  }
 
-            print "\nNatlang word id $nlwid found for word id $keyword, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+  $dbh->commit;
 
-            $dbh->do("DELETE FROM keywordmapping WHERE natlangwordid=?", undef, $nlwid );
-            $dbh->do("DELETE FROM natlangwordvotes WHERE natlangwordid=?", undef, $nlwid);
-            $dbh->do("DELETE FROM natlangwords WHERE wordid=?", undef, $nlwid); 
-          }
-        }
+  ####
+  # Enter the definition information.
+  ####
+  $dbh->begin_work;
+  #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
+  #currval pulls the latest value in a session safe manner.
+  $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time) VALUES
+    (?, ?, ?, ?, ?, ?, ?)",
+    undef, $lang, $valsiid, 1, $definition, $notes, $userid, $time);
 
-        $dbh->commit;
+  # Retrieve the DefinitionID that got generated above.
+  my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
 
-	####
-	# Enter the definition information.
-	####
-	$dbh->begin_work;
-        #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
-        #currval pulls the latest value in a session safe manner.
-	$dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time) VALUES
-	    (?, ?, ?, ?, ?, ?, ?)",
-	    undef, $lang, $valsiid, 1, $definition, $notes, $userid, $time);
+  # print("SELECT currval ('definitions_definitionid_seq')");
+  # print "$valsiid, $defid\n";
 
-	# Retrieve the DefinitionID that got generated above.
-	my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
-        
-        # print("SELECT currval ('definitions_definitionid_seq')");
-        # print "$valsiid, $defid\n";
+  $dbh->commit;
 
-	$dbh->commit;
+  ## print("SELECT definitionId FROM definitions where langid=$lang
+  ##    AND valsiId=$valsiid AND definitionNum=1" );
+  ## print "DEFID: $defid\n";
 
-	## print("SELECT definitionId FROM definitions where langid=$lang
-	##    AND valsiId=$valsiid AND definitionNum=1" );
-	## print "DEFID: $defid\n";
+  ####
+  # Enter the vote information.
+  ####
+  $dbh->begin_work;
+  $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
+    VALUES
+    (?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?)",
+    { },
+    $lang,
+    $valsiid,
+    $defid,
+    $votevalue,
+    $userid,
+    $time);
+  $dbh->commit;
 
-	####
-	# Enter the vote information.
-	####
-	$dbh->begin_work;
-        $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
-            VALUES
-                (?,
-		?,
-		?,
-                ?,
-                ?,
-                ?)",
-                { },
-                $lang,
-                $valsiid,
-		$defid,
-                $votevalue,
-                $userid,
-                $time);
-	$dbh->commit;
+  for (my $i = 0; $i <= 5; $i++) {
+    my $keyword = $keywords[$i];
 
-        for (my $i = 0; $i <= 5; $i++) {
-          my $keyword = $keywords[$i];
+    if( ! $keyword ) {
+      next;
+    }
 
-          if( ! $keyword ) {
-            next;
-          }
+    ####
+    # Enter the basic natlang word information for the keyword
+    ####
+    $dbh->begin_work;
+    $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+      undef,
+      $lang, $keyword, 1, $userid, $time );
+    $dbh->commit;
 
-          ####
-          # Enter the basic natlang word information for the keyword
-          ####
-          $dbh->begin_work;
-          $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
-            undef,
-            $lang, $keyword, 1, $userid, $time );
-          $dbh->commit;
+    ####
+    # Retrieve the WordID that got generated above.
+    ####
+    my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
 
-          ####
-          # Retrieve the WordID that got generated above.
-          ####
-          my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
+    # print "nlw: $valsiid, $defid, $wordid\n";
 
-          # print "nlw: $valsiid, $defid, $wordid\n";
+    ####
+    # Enter the vote information.
+    ####
+    $dbh->begin_work;
+    $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
+      VALUES
+      (?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?)",
+      undef,
+      $defid,
+      $wordid,
+      $i,
+      $votevalue,
+      $userid,
+      $time);
+    $dbh->commit;
 
-          ####
-          # Enter the vote information.
-          ####
-          $dbh->begin_work;
-          $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
-            VALUES
-            (?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?)",
-            undef,
-            $defid,
-            $wordid,
-            $i,
-            $votevalue,
-            $userid,
-            $time);
-          $dbh->commit;
+    ####
+    # Enter the mapping from the keyword to the definition.
+    ####
+    $dbh->begin_work;
+    $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
+      (
+      ?,
+      ?,
+      ?
+      )",
+      undef,
+      $defid, $wordid, $i );
+    $dbh->commit;
 
-          ####
-          # Enter the mapping from the keyword to the definition.
-          ####
-          $dbh->begin_work;
-          $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
-            (
-            ?,
-            ?,
-            ?
-            )",
-            undef,
-            $defid, $wordid, $i );
-          $dbh->commit;
-
-        }
+  }
 }
 
 $dbh->disconnect;

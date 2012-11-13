@@ -1,0 +1,215 @@
+#!/usr/bin/perl
+
+# All input files must match the following format.
+# 1. All values must be seperated by Tabs
+# 2. The four columns should be in the following order:
+#    a) cmavo
+#    b) selmaho
+#    c) glossword
+#    d) definition
+#    e) notes
+# 3. The definition and the notes must already be jbovlaste-ified;
+# this means that the definition must have LaTeX-style $x_1$ places
+# in it (although not really applicable here), and the notes field
+# must have cross-references like {bacru}.
+# 4. The header line must have a digit of some kind in the first
+# column.
+#
+# The import will fail if the above conditions are not met.
+#
+
+use strict;
+use warnings;
+
+use DBI;
+
+my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
+$dbh->{RaiseError} = 1;
+
+my $time = time();
+
+# I can imagine wanting to change this, but not enough to make it a
+# parameter
+my $votevalue = 1;
+
+use Getopt::Long;
+my $file = undef;
+my $userid = undef;
+my $lang = undef;
+my $result = GetOptions ("file=s" => \$file, "userid=i" => \$userid, "lang=i"   => \$lang );
+
+if( ! $userid || ! $lang || ! $file ) {
+  print "usage: -f data_file -u userid -l langid\n";
+  exit 1;
+}
+
+open(CMAVO,"<", $file);
+while(<CMAVO>) {
+  chomp;
+  my @columns = split(/\t/);
+
+  if( (scalar @columns) < 5 ) {
+    print "Too few columns. The document does not meet the specification criteria (which are in the header of this script). Please check the document.\n";
+    exit 1;
+  }
+
+  # Clean out spaces.
+  map { s/^\s+// } (map { s/\s+$// } @columns);
+
+  my($cmavo,$selmaho,$glossword,$definition,$notes) = @columns;
+	
+  $cmavo =~ tr/{}//d;
+  $cmavo =~ s/^\.//g;
+
+  # Header line
+  next if $cmavo =~ /\d/;
+
+  ####
+  # Retrieve the basic valsi information (should already be in the
+  # DB)
+  ####
+
+  my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM valsi WHERE word=?", undef, $cmavo);
+
+  if( ! $valsiid )
+  {
+    print "This script is not designed to add new cmavo (or any valsi, for that matter), but I can't find an entry for $cmavo ; bailing.\n";
+    exit 1
+  }
+
+  print "---$cmavo---$glossword---$definition---$notes---\n";
+
+  ####
+  # Delete old versions
+  ####
+
+  $dbh->begin_work;
+
+  my $definitionidsref = $dbh->selectall_arrayref("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?",
+    undef,
+    $lang, $valsiid, $userid );
+
+  foreach my $definitionidref (@{$definitionidsref}) {
+    my $defid = @{$definitionidref}[0];
+
+    print "\nDefinition id $defid found for valsi id $valsiid, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+
+    $dbh->do("DELETE FROM valsibestguesses WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM natlangwordbestguesses WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", undef, $defid );
+    $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=?", undef, $defid);
+    $dbh->do("DELETE FROM definitionvotes WHERE definitionid=?", undef, $defid);
+    $dbh->do("DELETE FROM definitions WHERE definitionid=?", undef, $defid );
+  }
+
+  my $nlwidsref = $dbh->selectall_arrayref("SELECT wordid from natlangwords WHERE word=? AND langid=? AND userid=?",
+    undef,
+    $glossword, $lang, $userid );
+
+  foreach my $nlwidref (@{$nlwidsref}) {
+    my $nlwid = @{$nlwidref}[0];
+
+    print "\nNatlang word id $nlwid found for word id $glossword, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
+
+    $dbh->do("DELETE FROM natlangwordbestguesses WHERE natlangwordid=?", undef, $nlwid );
+    $dbh->do("DELETE FROM keywordmapping WHERE natlangwordid=?", undef, $nlwid );
+    $dbh->do("DELETE FROM natlangwordvotes WHERE natlangwordid=?", undef, $nlwid);
+    $dbh->do("DELETE FROM natlangwords WHERE wordid=?", undef, $nlwid); 
+  }
+
+  $dbh->commit;
+next;
+
+  ####
+  # Enter the definition information.
+  ####
+  $dbh->begin_work;
+
+  #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
+  #currval pulls the latest value in a session safe manner.
+  $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time, selmaho) VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?)",
+    undef,
+    $lang, $valsiid, 1, $definition, $notes, $userid, $time, $selmaho);
+
+  # Retrieve the DefinitionID that got generated above.
+  my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
+
+  print "DEFID: $defid\n";
+
+  $dbh->commit;
+
+  ####
+  # Enter the vote information.
+  ####
+  $dbh->begin_work;
+  $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
+    VALUES
+    (?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?)",
+    { },
+    $lang,
+    $valsiid,
+    $defid,
+    $votevalue,
+    $userid,
+    $time);
+  $dbh->commit;
+
+  ####
+  # Enter the basic natlang word information for the gloss word.
+  ####
+  $dbh->begin_work;
+  $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+    undef,
+    $lang, $glossword, 1, $userid, $time );
+  $dbh->commit;
+
+  ####
+  # Retrieve the WordID that got generated above.
+  ####
+  my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
+  print "WORDID: $wordid\n";
+
+  ####
+  # Enter the vote information.
+  ####
+  $dbh->begin_work;
+  $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
+    VALUES
+    (?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?)",
+    undef,
+    $defid,
+    $wordid,
+    0,
+    $votevalue,
+    $userid,
+    $time);
+  $dbh->commit;
+
+  ####
+  # Enter the mapping from the gloss word to the definition.
+  ####
+  $dbh->begin_work;
+  $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
+    (
+    ?,
+    ?,
+    0
+    )",
+    undef,
+    $defid, $wordid );
+  $dbh->commit;
+
+}
+
+$dbh->disconnect;
