@@ -118,7 +118,6 @@ while(<CMAVO>) {
   }
 
   $dbh->commit;
-next;
 
   ####
   # Enter the definition information.
