@@ -180,8 +180,8 @@ print qq{</dictionary>\n};
 sub massage
 {
     my $input=shift(@_);
-    $input =~ s/'/\&amp;/g;
-    $input =~ s/"/\&apos;/g;
+    $input =~ s/"/\&quot;/g;
+    $input =~ s/'/\&apos;/g;
     $input =~ s/\&/\&amp;/g;
     $input =~ s/</\&lt;/g;
     $input =~ s/>/\&gt;/g;
