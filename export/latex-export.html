@@ -8,6 +8,8 @@
 
     my $langrealname = $dbh->selectrow_array("SELECT realname FROM
 	languages WHERE tag=?", undef, $lang);
+    my $englishname = $dbh->selectrow_array("SELECT englishname FROM
+	languages WHERE tag=?", undef, $lang);
     my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
 	tag=?", undef, $lang);
 #    my $words = $dbh->selectall_arrayref("SELECT word, meaning, wordId FROM natlangwords WHERE langId=$langid ORDER BY word");
@@ -191,20 +193,53 @@
     #print Dumper($lojbanToNatLang);
     #print Dumper($natLangToLojban);
 
-    print TMP '
-\documentclass[notitlepage,twocolumn,letter,a4paper]{book}
+    print TMP q(
+%!TEX encoding = UTF-8 Unicode
+%!TEX TS-program = xelatex
+\documentclass[notitlepage,twocolumn,a4paper,10pt]{book}
 
 \usepackage{underscore}
-
-%% These apply to A4 paper only
-\pdfpagewidth 210mm
-\pdfpageheight 297mm
 
 \usepackage{fancyhdr} % important, lets us actually pull this stuff off.
 \pagestyle{fancy}     % turns on the magic provided by fancyhdr
 
+% This currently fails with a stack overflow.  This is *probably* a
+% problem interacting with other packages, but maybe not; it would
+% need testing.  It might be that wrapping all of the bits in each
+% language with \textrussian or \textenglish or whatever so that
+% polyglossia doesn't have to guess would solve the problem, and in
+% any case that's the right thing to do with polyglossia anyway, but
+% it's a lot of work.  See
+% http://www.math.washington.edu/tex-archive/macros/xetex/latex/polyglossia/polyglossia.pdf
+% for some details.
+%
+% \usepackage{polyglossia}
+
+% \setdefaultlanguage{). lc($englishname) . q(}
+
+% Packages from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
+%\usepackage[utf8]{inputenc} % not needed by XeTex
+\usepackage{xunicode} % for XeTeX!
+\usepackage{fontspec} % for XeTeX!
+\usepackage{xltxtra} % for XeTeX!
+
 \usepackage{fontspec}
-\setromanfont{Code2000}
+
+% Font definitions mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
+\defaultfontfeatures{Scale=MatchLowercase}% to adjust all used fonts to the same x−height
+\setromanfont[Mapping=tex−text]{Linux Libertine O}
+\setsansfont[Mapping=tex−text]{Linux Biolinum O}
+%\setmonofont[Mapping=tex−text]{Liberation Mono}
+%\setmonofont[Mapping=tex−text, Scale=0.9]{Courier New}
+
+%% Formatting, mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf , not working
+%\setlength{\marginparwidth}{0cm}
+%\setlength{\oddsidemargin}{0cm}
+%\setlength{\evensidemargin}{0cm}
+%\setlength{\textwidth}{15cm}
+%\setlength{\textheight}{24cm}
+%%\setlength{\topmargin}{−1cm}
+%\setlength{\parindent}{0pt}
 
 \fancyhead{}          % empty out the header
 \fancyfoot{}          % empty out the footer
@@ -214,7 +249,7 @@
 
 \setlength{\parindent}{1 em}
 
-\title{'. $langrealname . ' To lojban and lojban To '. $langrealname .' Dictionary}
+\title{). $langrealname . q( To lojban and lojban To ). $langrealname .q( Dictionary}
 \author{Lojbanic Community}
 \date{\today}
 
@@ -222,14 +257,14 @@
 
 \maketitle
 
-\chapter{lojban to '. $langrealname .'}'.
-$lojbanToNatLang. '
+\chapter{lojban to ). $langrealname .q(}).
+$lojbanToNatLang. q(
 
-\chapter{'. $langrealname .' to lojban}'.
-$natLangToLojban. '
+\chapter{). $langrealname .q( to lojban}).
+$natLangToLojban. q(
 
 \end{document}
-';
+);
 #$joinedwords
 
     close( TMP );
