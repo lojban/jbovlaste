@@ -31,17 +31,17 @@
 # Shell script to affix_insert 
 #
 
-($origversion, $infile, $outfile, undef) = @ARGV;
+($infile, $outfile) = @ARGV;
 
 $date = `date`;
 chomp $date;
 
 #$version = $origversion;
 #$version =~ s/\.[A-Z].*//;
-$version = `svn info $infile | grep Revision | awk '{ print \$2 }'`;
-chomp $version;
+#$version = `svn info $infile | grep Revision | awk '{ print \$2 }'`;
+#chomp $version;
 
-print "$origversion, $version, $infile, $outfile\n";
+#print "$origversion, $version, $infile, $outfile\n";
 
 open( INFILE, "<$infile" );
 open( OUTFILE, ">$outfile" );
@@ -51,10 +51,10 @@ while( <INFILE> )
     {
 	s/<!-- #JVS#DATE# -->/$date/;
     }
-    if( /<!-- #JVS#VERSION# -->/ )
-    {
-	s/<!-- #JVS#VERSION# -->/$version/;
-    }
+#    if( /<!-- #JVS#VERSION# -->/ )
+#    {
+#	s/<!-- #JVS#VERSION# -->/$version/;
+#    }
     
     print OUTFILE $_;
 }

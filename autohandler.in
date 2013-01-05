@@ -91,7 +91,7 @@ what happened leading up to this. Just in case.
     <td align="left" valign="top">
      <font size="-1">
      This is jbovlaste, the lojban dictionary system.<br />
-     This is version <!-- #JVS#VERSION# -->, last changed on <!-- #JVS#DATE# -->.<br />
+     The main code was last changed on <!-- #JVS#DATE# -->.<br />
      All content is public domain. By submitting content, you agree to place
      it in the public domain to the fullest extent allowed by local law. <br />
      jbovlaste is an official project of the logical language group,
@@ -151,7 +151,7 @@ what happened leading up to this. Just in case.
     [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
     [ "XML Export", "$base_url/export/xml.html" ],
     [ "user Listing", "$base_url/personal/listing.html" ],
-    [ "Report Bugs", "mailto:rt-jvs\@lojban.org" ],
+    [ "Report Bugs", "mailto:jbovlaste\@lojban.org" ],
     [ "Utilities", "$base_url/util/index.html" ],
     [ "Status", "$base_url/status.html" ],
     [ "Help", "$base_url/help/index.html" ],
