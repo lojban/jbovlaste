@@ -273,7 +273,7 @@ $natLangToLojban. q(
 
     my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
 
-    # print "<pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre>\n";
+    print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre> -->\n";
 
     # Get the xelatex generated file's name.
     my $pdffilename=$shortfilename;
