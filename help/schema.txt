@@ -1,0 +1,1357 @@
+--
+-- PostgreSQL database dump
+--
+
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: comments; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE comments (
+    commentid integer NOT NULL,
+    threadid integer NOT NULL,
+    parentid integer NOT NULL,
+    userid integer NOT NULL,
+    commentnum integer NOT NULL,
+    "time" integer NOT NULL,
+    subject text,
+    content text
+);
+
+
+ALTER TABLE public.comments OWNER TO jbovlaste;
+
+--
+-- Name: comments_commentid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE comments_commentid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.comments_commentid_seq OWNER TO jbovlaste;
+
+--
+-- Name: comments_commentid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE comments_commentid_seq OWNED BY comments.commentid;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE users (
+    userid integer NOT NULL,
+    username character varying(64) NOT NULL,
+    password character(32) NOT NULL,
+    email text NOT NULL,
+    realname text,
+    url text,
+    personal text,
+    votesize real DEFAULT 0.0
+);
+
+
+ALTER TABLE public.users OWNER TO jbovlaste;
+
+--
+-- Name: convenientcomments; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientcomments AS
+    SELECT c.commentid, c.threadid, c.parentid, c.userid, u.username, u.realname, c."time", c.subject, c.content, c.commentnum FROM comments c, users u WHERE (u.userid = c.userid);
+
+
+ALTER TABLE public.convenientcomments OWNER TO jbovlaste;
+
+--
+-- Name: definitions; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE definitions (
+    langid integer NOT NULL,
+    valsiid integer NOT NULL,
+    definitionnum integer NOT NULL,
+    definitionid integer NOT NULL,
+    definition text NOT NULL,
+    notes text,
+    userid integer NOT NULL,
+    "time" integer NOT NULL,
+    selmaho text,
+    jargon text
+);
+
+
+ALTER TABLE public.definitions OWNER TO jbovlaste;
+
+--
+-- Name: languages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE languages (
+    langid integer NOT NULL,
+    tag character varying(128) NOT NULL,
+    englishname text NOT NULL,
+    lojbanname text NOT NULL,
+    realname text NOT NULL,
+    forlojban text,
+    url text
+);
+
+
+ALTER TABLE public.languages OWNER TO jbovlaste;
+
+--
+-- Name: valsi; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE valsi (
+    valsiid integer NOT NULL,
+    word text NOT NULL,
+    typeid smallint,
+    userid integer NOT NULL,
+    "time" integer NOT NULL,
+    rafsi text
+);
+
+
+ALTER TABLE public.valsi OWNER TO jbovlaste;
+
+--
+-- Name: convenientdefinitions; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientdefinitions AS
+    SELECT nd.definitionid, l.realname AS langrealname, l.tag, l.langid, v.valsiid, v.word, nd.definition, nd.notes, u.username, u.userid, nd."time", nd.definitionnum, v.rafsi, nd.selmaho, nd.jargon FROM definitions nd, languages l, valsi v, users u WHERE (((nd.langid = l.langid) AND (nd.valsiid = v.valsiid)) AND (nd.userid = u.userid));
+
+
+ALTER TABLE public.convenientdefinitions OWNER TO jbovlaste;
+
+--
+-- Name: etymology; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE etymology (
+    etymologyid integer NOT NULL,
+    valsiid integer NOT NULL,
+    langid integer NOT NULL,
+    content text,
+    "time" integer NOT NULL,
+    userid integer NOT NULL
+);
+
+
+ALTER TABLE public.etymology OWNER TO jbovlaste;
+
+--
+-- Name: convenientetymology; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientetymology AS
+    SELECT e.etymologyid, v.word, e.valsiid, l.tag, l.realname, l.langid, e.content, e."time", u.username, u.userid FROM etymology e, valsi v, languages l, users u WHERE (((e.userid = u.userid) AND (e.langid = l.langid)) AND (e.valsiid = v.valsiid));
+
+
+ALTER TABLE public.convenientetymology OWNER TO jbovlaste;
+
+--
+-- Name: example; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE example (
+    exampleid integer NOT NULL,
+    valsiid integer NOT NULL,
+    definitionid integer NOT NULL,
+    examplenum integer NOT NULL,
+    content text,
+    "time" integer NOT NULL,
+    userid integer NOT NULL
+);
+
+
+ALTER TABLE public.example OWNER TO jbovlaste;
+
+--
+-- Name: convenientexamples; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientexamples AS
+    SELECT e.exampleid, v.word, e.valsiid, e.content, e."time", u.username, u.userid, e.examplenum, e.definitionid FROM valsi v, example e, users u WHERE ((v.valsiid = e.valsiid) AND (u.userid = e.userid));
+
+
+ALTER TABLE public.convenientexamples OWNER TO jbovlaste;
+
+--
+-- Name: natlangwords; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE natlangwords (
+    wordid integer NOT NULL,
+    langid integer NOT NULL,
+    word text NOT NULL,
+    meaning text,
+    meaningnum integer NOT NULL,
+    userid integer NOT NULL,
+    "time" integer NOT NULL,
+    notes text
+);
+
+
+ALTER TABLE public.natlangwords OWNER TO jbovlaste;
+
+--
+-- Name: threads; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE threads (
+    threadid integer NOT NULL,
+    valsiid integer NOT NULL,
+    natlangwordid integer NOT NULL,
+    definitionid integer NOT NULL
+);
+
+
+ALTER TABLE public.threads OWNER TO jbovlaste;
+
+--
+-- Name: convenientthreads; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientthreads AS
+    SELECT t.threadid, t.valsiid, v.word AS valsi, t.natlangwordid, nlw.word AS natlangword, l.tag, t.definitionid FROM threads t, valsi v, natlangwords nlw, languages l WHERE (((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid)) AND (nlw.langid = l.langid));
+
+
+ALTER TABLE public.convenientthreads OWNER TO jbovlaste;
+
+--
+-- Name: valsitypes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE valsitypes (
+    typeid smallint NOT NULL,
+    descriptor character varying(128)
+);
+
+
+ALTER TABLE public.valsitypes OWNER TO jbovlaste;
+
+--
+-- Name: convenientvalsi; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW convenientvalsi AS
+    SELECT v.valsiid, v.word, t.descriptor AS type, v.typeid, u.username, v.userid, v."time", v.rafsi FROM valsi v, valsitypes t, users u WHERE ((v.typeid = t.typeid) AND (v.userid = u.userid));
+
+
+ALTER TABLE public.convenientvalsi OWNER TO jbovlaste;
+
+--
+-- Name: definitions_definitionid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE definitions_definitionid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.definitions_definitionid_seq OWNER TO jbovlaste;
+
+--
+-- Name: definitions_definitionid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE definitions_definitionid_seq OWNED BY definitions.definitionid;
+
+
+--
+-- Name: definitionvotes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE definitionvotes (
+    valsiid integer NOT NULL,
+    langid integer NOT NULL,
+    definitionid integer NOT NULL,
+    value real NOT NULL,
+    userid integer NOT NULL,
+    "time" integer NOT NULL
+);
+
+
+ALTER TABLE public.definitionvotes OWNER TO jbovlaste;
+
+--
+-- Name: etymology_etymologyid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE etymology_etymologyid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.etymology_etymologyid_seq OWNER TO jbovlaste;
+
+--
+-- Name: etymology_etymologyid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE etymology_etymologyid_seq OWNED BY etymology.etymologyid;
+
+
+--
+-- Name: example_exampleid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE example_exampleid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.example_exampleid_seq OWNER TO jbovlaste;
+
+--
+-- Name: example_exampleid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE example_exampleid_seq OWNED BY example.exampleid;
+
+
+--
+-- Name: keywordmapping; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE keywordmapping (
+    natlangwordid integer NOT NULL,
+    definitionid integer NOT NULL,
+    place smallint NOT NULL
+);
+
+
+ALTER TABLE public.keywordmapping OWNER TO jbovlaste;
+
+--
+-- Name: languages_langid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE languages_langid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.languages_langid_seq OWNER TO jbovlaste;
+
+--
+-- Name: languages_langid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE languages_langid_seq OWNED BY languages.langid;
+
+
+--
+-- Name: natlangword_corrections; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE natlangword_corrections (
+    wordid integer,
+    newword text NOT NULL,
+    newmeaning text NOT NULL,
+    notes text,
+    userid integer,
+    "time" integer NOT NULL
+);
+
+
+ALTER TABLE public.natlangword_corrections OWNER TO jbovlaste;
+
+--
+-- Name: natlangwordbestguesses; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE natlangwordbestguesses (
+    natlangwordid integer NOT NULL,
+    definitionid integer,
+    place smallint NOT NULL
+);
+
+
+ALTER TABLE public.natlangwordbestguesses OWNER TO jbovlaste;
+
+--
+-- Name: natlangwords_wordid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE natlangwords_wordid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.natlangwords_wordid_seq OWNER TO jbovlaste;
+
+--
+-- Name: natlangwords_wordid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE natlangwords_wordid_seq OWNED BY natlangwords.wordid;
+
+
+--
+-- Name: natlangwordvotes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE natlangwordvotes (
+    natlangwordid integer NOT NULL,
+    definitionid integer,
+    place integer NOT NULL,
+    userid integer NOT NULL,
+    value real NOT NULL,
+    "time" integer NOT NULL
+);
+
+
+ALTER TABLE public.natlangwordvotes OWNER TO jbovlaste;
+
+--
+-- Name: pages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE pages (
+    pagename text NOT NULL,
+    version integer NOT NULL,
+    "time" integer NOT NULL,
+    userid integer NOT NULL,
+    langid integer NOT NULL,
+    content text,
+    compressed boolean DEFAULT false,
+    latest boolean DEFAULT true
+);
+
+
+ALTER TABLE public.pages OWNER TO jbovlaste;
+
+--
+-- Name: threads_threadid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE threads_threadid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.threads_threadid_seq OWNER TO jbovlaste;
+
+--
+-- Name: threads_threadid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE threads_threadid_seq OWNED BY threads.threadid;
+
+
+--
+-- Name: users_userid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE users_userid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.users_userid_seq OWNER TO jbovlaste;
+
+--
+-- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE users_userid_seq OWNED BY users.userid;
+
+
+--
+-- Name: valsi_valsiid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
+--
+
+CREATE SEQUENCE valsi_valsiid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.valsi_valsiid_seq OWNER TO jbovlaste;
+
+--
+-- Name: valsi_valsiid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
+--
+
+ALTER SEQUENCE valsi_valsiid_seq OWNED BY valsi.valsiid;
+
+
+--
+-- Name: valsibestguesses; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE valsibestguesses (
+    valsiid integer NOT NULL,
+    langid integer NOT NULL,
+    definitionid integer NOT NULL
+);
+
+
+ALTER TABLE public.valsibestguesses OWNER TO jbovlaste;
+
+--
+-- Name: xrefs; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE xrefs (
+    srctype smallint NOT NULL,
+    srcid integer NOT NULL,
+    desttype smallint NOT NULL,
+    destid integer NOT NULL
+);
+
+
+ALTER TABLE public.xrefs OWNER TO jbovlaste;
+
+--
+-- Name: commentid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY comments ALTER COLUMN commentid SET DEFAULT nextval('comments_commentid_seq'::regclass);
+
+
+--
+-- Name: definitionid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitions ALTER COLUMN definitionid SET DEFAULT nextval('definitions_definitionid_seq'::regclass);
+
+
+--
+-- Name: etymologyid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY etymology ALTER COLUMN etymologyid SET DEFAULT nextval('etymology_etymologyid_seq'::regclass);
+
+
+--
+-- Name: exampleid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY example ALTER COLUMN exampleid SET DEFAULT nextval('example_exampleid_seq'::regclass);
+
+
+--
+-- Name: langid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY languages ALTER COLUMN langid SET DEFAULT nextval('languages_langid_seq'::regclass);
+
+
+--
+-- Name: wordid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwords ALTER COLUMN wordid SET DEFAULT nextval('natlangwords_wordid_seq'::regclass);
+
+
+--
+-- Name: threadid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY threads ALTER COLUMN threadid SET DEFAULT nextval('threads_threadid_seq'::regclass);
+
+
+--
+-- Name: userid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY users ALTER COLUMN userid SET DEFAULT nextval('users_userid_seq'::regclass);
+
+
+--
+-- Name: valsiid; Type: DEFAULT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsi ALTER COLUMN valsiid SET DEFAULT nextval('valsi_valsiid_seq'::regclass);
+
+
+--
+-- Name: comments_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_pkey PRIMARY KEY (commentid);
+
+
+--
+-- Name: definitions_langid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY definitions
+    ADD CONSTRAINT definitions_langid_key UNIQUE (langid, valsiid, definitionnum);
+
+
+--
+-- Name: definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY definitions
+    ADD CONSTRAINT definitions_pkey PRIMARY KEY (definitionid);
+
+
+--
+-- Name: definitionvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY definitionvotes
+    ADD CONSTRAINT definitionvotes_pkey PRIMARY KEY (valsiid, langid, userid);
+
+
+--
+-- Name: etymology_etymologyid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY etymology
+    ADD CONSTRAINT etymology_etymologyid_key UNIQUE (etymologyid);
+
+
+--
+-- Name: example_exampleid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY example
+    ADD CONSTRAINT example_exampleid_key UNIQUE (exampleid);
+
+
+--
+-- Name: keywordmapping_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY keywordmapping
+    ADD CONSTRAINT keywordmapping_pkey PRIMARY KEY (natlangwordid, definitionid, place);
+
+
+--
+-- Name: languages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY languages
+    ADD CONSTRAINT languages_pkey PRIMARY KEY (langid);
+
+
+--
+-- Name: natlangwordbestguesses_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY natlangwordbestguesses
+    ADD CONSTRAINT natlangwordbestguesses_pkey PRIMARY KEY (natlangwordid);
+
+
+--
+-- Name: natlangwords_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY natlangwords
+    ADD CONSTRAINT natlangwords_pkey PRIMARY KEY (wordid);
+
+
+--
+-- Name: natlangwords_unique_langid_word_meaning; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY natlangwords
+    ADD CONSTRAINT natlangwords_unique_langid_word_meaning UNIQUE (langid, word, meaning);
+
+
+--
+-- Name: natlangwordvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT natlangwordvotes_pkey PRIMARY KEY (natlangwordid, userid);
+
+
+--
+-- Name: pages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY pages
+    ADD CONSTRAINT pages_pkey PRIMARY KEY (pagename, version, langid);
+
+
+--
+-- Name: threads_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY threads
+    ADD CONSTRAINT threads_pkey PRIMARY KEY (threadid);
+
+
+--
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
+
+
+--
+-- Name: users_username_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: valsi_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY valsi
+    ADD CONSTRAINT valsi_pkey PRIMARY KEY (valsiid);
+
+
+--
+-- Name: valsi_word_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY valsi
+    ADD CONSTRAINT valsi_word_key UNIQUE (word);
+
+
+--
+-- Name: valsibestguesses_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY valsibestguesses
+    ADD CONSTRAINT valsibestguesses_pkey PRIMARY KEY (valsiid, langid);
+
+
+--
+-- Name: valsitypes_descriptor_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY valsitypes
+    ADD CONSTRAINT valsitypes_descriptor_key UNIQUE (descriptor);
+
+
+--
+-- Name: valsitypes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+ALTER TABLE ONLY valsitypes
+    ADD CONSTRAINT valsitypes_pkey PRIMARY KEY (typeid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsi
+    ADD CONSTRAINT "$1" FOREIGN KEY (typeid) REFERENCES valsitypes(typeid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsibestguesses
+    ADD CONSTRAINT "$1" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordbestguesses
+    ADD CONSTRAINT "$1" FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY keywordmapping
+    ADD CONSTRAINT "$1" FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT "$1" FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid);
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangword_corrections
+    ADD CONSTRAINT "$1" FOREIGN KEY (wordid) REFERENCES natlangwords(wordid);
+
+
+--
+-- Name: $2; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordbestguesses
+    ADD CONSTRAINT "$2" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
+
+
+--
+-- Name: $2; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY keywordmapping
+    ADD CONSTRAINT "$2" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
+
+
+--
+-- Name: $2; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT "$2" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
+
+
+--
+-- Name: $2; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangword_corrections
+    ADD CONSTRAINT "$2" FOREIGN KEY (userid) REFERENCES users(userid);
+
+
+--
+-- Name: $3; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT "$3" FOREIGN KEY (userid) REFERENCES users(userid);
+
+
+--
+-- Name: comments_parentid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_parentid FOREIGN KEY (parentid) REFERENCES comments(commentid) MATCH FULL;
+
+
+--
+-- Name: comments_threadid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_threadid FOREIGN KEY (threadid) REFERENCES threads(threadid) MATCH FULL;
+
+
+--
+-- Name: comments_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: definitions_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitions
+    ADD CONSTRAINT definitions_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: definitions_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitions
+    ADD CONSTRAINT definitions_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: definitions_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitions
+    ADD CONSTRAINT definitions_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: definitionvotes_definitionid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitionvotes
+    ADD CONSTRAINT definitionvotes_definitionid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
+
+
+--
+-- Name: definitionvotes_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitionvotes
+    ADD CONSTRAINT definitionvotes_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: definitionvotes_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitionvotes
+    ADD CONSTRAINT definitionvotes_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: definitionvotes_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY definitionvotes
+    ADD CONSTRAINT definitionvotes_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: etymology_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY etymology
+    ADD CONSTRAINT etymology_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: etymology_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY etymology
+    ADD CONSTRAINT etymology_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: etymology_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY etymology
+    ADD CONSTRAINT etymology_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: example_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY example
+    ADD CONSTRAINT example_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: example_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY example
+    ADD CONSTRAINT example_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: keywordmapping_defbestguessid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY keywordmapping
+    ADD CONSTRAINT keywordmapping_defbestguessid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
+
+
+--
+-- Name: keywordmapping_natlangwordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY keywordmapping
+    ADD CONSTRAINT keywordmapping_natlangwordid FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid) MATCH FULL;
+
+
+--
+-- Name: natlangwordbestguesses_defbestguessid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordbestguesses
+    ADD CONSTRAINT natlangwordbestguesses_defbestguessid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
+
+
+--
+-- Name: natlangwordbestguesses_natlangwordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordbestguesses
+    ADD CONSTRAINT natlangwordbestguesses_natlangwordid FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid) MATCH FULL;
+
+
+--
+-- Name: natlangwordid_natlangwordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY threads
+    ADD CONSTRAINT natlangwordid_natlangwordid FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid) MATCH FULL;
+
+
+--
+-- Name: natlangwords_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwords
+    ADD CONSTRAINT natlangwords_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: natlangwordvotes_natlangwordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT natlangwordvotes_natlangwordid FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid) MATCH FULL;
+
+
+--
+-- Name: natlangwordvotes_voter; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY natlangwordvotes
+    ADD CONSTRAINT natlangwordvotes_voter FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: pages_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY pages
+    ADD CONSTRAINT pages_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: pages_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY pages
+    ADD CONSTRAINT pages_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: threads_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY threads
+    ADD CONSTRAINT threads_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: valsi_userid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsi
+    ADD CONSTRAINT valsi_userid FOREIGN KEY (userid) REFERENCES users(userid) MATCH FULL;
+
+
+--
+-- Name: valsibestguesses_defbestguessid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsibestguesses
+    ADD CONSTRAINT valsibestguesses_defbestguessid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
+
+
+--
+-- Name: valsibestguesses_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsibestguesses
+    ADD CONSTRAINT valsibestguesses_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+
+
+--
+-- Name: valsibestguesses_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+--
+
+ALTER TABLE ONLY valsibestguesses
+    ADD CONSTRAINT valsibestguesses_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: comments; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE comments FROM PUBLIC;
+REVOKE ALL ON TABLE comments FROM jbovlaste;
+GRANT ALL ON TABLE comments TO jbovlaste;
+GRANT SELECT ON TABLE comments TO PUBLIC;
+
+
+--
+-- Name: users; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE users FROM PUBLIC;
+REVOKE ALL ON TABLE users FROM jbovlaste;
+GRANT ALL ON TABLE users TO jbovlaste;
+GRANT SELECT ON TABLE users TO PUBLIC;
+
+
+--
+-- Name: convenientcomments; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientcomments FROM PUBLIC;
+REVOKE ALL ON TABLE convenientcomments FROM jbovlaste;
+GRANT ALL ON TABLE convenientcomments TO jbovlaste;
+GRANT SELECT ON TABLE convenientcomments TO PUBLIC;
+
+
+--
+-- Name: definitions; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE definitions FROM PUBLIC;
+REVOKE ALL ON TABLE definitions FROM jbovlaste;
+GRANT ALL ON TABLE definitions TO jbovlaste;
+GRANT SELECT ON TABLE definitions TO PUBLIC;
+
+
+--
+-- Name: languages; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE languages FROM PUBLIC;
+REVOKE ALL ON TABLE languages FROM jbovlaste;
+GRANT ALL ON TABLE languages TO jbovlaste;
+GRANT SELECT ON TABLE languages TO PUBLIC;
+
+
+--
+-- Name: valsi; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE valsi FROM PUBLIC;
+REVOKE ALL ON TABLE valsi FROM jbovlaste;
+GRANT ALL ON TABLE valsi TO jbovlaste;
+GRANT SELECT ON TABLE valsi TO PUBLIC;
+
+
+--
+-- Name: etymology; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE etymology FROM PUBLIC;
+REVOKE ALL ON TABLE etymology FROM jbovlaste;
+GRANT ALL ON TABLE etymology TO jbovlaste;
+GRANT SELECT ON TABLE etymology TO PUBLIC;
+
+
+--
+-- Name: convenientetymology; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientetymology FROM PUBLIC;
+REVOKE ALL ON TABLE convenientetymology FROM jbovlaste;
+GRANT ALL ON TABLE convenientetymology TO jbovlaste;
+GRANT SELECT ON TABLE convenientetymology TO PUBLIC;
+
+
+--
+-- Name: example; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE example FROM PUBLIC;
+REVOKE ALL ON TABLE example FROM jbovlaste;
+GRANT ALL ON TABLE example TO jbovlaste;
+GRANT SELECT ON TABLE example TO PUBLIC;
+
+
+--
+-- Name: convenientexamples; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientexamples FROM PUBLIC;
+REVOKE ALL ON TABLE convenientexamples FROM jbovlaste;
+GRANT ALL ON TABLE convenientexamples TO jbovlaste;
+GRANT SELECT ON TABLE convenientexamples TO PUBLIC;
+
+
+--
+-- Name: natlangwords; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE natlangwords FROM PUBLIC;
+REVOKE ALL ON TABLE natlangwords FROM jbovlaste;
+GRANT ALL ON TABLE natlangwords TO jbovlaste;
+GRANT SELECT ON TABLE natlangwords TO PUBLIC;
+
+
+--
+-- Name: threads; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE threads FROM PUBLIC;
+REVOKE ALL ON TABLE threads FROM jbovlaste;
+GRANT ALL ON TABLE threads TO jbovlaste;
+GRANT SELECT ON TABLE threads TO PUBLIC;
+
+
+--
+-- Name: convenientthreads; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientthreads FROM PUBLIC;
+REVOKE ALL ON TABLE convenientthreads FROM jbovlaste;
+GRANT ALL ON TABLE convenientthreads TO jbovlaste;
+GRANT SELECT ON TABLE convenientthreads TO PUBLIC;
+
+
+--
+-- Name: valsitypes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE valsitypes FROM PUBLIC;
+REVOKE ALL ON TABLE valsitypes FROM jbovlaste;
+GRANT ALL ON TABLE valsitypes TO jbovlaste;
+GRANT SELECT ON TABLE valsitypes TO PUBLIC;
+
+
+--
+-- Name: convenientvalsi; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientvalsi FROM PUBLIC;
+REVOKE ALL ON TABLE convenientvalsi FROM jbovlaste;
+GRANT ALL ON TABLE convenientvalsi TO jbovlaste;
+GRANT SELECT ON TABLE convenientvalsi TO PUBLIC;
+
+
+--
+-- Name: definitionvotes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE definitionvotes FROM PUBLIC;
+REVOKE ALL ON TABLE definitionvotes FROM jbovlaste;
+GRANT ALL ON TABLE definitionvotes TO jbovlaste;
+GRANT SELECT ON TABLE definitionvotes TO PUBLIC;
+
+
+--
+-- Name: keywordmapping; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE keywordmapping FROM PUBLIC;
+REVOKE ALL ON TABLE keywordmapping FROM jbovlaste;
+GRANT ALL ON TABLE keywordmapping TO jbovlaste;
+GRANT SELECT ON TABLE keywordmapping TO PUBLIC;
+
+
+--
+-- Name: natlangwordbestguesses; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE natlangwordbestguesses FROM PUBLIC;
+REVOKE ALL ON TABLE natlangwordbestguesses FROM jbovlaste;
+GRANT ALL ON TABLE natlangwordbestguesses TO jbovlaste;
+GRANT SELECT ON TABLE natlangwordbestguesses TO PUBLIC;
+
+
+--
+-- Name: natlangwordvotes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE natlangwordvotes FROM PUBLIC;
+REVOKE ALL ON TABLE natlangwordvotes FROM jbovlaste;
+GRANT ALL ON TABLE natlangwordvotes TO jbovlaste;
+GRANT SELECT ON TABLE natlangwordvotes TO PUBLIC;
+
+
+--
+-- Name: pages; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE pages FROM PUBLIC;
+REVOKE ALL ON TABLE pages FROM jbovlaste;
+GRANT ALL ON TABLE pages TO jbovlaste;
+GRANT SELECT ON TABLE pages TO PUBLIC;
+
+
+--
+-- Name: valsibestguesses; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE valsibestguesses FROM PUBLIC;
+REVOKE ALL ON TABLE valsibestguesses FROM jbovlaste;
+GRANT ALL ON TABLE valsibestguesses TO jbovlaste;
+GRANT SELECT ON TABLE valsibestguesses TO PUBLIC;
+
+
+--
+-- Name: xrefs; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE xrefs FROM PUBLIC;
+REVOKE ALL ON TABLE xrefs FROM jbovlaste;
+GRANT ALL ON TABLE xrefs TO jbovlaste;
+GRANT SELECT ON TABLE xrefs TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
