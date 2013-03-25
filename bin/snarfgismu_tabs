@@ -24,6 +24,13 @@ use warnings;
 
 use DBI;
 
+{
+  local( $| ) = ( 1 );
+  print "This code HAS NOT BEEN TESTED since it was last changed.  Please make backups!"
+  print "Press <Enter> or <Return> to continue: ";
+  my $resp = <STDIN>;
+}
+
 my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 $dbh->{RaiseError} = 1;
 
@@ -140,23 +147,19 @@ while(<GISMU>) {
   # Enter the definition information.
   ####
   $dbh->begin_work;
-  #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
-  #currval pulls the latest value in a session safe manner.
+
   $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time) VALUES
     (?, ?, ?, ?, ?, ?, ?)",
     undef, $lang, $valsiid, 1, $definition, $notes, $userid, $time);
 
   # Retrieve the DefinitionID that got generated above.
-  my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
+  my $defid = $dbh->selectrow_array("SELECT definitionid from defininions WHERE langid=?, valsiid=?, definitionNum=?",
+    undef,
+    $lang, $valsiid, 1 );
 
-  # print("SELECT currval ('definitions_definitionid_seq')");
-  # print "$valsiid, $defid\n";
+  print "DEFID: $defid\n";
 
   $dbh->commit;
-
-  ## print("SELECT definitionId FROM definitions where langid=$lang
-  ##    AND valsiId=$valsiid AND definitionNum=1" );
-  ## print "DEFID: $defid\n";
 
   ####
   # Enter the vote information.
@@ -187,20 +190,35 @@ while(<GISMU>) {
     }
 
     ####
-    # Enter the basic natlang word information for the keyword
+    # Try to find our word before we add it.
     ####
-    $dbh->begin_work;
-    $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+    my $wordid = $dbh->selectrow_array("SELECT wordid from natlangwords WHERE word=? AND langid=? AND meaning is null",
       undef,
-      $lang, $keyword, 1, $userid, $time );
-    $dbh->commit;
+      $glossword, $lang );
 
-    ####
-    # Retrieve the WordID that got generated above.
-    ####
-    my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
+    print "Pre-found WORDID: $wordid\n";
 
-    # print "nlw: $valsiid, $defid, $wordid\n";
+    if( ! $wordid ) {
+
+      ####
+      # Enter the basic natlang word information for the keyword
+      ####
+      $dbh->begin_work;
+      $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
+        undef,
+        $lang, $keyword, 1, $userid, $time );
+
+      ####
+      # Retrieve the WordID that got generated above.
+      ####
+      $wordid = $dbh->selectrow_array("SELECT wordid from natlangwords WHERE word=? AND langid=? AND meaning is null",
+        undef,
+        $glossword, $lang );
+
+      print "Just-created WORDID: $wordid\n";
+
+      $dbh->commit;
+    }
 
     ####
     # Enter the vote information.

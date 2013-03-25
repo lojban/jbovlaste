@@ -23,6 +23,13 @@ use warnings;
 
 use DBI;
 
+{
+  local( $| ) = ( 1 );
+  print "This code HAS NOT BEEN TESTED since it was last changed.  Please make backups!"
+  print "Press <Enter> or <Return> to continue: ";
+  my $resp = <STDIN>;
+}
+
 my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 $dbh->{RaiseError} = 1;
 
@@ -124,15 +131,15 @@ while(<CMAVO>) {
   ####
   $dbh->begin_work;
 
-  #http://grokbase.com/t/postgresql/pgsql-general/02b1cc4ajj/q-sequences-last-value-and-inserts
-  #currval pulls the latest value in a session safe manner.
   $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time, selmaho) VALUES
     (?, ?, ?, ?, ?, ?, ?, ?)",
     undef,
     $lang, $valsiid, 1, $definition, $notes, $userid, $time, $selmaho);
 
   # Retrieve the DefinitionID that got generated above.
-  my $defid = $dbh->selectrow_array("SELECT currval('definitions_definitionid_seq')");
+  my $defid = $dbh->selectrow_array("SELECT definitionid from defininions WHERE langid=?, valsiid=?, definitionNum=?",
+    undef,
+    $lang, $valsiid, 1 );
 
   print "DEFID: $defid\n";
 
@@ -166,13 +173,17 @@ while(<CMAVO>) {
   $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
     undef,
     $lang, $glossword, 1, $userid, $time );
-  $dbh->commit;
 
   ####
   # Retrieve the WordID that got generated above.
   ####
-  my $wordid = $dbh->selectrow_array("SELECT currval ('natlangwords_wordid_seq')");
+  my $wordid = $dbh->selectrow_array("SELECT wordid from natlangwords WHERE word=? AND langid=? AND meaning is null",
+    undef,
+    $glossword, $lang );
+
   print "WORDID: $wordid\n";
+
+  $dbh->commit;
 
   ####
   # Enter the vote information.
