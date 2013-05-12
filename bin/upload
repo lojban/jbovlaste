@@ -43,6 +43,7 @@ Usage: $PROG [options] [FILE]
      -p PASS, --passwd=PASS   User password.
      -D LANG, --definitions=LANG    Check/update the definitions.
      -U, --update             Make the update of the online dictionary.
+     -W, --ignore-warnings    Ignore definition check warnings.
      -L URL, --url=URL        Dictionary URL.
      -P, --plain-http         Do not use HTTPS.
      -N, --ignore-cert        Ignore SSL host certificate problems.
@@ -68,6 +69,7 @@ GetOptions
 	"p|passwd=s" => \my $pass,
 	"D|definitions=s" => \my $use_definitions,
 	"U|update" => \my $make_update,
+    "W|ignore-warnings" => \my $ignore_warnings,
 	"L|url=s" => \my $url,
         "P|plain-http" => \my $plain_http,
         "N|ignore-cert" => \my $ignore_cert,
@@ -186,7 +188,7 @@ if ($use_definitions) {
 				    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
 				    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
 				    if ($response->is_success()) {
-					if ($response->content() !~ /WARNING/ && 
+					if (($response->content() !~ /WARNING/ || $ignore_warnings) && 
 					    $response->content() =~ /name="final"\s+value="Submit Definition"/) {
 					    print " OK" unless $quiet;
 					    if ($make_update) {
