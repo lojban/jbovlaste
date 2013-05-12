@@ -132,6 +132,14 @@ if (not open (INFILE, "< $infile")) {
     }
 }
 
+sub trim($)
+{
+    my $trim_string = shift;
+    $trim_string =~ s/^\s+//;
+    $trim_string =~ s/\s+$//;
+    return $trim_string;
+}
+
 my $ln = 0;
 my $errs = 0;
 my $defs = 0;
@@ -382,12 +390,4 @@ sub getdefids {
 	print STDERR "Unable to find 'adddef' form\n" unless $quiet;
 	return 7;
     }
-}
-
-sub trim($)
-{
-    my $trim_string = shift;
-    $trim_string =~ s/^\s+//;
-    $trim_string =~ s/\s+$//;
-    return $trim_string;
 }
