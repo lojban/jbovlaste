@@ -151,9 +151,9 @@ if ($use_definitions) {
 	$ln++;
 	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
 	    $defs++;
-	    my $valsi = "$1";
-	    my $def = "$2";
-	    my $notes = "$4" if $3;
+	    my $valsi = trim ($1);
+	    my $def = trim ($2);
+	    my $notes = trim ($4) if $3;
 	    print "$valsi: valsi check" unless $quiet;
 	    my $currurl = "$url/dict/$valsi";
 	    print STDERR "Try to access $currurl\n" if $verbose > 1;
@@ -381,4 +381,12 @@ sub getdefids {
 	print STDERR "Unable to find 'adddef' form\n" unless $quiet;
 	return 7;
     }
+}
+
+sub trim($)
+{
+    my $trim_string = shift;
+    $trim_string =~ s/^\s+//;
+    $trim_string =~ s/\s+$//;
+    return $trim_string;
 }
