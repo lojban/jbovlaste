@@ -93,7 +93,8 @@ while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
     }
 
     $entry .= "<definition>" .
-    massage("${$convenientDefinition}{'definition'}") .
+    "<id>${$valsirow}{'definitionid'}</id>" .
+    "<text>" . massage("${$convenientDefinition}{'definition'}") . "</text>" .
     "</definition>";
 
     if( ${$convenientDefinition}{'notes'} )
