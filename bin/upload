@@ -142,6 +142,27 @@ sub trim($)
     return $trim_string;
 }
 
+sub extract_tags($)
+{
+    my $input = shift;
+    my %tags = ();
+    my $text = "";
+
+    my $pos = 0;
+    while ($input =~ m/\\([^{\s]+){([^}]+)}/g) {
+	my $next = substr ($input, $pos, (pos ($input) - length ($&) - $pos));
+	$pos = pos ($input);
+	$tags{$1} = $2;
+	$next =~ s/\s+$//;
+	$text = $text.$next if length ($next);
+    }
+    if ($pos > 0) {
+	$text = $text.substr($input, $pos);
+    }
+
+    return ($text, \%tags);
+}
+
 my $ln = 0;
 my $errs = 0;
 my $defs = 0;
@@ -164,7 +185,7 @@ if ($use_definitions) {
 	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
 	    $defs++;
 	    my $valsi = trim ($1);
-	    my $def = trim ($2);
+	    my ($def, $tags) = extract_tags (trim ($2));
 	    my $notes = trim ($4) if $3;
 	    print "$valsi: valsi check\n" unless $quiet;
 	    my $currurl = "$url/dict/$valsi";
