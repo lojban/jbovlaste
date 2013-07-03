@@ -43,6 +43,7 @@ Usage: $PROG [options] [FILE]
      -p PASS, --passwd=PASS   User password.
      -D LANG, --definitions=LANG    Check/update the definitions.
      -U, --update             Make the update of the online dictionary.
+     -A, --add                Add new words (valsi).
      -W, --ignore-warnings    Ignore definition check warnings.
      -L URL, --url=URL        Dictionary URL.
      -P, --plain-http         Do not use HTTPS.
@@ -69,6 +70,7 @@ GetOptions
 	"p|passwd=s" => \my $pass,
 	"D|definitions=s" => \my $use_definitions,
 	"U|update" => \my $make_update,
+    "A|add" => \my $add_valsi,
     "W|ignore-warnings" => \my $ignore_warnings,
 	"L|url=s" => \my $url,
         "P|plain-http" => \my $plain_http,
