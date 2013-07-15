@@ -174,8 +174,26 @@ if ($use_definitions) {
 	    $valsi = trim ($1);
 	    ($def, $tags) = extract_tags (trim ($2));
 	    $notes = trim ($4) if $3;
+	    if ($verbose > 0) {
+		print "Valsi: $valsi\n";
+		print "Definition: $def\n";
+		print "Notes: $notes\n";
+		print "Tags:";
+		foreach my $tag (keys %$tags) {
+		    print " $tag=$tags->{$tag}";
+		}
+		print "\n";
+	    }
+	    if (length($valsi) == 0) {
+		print STDERR "Empty valsi at input line $ln\n" if $verbose > 0;
+		next;
+	    }
+	    if (length($def) == 0) {
+		print STDERR "Empty definition at input line $ln\n" if $verbose > 0;
+		next;
+	    }
 	} else {
-	    print STDERR "Malformed definition at input line $ln\n" if $verbose > 0;
+	    print STDERR "Malformed input at line $ln\n" if $verbose > 0;
 	    $errs++;
 	    $malforms++;
 	    next;
