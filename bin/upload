@@ -442,7 +442,7 @@ sub browse {
     print STDERR "\n$msg\n" if $verbose > 1;
     my $response = &$action ();
     print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+    print STDERR "---HTTP RESPONSE BEGIN---\n".trim($response->content())."\n---HTTP RESPONSE END---\n" if $verbose > 3;
 
     if ($response->is_success()) {
 	return &$on_response ($response);
