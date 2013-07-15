@@ -285,14 +285,10 @@ if ($use_definitions) {
     
 unless ($quiet) {
     print "\n---\n";
-    if ($defs > 0) {
-	print "$defsubms of $defs definitions sumbitted\n";
-	print "Valsi checks failed: $valsierrs\n";
-	print "Definition checks failed: $deferrs\n";
-    }
-    if ($malforms > 0) {
-	print "Malformed entries: $malforms\n";
-    }
+    print "$defsubms of $defs definitions sumbitted\n";
+    print "Valsi checks failed: $valsierrs\n";
+    print "Definition checks failed: $deferrs\n";
+    print "Malformed entries: $malforms\n";
 }
 
 if ($ret == 0 && $errs > 0) {
