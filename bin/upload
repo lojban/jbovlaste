@@ -183,7 +183,8 @@ if ($use_definitions) {
 		    print " (no tags)";
 		} else {
 		    foreach my $tag (keys %$tags) {
-			print " \\$tag\{$tags->{$tag}\}";
+			print " \\$tag";
+			print '{'.$tags->{$tag}.'}' unless $tags->{$tag} eq '';
 		    }
 		}
 		print "\n";
@@ -445,10 +446,14 @@ sub extract_tags {
     my $text = "";
 
     my $pos = 0;
-    while ($input =~ m/\\([^{\s]+){([^}]+)}/g) {
+    while ($input =~ m/\\([^{\s]+)({([^}]*)})?/g) {
 	my $next = substr ($input, $pos, (pos ($input) - length ($&) - $pos));
 	$pos = pos ($input);
-	$tags{$1} = $2;
+	if ($2) {
+	    $tags{$1} = $3;
+	} else {
+	    $tags{$1} = '';
+	}
 	$next =~ s/\s+$//;
 	$text = $text.$next if length ($next);
     }
