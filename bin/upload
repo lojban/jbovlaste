@@ -172,15 +172,19 @@ if ($use_definitions) {
 	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
 	    $defs++;
 	    $valsi = trim ($1);
-	    ($def, $tags) = extract_tags (trim ($2));
-	    $notes = trim ($4) if $3;
+	    $def = trim ($2);
+	    ($notes, $tags) = extract_tags (trim ($4)) if $3;
 	    if ($verbose > 0) {
 		print "Valsi: $valsi\n";
 		print "Definition: $def\n";
 		print "Notes: $notes\n";
 		print "Tags:";
-		foreach my $tag (keys %$tags) {
-		    print " $tag=$tags->{$tag}";
+		if (scalar(keys %$tags) == 0) {
+		    print " (no tags)";
+		} else {
+		    foreach my $tag (keys %$tags) {
+			print " \\$tag\{$tags->{$tag}\}";
+		    }
 		}
 		print "\n";
 	    }
