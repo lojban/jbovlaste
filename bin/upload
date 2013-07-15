@@ -450,6 +450,8 @@ sub extract_tags {
     }
     if ($pos > 0) {
 	$text = $text.substr($input, $pos);
+    } else {
+	$text = $input;
     }
 
     return ($text, \%tags);
