@@ -250,6 +250,9 @@ if ($use_definitions) {
 			print "\n" unless $quiet;
 			return 1;
 		    }
+		} else {
+		    print "FAILED (check)\n" unless $quiet;
+		    return 1;
 		}
 	    });
 	next unless $ret == 0;
