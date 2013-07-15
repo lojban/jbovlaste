@@ -80,6 +80,7 @@ GetOptions
 	"h|help|usage"	=> sub { help(0) }
 	or usage(2);
 
+
 # Clean/fix the parameters.
 $verbose = 0 unless defined $verbose;
 my $ret = 0;
@@ -90,47 +91,319 @@ $pass = "" unless $pass;
 $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0 if $ignore_cert;
 $url =~ s/^https/http/i if $plain_http;
 
-# Connect to the dictionary, log in.
 
-my $loggedin = 0;
+# Set up the browser.
+
 my $browser = LWP::UserAgent->new (cookie_jar => {});
 if ($verbose > 3) {
     $browser->add_handler("request_send",  sub { shift->dump(); return });
     $browser->add_handler("response_done", sub { shift->dump(); return });
 }
 
-my $currurl = "$url/login.html";
-print STDERR "Try to log in to $currurl as $user\n" if $verbose > 1;
-my $response = $browser->post ($currurl, [ 'username' => "$user", 'password' => "$pass" ]);
-print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-if ($response->is_success()) {
-    if ($response->content() =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
-	$loggedin = 1;
-	if ($1 ne $user) {
-	    print "Error: Logged in as an other user: $1\n" unless $quiet;
-	    $ret = 1;
-	} else {
-	    print "Logged in as $1\n" unless $quiet;
-	}
-    } else {
-	print "Error: Unable to log in\n" unless $quiet;
-	$ret = 2;
-    }
-} else {
-    $ret = 3;
-}
 
-if ($ret != 0) {
-    exit $ret;
-}
+# Connect to the dictionary, log in.
+
+my $loggedin = 0;
+my $currurl = "$url/login.html";
+my $ret = browse (
+    "Try to log in to $currurl as $user",
+    sub {
+	return $browser->post ($currurl,
+			       [ 'username' => "$user",
+				 'password' => "$pass" ]);
+    },
+    sub {
+	my $response = shift;
+	if ($response->content() =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
+	    $loggedin = 1;
+	    if ($1 ne $user) {
+		print "Error: Logged in as an other user: $1\n" unless $quiet;
+		return 1;
+	    } else {
+		print "Logged in as $1\n" unless $quiet;
+		return 0;
+	    }
+	} else {
+	    print "Error: Unable to log in\n" unless $quiet;
+	    return 2;
+	}
+    });
+exit $ret unless $ret == 0;
+
+
+# Open the input file.
 
 my $infile = $ARGV[0] || "-";
 if (not open (INFILE, "< $infile")) {
     if ($infile == "-") {
-	die "Unable to open standard input for reading";
+	die "Unable to open standard input for reading\n";
     } else {
-	die "Unable to open file '$infile' for reading";
+	die "Unable to open file '$infile' for reading\n";
+    }
+}
+
+
+# Process the lines of input.
+
+my $ln = 0;
+my $errs = 0;
+my $defs = 0;
+my $valsierrs = 0;
+my $deferrs = 0;
+my $defsubms = 0;
+my $malforms = 0;
+if ($use_definitions) {
+    my $lang = $use_definitions;
+
+    print "Selected language: $lang\n" unless $quiet;
+    if ($verbose) {
+	if ($infile eq "-") {
+	    print STDERR "Read definitions from standard input\n" unless $quiet;
+	} else {
+	    print STDERR "Read definitions from '$infile'\n" unless $quiet;
+	}
+    }
+
+    my ($valsi, $def, $tags, $notes);
+    while ($ret == 0 && ($_ = <INFILE>)) {
+	$ln++;
+
+	# Parse the next line of input.
+	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
+	    $defs++;
+	    $valsi = trim ($1);
+	    ($def, $tags) = extract_tags (trim ($2));
+	    $notes = trim ($4) if $3;
+	} else {
+	    print STDERR "Malformed definition at input line $ln\n" if $verbose > 0;
+	    $errs++;
+	    $malforms++;
+	    next;
+	}
+
+	# Process a valsi.
+	print "$valsi: " unless $quiet;
+	my $valsiid;
+	my $langid;
+
+	# Check is the valsi already in the dictionary.
+	my $currurl = "$url/dict/$valsi";
+	$ret = browse (
+	    "Try to access $currurl",
+	    sub {
+		return $browser->get ($currurl);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Word\s+not\s+found!/) {
+		    $errs++;
+		    $valsierrs++;
+		    printf "FAILED (not found)\n" unless $quiet;
+		    return 1;
+		}
+		return getdefids ($response->content(), $lang, \$currurl, \$valsiid, \$langid);
+	    });
+	next unless $ret == 0;
+
+	# Check the valsiid and langid.
+	my %hidden = ();
+	$ret = browse (
+	    "Try to check valsi and language at $currurl",
+	    sub {
+		return $browser->post (
+		    $currurl,
+		    [ 'valsiid' => "$valsiid",
+		      'langid' => "$langid" ]);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/)
+		{
+		    return gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		} else {
+		    printf " FAILED (unexpected page)\n" unless $quiet;
+		    return 1;
+		}
+	    });
+	next $ret unless $ret == 0;
+
+	# Checking the definition.
+	$ret = browse (
+	    "Try to check the definition at $currurl",
+	    sub {
+		return $browser->post (
+		    $currurl,
+		    [ 'definitiontxt' => $def,
+		      'notes' => $notes,
+		      'check' => "Check Definition",
+		      %hidden ]);
+	    },
+	    sub {
+		my $response = shift;
+		if (($response->content() !~ /WARNING/ || $ignore_warnings) && $response->content() =~ /name="final"\s+value="Submit Definition"/)
+		{
+		    print "CHECKED " unless $quiet;
+		    if ($make_update) {
+			%hidden = ();
+			return gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
+		    } else {
+			print "\n" unless $quiet;
+			return 1;
+		    }
+		}
+	    });
+	next unless $ret == 0;
+
+	# Write the checked definition into the dictionary.
+	$ret = browse (
+	    "Try to submit the definition at $currurl",
+	    sub {
+		return $browser->post (
+		    $currurl,
+		    [ 'definitiontxt' => $def,
+		      'notes' => $notes,
+		      'final' => "Submit Definition",
+		      %hidden ]);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Processing\s+new\s+definition\s+for\s+"$valsi"/ && $response->content() =~ /If\s+you're\s+seeing\s+this,\s+it\s+probably\s+worked/) {
+		    print "SUBMITTED\n" unless $quiet;
+		    $defsubms++;
+		    return 0;
+		} else {
+		    print "FAILED\n" unless $quiet;
+		    $errs++;
+		    return 1;
+		}
+	    });
+    }
+}
+
+
+# Ouput the final report.
+    
+unless ($quiet) {
+    print "\n---\n";
+    if ($defs > 0) {
+	print "$defsubms of $defs definitions sumbitted\n";
+	print "Valsi checks failed: $valsierrs\n";
+	print "Definition checks failed: $deferrs\n";
+    }
+    if ($malforms > 0) {
+	print "Malformed entries: $malforms\n";
+    }
+}
+
+if ($ret == 0 && $errs > 0) {
+    $ret = 127;
+}
+exit $ret;
+
+
+# Log out before exit.
+END {
+    if ($loggedin) {
+	$currurl = "$url/logout.html";
+	print STDERR "\nTry to log out from $currurl\n" if $verbose > 1;
+	$response = $browser->get ($currurl);
+	print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+	print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+	if ($response->is_success()) {
+	    if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
+		print "Log out successful\n" unless $quiet;
+	    } else {
+		print "Error: problems with loging out\n" unless $quiet;
+	    }
+	}
+    } else {
+	print STDERR "\nNot logged in: not bother to log out.\n" if $verbose > 1;
+    }
+    close (INFILE);
+}
+
+
+# Various subroutines.
+
+sub actionurl {
+    my ($url, $action) = @_;
+
+    if ($action =~ /^http/) {
+	return $action;
+    } elsif ($action =~ /^\//) {
+	$url =~ s/^(https?:\/\/[^\/]+)\/?.*$/$1$action/;
+    } else {
+	$url =~ s/[^\/]+\/?$/$action/;
+    }
+    return $url;
+}
+
+sub gethidden {
+    my ($page, $formname, $url, $hidden) = @_;
+
+    if ($page =~ /<form\s+[^>]*action="($formname)"[^>]*>(.*)$/s) {
+	$$url = actionurl ($$url, $1);
+	
+	while ($page =~ /(<input\s+[^>]*type="hidden"\s+[^>]*>)(.*)$/s) {
+	    my $tag = $1;
+	    $page = $2;
+	    if ($tag =~ /name="([^"]+)"/s) {
+		my $name = $1;
+		$$hidden{$name} = "";
+		if ($tag =~/value="([^"]*)"/s) {
+		    my $val = $1;
+		    print STDERR "\nAdd hidden field: '$name' = '$val'\n" if $verbose > 2;
+		    $$hidden{$name} = $val;
+		}
+	    } else {
+		print STDERR "\nMalformed hidden field: $tag\n" if $verbose > 2;
+	    }
+	}
+	$page = $2;
+    } else {
+	die "\nUnable to find form '$formname'" unless $quiet;
+    }
+
+    return 0;
+}
+
+sub getdefids {
+    my ($page, $lang, $url, $valsiid, $langid) = @_;
+
+    if ($page =~ /<form\s+[^>]*action="([^"]*adddef\.html)"(.*)$/s) {
+	print STDERR "\nRead action URL value: $1" if $verbose > 2;
+	$$url = actionurl ($$url, $1);
+	$page = $2;
+	if ($page =~ /(<input\s+[^>]*name="valsiid"[^>]*>)(.*)$/s) {
+	    my $tag = $1;
+	    $page = $2;
+	    if ($tag =~ /value="([^"]+)"/) {
+		print STDERR "\nRead valsi ID value: $1\n" if $verbose > 2;
+		$$valsiid = $1;
+	    } else {
+		die "\nUnable to find the valsiid value";
+	    }
+            if ($page =~ /<select\s+[^>]*name="langid"[^>]*>(.*)$/s) {
+		$page = $1;
+		while ($page =~ /(.*)<\/?select[^>]*>.*$/s) {
+		    $page = $1;
+		}
+	        while ($page =~ /<option\s+[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option[^>]*>/sg) {
+		    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
+		    if ($2 eq $lang) {
+			$$langid = $1;
+			return 0;
+		    }
+		}
+	    }
+	    die "\nUnable to find ID for the language '$lang'";
+        } else {
+            die "\nUnable to find the valsiid value";
+        }
+
+	return 0;
+    } else {
+	die "\nUnable to find 'adddef' form";
     }
 }
 
@@ -163,254 +436,21 @@ sub extract_tags($)
     return ($text, \%tags);
 }
 
-my $ln = 0;
-my $errs = 0;
-my $defs = 0;
-my $valsierrs = 0;
-my $deferrs = 0;
-my $defsubms = 0;
-my $malforms = 0;
-if ($use_definitions) {
-    my $lang = $use_definitions;
-    print "Selected language: $lang\n" unless $quiet;
-    if ($verbose) {
-	if ($infile eq "-") {
-	    print STDERR "Read definitions from standard input\n" unless $quiet;
-	} else {
-	    print STDERR "Read definitions from '$infile'\n" unless $quiet;
-	}
-    }
-    while ($ret == 0 && ($_ = <INFILE>)) {
-	$ln++;
-	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
-	    $defs++;
-	    my $valsi = trim ($1);
-	    my ($def, $tags) = extract_tags (trim ($2));
-	    my $notes = trim ($4) if $3;
-	    print "$valsi: valsi check\n" unless $quiet;
-	    my $currurl = "$url/dict/$valsi";
-	    print STDERR "Try to access $currurl\n" if $verbose > 1;
-	    my $response = $browser->get ($currurl);
-	    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-	    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-	    if ($response->is_success()) {
-		if ($response->content() =~ /Word\s+not\s+found!/) {
-		    print " FAILED\n" unless $quiet;
-		    $errs++;
-		    $valsierrs++;
-		} else {
-		    print " OK definition check\n" unless $quiet;
-		    my $valsiid;
-		    my $langid;
-		    my $action;
-		    $ret = getdefids ($response->content(), $lang, \$currurl, \$valsiid, \$langid);
-		    if ($ret == 0) {
-			print STDERR "Try to check valsi and language at $currurl\n" if $verbose > 1;
-			$response = $browser->post ($currurl, [ 'valsiid' => "$valsiid", 'langid' => "$langid" ]);
-			print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-			print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-			if ($response->is_success()) {
-			    if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/) {
-				my %hidden = ();
-				$ret = gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
-				if ($ret == 0) {
-				    print STDERR "Try to check the definition at $currurl\n" if $verbose > 1;
-				    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'check' => "Check Definition", %hidden ]);
-				    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-				    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-				    if ($response->is_success()) {
-					if (($response->content() !~ /WARNING/ || $ignore_warnings) && 
-					    $response->content() =~ /name="final"\s+value="Submit Definition"/) {
-					    print " OK\n" unless $quiet;
-					    if ($make_update) {
-						print " submit\n" unless $quiet;
-						%hidden = ();
-						$ret = gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
-						if ($ret == 0) {
-						    print STDERR "Try to submit the definition at $currurl\n" if $verbose > 1;
-						    $response = $browser->post ($currurl, [ 'definitiontxt' => $def, 'notes' => $notes, 'final' => "Submit Definition", %hidden ]);
-						    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-						    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-						    if ($response->is_success()) {
-							if ($response->content() =~ /Processing\s+new\s+definition\s+for\s+"$valsi"/ &&
-							    $response->content() =~ /If\s+you're\s+seeing\s+this,\s+it\s+probably\s+worked/) {
-							    print " OK\n" unless $quiet;
-							    $defsubms++;
-							} else {
-							    print " FAILED\n" unless $quiet;
-							    $errs++;
-							}
-						    } else {
-							print " ERROR\n" unless $quiet;
-							$ret = 3;
-						    }
-						} else {
-						    print " ERROR\n" unless $quiet;
-						}
-					    }
-					} else {
-					    print " FAILED\n" unless $quiet;
-					    $errs++;
-					    $deferrs++;
-					}
-				    } else {
-					print " ERROR\n" unless $quiet;
-					$ret = 3;
-				    }
-				} else {
-				    print " ERROR\n" unless $quiet;
-				}
-			    } else {
-				print " ERROR\n" unless $quiet;
-				$ret = 6;
-			    }
-			} else {
-			    print " ERROR\n" unless $quiet;
-			    $ret = 3;
-			}
-		    } else {
-			print " ERROR\n" unless $quiet;
-		    }
-		}
-	    } else {
-		print " ERROR\n" unless $quiet;
-		$ret = 3;
-	    }
-	} else {
-	    print "Malformed definition on line $ln\n" unless $quiet;
-	    $errs++;
-	    $malforms++;
-	}
-    }
-} else {
-    usage (2);
-}
+sub browse ($)
+{
+    my $msg = shift;
+    my $action = shift;
+    my $on_response = shift;
 
-    
-unless ($quiet) {
-    print "---\n";
-    if ($defs > 0) {
-	print "$defsubms of $defs definitions sumbitted\n";
-	print "Valsi checks failed: $valsierrs\n";
-	print "Definition checks failed: $deferrs\n";
-    }
-    if ($malforms > 0) {
-	print "Malformed entries: $malforms\n";
-    }
-}
+    print STDERR "\n$msg\n" if $verbose > 1;
+    my $response = &$action ();
+    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+    print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
 
-if ($ret == 0 && $errs > 0) {
-    $ret = 127;
-}
-exit $ret;
-
-
-# Log out before exit.
-END {
-    if ($loggedin) {
-	$currurl = "$url/logout.html";
-	print STDERR "Try to log out from $currurl\n" if $verbose > 1;
-	$response = $browser->get ($currurl);
-	print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-	print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-	if ($response->is_success()) {
-	    if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
-		print "Log out successful\n" unless $quiet;
-	    } else {
-		print "Error: problems with loging out\n" unless $quiet;
-		$ret = 5;
-	    }
-	} else {
-	    $ret = 3;
-	}
+    if ($response->is_success()) {
+	my $ret = &$on_response ($response);
+	return $ret;
     } else {
-	print STDERR "Not logged in: not bother to log out.\n" if $verbose > 1;
-    }
-    close (INFILE);
-}
-
-sub actionurl {
-    my ($url, $action) = @_;
-
-    if ($action =~ /^http/) {
-	return $action;
-    } elsif ($action =~ /^\//) {
-	$url =~ s/^(https?:\/\/[^\/]+)\/?.*$/$1$action/;
-    } else {
-	$url =~ s/[^\/]+\/?$/$action/;
-    }
-    return $url;
-}
-
-sub gethidden {
-    my ($page, $formname, $url, $hidden) = @_;
-
-    if ($page =~ /<form\s+[^>]*action="($formname)"[^>]*>(.*)$/s) {
-	$$url = actionurl ($$url, $1);
-	
-	while ($page =~ /(<input\s+[^>]*type="hidden"\s+[^>]*>)(.*)$/s) {
-	    my $tag = $1;
-	    $page = $2;
-	    if ($tag =~ /name="([^"]+)"/s) {
-		my $name = $1;
-		$$hidden{$name} = "";
-		if ($tag =~/value="([^"]*)"/s) {
-		    my $val = $1;
-		    print STDERR "Add hidden field: '$name' = '$val'\n" if $verbose > 2;
-		    $$hidden{$name} = $val;
-		}
-	    } else {
-		print STDERR "Malformed hidden field: $tag\n" unless $quiet;
-	    }
-	}
-$page = $2;
-    } else {
-	print STDERR "Unable to find form '$formname'\n" unless $quiet;
-	return 7;
-    }
-
-    return 0;
-}
-
-sub getdefids {
-    my ($page, $lang, $url, $valsiid, $langid) = @_;
-
-    if ($page =~ /<form\s+[^>]*action="([^"]*adddef\.html)"(.*)$/s) {
-	print STDERR "Read action URL value: $1\n" if $verbose > 2;
-	$$url = actionurl ($$url, $1);
-	$page = $2;
-	if ($page =~ /(<input\s+[^>]*name="valsiid"[^>]*>)(.*)$/s) {
-	    my $tag = $1;
-	    $page = $2;
-	    if ($tag =~ /value="([^"]+)"/) {
-		print STDERR "Read valsi ID value: $1\n" if $verbose > 2;
-		$$valsiid = $1;
-	    } else {
-		print STDERR "Unable to find the valsiid value\n" unless $quiet;
-		return 7;
-	    }
-            if ($page =~ /<select\s+[^>]*name="langid"[^>]*>(.*)$/s) {
-		$page = $1;
-		while ($page =~ /(.*)<\/?select[^>]*>.*$/s) {
-		    $page = $1;
-		}
-	        while ($page =~ /<option\s+[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option[^>]*>/sg) {
-		    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
-		    if ($2 eq $lang) {
-			$$langid = $1;
-			return 0;
-		    }
-		}
-	    }
-	    print STDERR "Unable to find ID for the language '$lang'\n" unless $quiet;
-	    return 7;
-        } else {
-            print STDERR "Unable to find the valsiid value\n" unless $quiet;
-            return 7;
-        }
-	return 0;
-    } else {
-	print STDERR "Unable to find 'adddef' form\n" unless $quiet;
-	return 7;
+	die "\nHTTP request error";
     }
 }
