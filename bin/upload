@@ -65,6 +65,7 @@ EOF
 	exit $_[0];
 }
 
+my $verbose = 0;
 GetOptions
 	"u|user=s"	=> \my $user,
 	"p|passwd=s" => \my $pass,
@@ -75,14 +76,13 @@ GetOptions
 	"L|url=s" => \my $url,
         "P|plain-http" => \my $plain_http,
         "N|ignore-cert" => \my $ignore_cert,
-	"v|verbose+"    => \my $verbose,
+	"v|verbose+"    => \$verbose,
         "q|quiet" => \my $quiet,
 	"h|help|usage"	=> sub { help(0) }
 	or usage(2);
 
 
 # Clean/fix the parameters.
-$verbose = 0 unless defined $verbose;
 my $ret = 0;
 $url = "https://jbovlaste.lojban.org" unless $url;
 $url =~ s/\/+$//;
@@ -105,7 +105,7 @@ if ($verbose > 3) {
 
 my $loggedin = 0;
 my $currurl = "$url/login.html";
-my $ret = browse (
+$ret = browse (
     "Try to log in to $currurl as $user",
     sub {
 	return $browser->post ($currurl,
@@ -305,17 +305,21 @@ exit $ret;
 END {
     if ($loggedin) {
 	$currurl = "$url/logout.html";
-	print STDERR "\nTry to log out from $currurl\n" if $verbose > 1;
-	$response = $browser->get ($currurl);
-	print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
-	print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
-	if ($response->is_success()) {
-	    if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
-		print "Log out successful\n" unless $quiet;
-	    } else {
-		print "Error: problems with loging out\n" unless $quiet;
-	    }
-	}
+	browse (
+	    "Try to log out from $currurl",
+	    sub {
+		return $browser->get ($currurl);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
+		    print "Log out successful\n" unless $quiet;
+		    return 0;
+		} else {
+		    print "Error: problems with loging out\n" unless $quiet;
+		    return 1;
+		}
+	    });
     } else {
 	print STDERR "\nNot logged in: not bother to log out.\n" if $verbose > 1;
     }
@@ -407,16 +411,14 @@ sub getdefids {
     }
 }
 
-sub trim($)
-{
+sub trim {
     my $trim_string = shift;
     $trim_string =~ s/^\s+//;
     $trim_string =~ s/\s+$//;
     return $trim_string;
 }
 
-sub extract_tags($)
-{
+sub extract_tags {
     my $input = shift;
     my %tags = ();
     my $text = "";
@@ -436,8 +438,7 @@ sub extract_tags($)
     return ($text, \%tags);
 }
 
-sub browse ($)
-{
+sub browse {
     my $msg = shift;
     my $action = shift;
     my $on_response = shift;
@@ -448,8 +449,7 @@ sub browse ($)
     print STDERR "---HTTP RESPONSE BEGIN---\n".$response->content()."\n---HTTP RESPONSE END---\n" if $verbose > 3;
 
     if ($response->is_success()) {
-	my $ret = &$on_response ($response);
-	return $ret;
+	return &$on_response ($response);
     } else {
 	die "\nHTTP request error";
     }
