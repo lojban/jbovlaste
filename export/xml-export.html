@@ -7,186 +7,235 @@ Lojban XML Dictionary Generation
 </%method>
 
 <%init>
-$r->content_type('application/xml; charset=utf-8');
 our($dbh);
 use File::Temp qw{ tempfile tempdir };
 use POSIX;
 use Data::Dumper;
+use Captcha::reCAPTCHA;
+
+my $c = Captcha::reCAPTCHA->new;
 </%init>
 
 <%args>
 $lang => undef
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
 </%args>
 
+% if( ! defined($session{'userid'}) && ! defined($recaptcha_response_field) ) {
+<html><head></head>
+<body>
+<h1>Login To Skip This Step</h1>
+<form method="post" action="xml-export.html">
+  <input type="hidden" name="lang" value="<% $lang %>" />
 <%perl>
-our $unofficialwarning = 'unofficial="true" ';
-my $langrealname = $dbh->selectrow_array("SELECT realname FROM
-    languages WHERE tag=?", undef, $lang);
-my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
-    tag=?", undef, $lang);
-
-#print Dumper( $valsibestguesses );
-
-my $lojbanToNatLang;
-my @lojbanToNatLangEntries;
-my $natLangToLojban;
-my @natLangToLojbanEntries;
-
-print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
-print qq{<dictionary>\n};
-print qq{<direction from="lojban" to="$langrealname">};
-
-
-# Get the valsi best guesses list.
-my $valsiquery = $dbh->prepare("SELECT v.word, vbg.* from
-    valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
-    AND v.valsiid=vbg.valsiid
-    ORDER BY v.word");
-
-$valsiquery->execute;
-
-# Print the lojban -> foo section
-while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
-{
-    my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
-	FROM convenientdefinitions
-	WHERE definitionid=${$valsirow}{'definitionid'}" );
-
-    my $valsitype = $dbh->selectrow_array("SELECT descriptor
-	FROM valsi v, definitions d, valsitypes vt
-	WHERE v.valsiid = d.valsiid
-	AND d.definitionid = ${$valsirow}{'definitionid'}
-	AND v.typeid=vt.typeid");
-
-    my $entry .= "\n\n<valsi ";
-
-    # Alert about non-standard entries
-    if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo")
-    {
-	$entry .= $unofficialwarning;
-    };
-
-    # Basic bits
-    $entry .= qq{word="}.${$convenientDefinition}{'word'}.qq{" type="$valsitype"};
-
-    # Close the basic bits
-    $entry .= ">";
-
-    # Clear out silly rafsi spaces
-    my $rafsis = massage( ${$convenientDefinition}{'rafsi'} );
-    $rafsis =~ s/\s+$//;
-    $rafsis =~ s/^\s+//;
-    $rafsis =~ s/\s+/ / ;
-
-    if( $rafsis )
-    {
-	foreach my $rafsi (split(/ /, $rafsis))
-	{
-	    $entry .= "<rafsi>$rafsi</rafsi>";
-	}
-    }
-    if( ${$convenientDefinition}{'selmaho'} )
-    {
-	$entry .= "<selmaho>" .
-	massage(${$convenientDefinition}{'selmaho'})
-	. "</selmaho>";
-    }
-
-    $entry .= "<definition>" .
-    massage("${$convenientDefinition}{'definition'}") .
-    "</definition>\n".
-    "<definitionid>${$valsirow}{'definitionid'}</definitionid>";
-
-    if( ${$convenientDefinition}{'notes'} )
-    {
-	$entry .= "<notes>".
-	massage(${$convenientDefinition}{'notes'})
-	."</notes>";
-    }
-
-    # Close the entry
-    $entry .= "</valsi>";
-
-    #push @lojbanToNatLangEntries, $entry;
-
-    print $entry;
+# Don't bother making logged in users captcha
+if( ! defined($session{'userid'}) ) {
+    # reCaptcha Output form
+    # Public key
+    print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
 }
+</%perl>
+  <input type="submit" />
+</form>
+</body>
+</html>
 
-#print $lojbanToNatLang;
-print qq{</direction>};
-print qq{<direction from="$langrealname" to="lojban">};
+<%perl>
+ } else {
+    my $result;
 
-$valsiquery->execute;
-
-# Print the foo -> lojban section
-while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
-{
-    #print Dumper( $valsirow );
-    my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
-	nlw.meaning, nlwbg.* from
-	natlangwordbestguesses nlwbg, natlangwords nlw WHERE
-	definitionid=${$valsirow}{'definitionid'}
-	AND nlwbg.natlangwordid = nlw.wordid
-	ORDER BY nlw.word", "word" );
-    #print Dumper( $nlwbg );
-    foreach my $nlwbgrow (values %{$nlwbg} )
-    {
-	my $entry .= "\n\n<nlword word=\"".
-	massage(${$nlwbgrow}{'word'}) ."\"";
-
-	if( ${$nlwbgrow}{'meaning'} )
-	{
-	    $entry .= " sense=\"".
-	    massage(${$nlwbgrow}{'meaning'})
-	    ."\"";
-	}
-
-	my $defvalsi = $dbh->selectrow_array("SELECT word
-	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
-	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
-
-	$entry .= " valsi=\"" . massage($defvalsi) . "\"";
-
-	if( ${$nlwbgrow}{'place'} > 0 )
-	{
-	    $entry .= " place=\"${$nlwbgrow}{'place'}\"";
-	}
-
-	# Close the entry
-	$entry .= " />";
-
-	#push @natLangToLojbanEntries, $entry;
-	#print Dumper( $nlwbgrow );
-
-	print $entry;
+    # Verify submission
+    # Don't bother making logged in users captcha
+    if( ! defined($session{'userid'}) ) {
+	$result = $c->check_answer(
+	    # Private key
+	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
+	    $recaptcha_challenge_field, $recaptcha_response_field
+	);
     }
-}
 
-sub dictcollate {
-    my $to_be_ignored = $unofficialwarning;
-    my $temp_a = $a;
-    my $temp_b = $b;
-    $temp_a =~ s/\Q$to_be_ignored\E//;
-    $temp_b =~ s/\Q$to_be_ignored\E//;
-    lc($temp_a) cmp lc($temp_b);
-}
+    if ( $result->{is_valid} || defined($session{'userid'}) ) {
+      $r->content_type('application/xml; charset=utf-8');
+      our $unofficialwarning = 'unofficial="true" ';
+      my $langrealname = $dbh->selectrow_array("SELECT realname FROM
+          languages WHERE tag=?", undef, $lang);
+      my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
+          tag=?", undef, $lang);
+      
+      #print Dumper( $valsibestguesses );
+      
+      my $lojbanToNatLang;
+      my @lojbanToNatLangEntries;
+      my $natLangToLojban;
+      my @natLangToLojbanEntries;
+      
+      print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
+      print qq{<dictionary>\n};
+      print qq{<direction from="lojban" to="$langrealname">};
+      
+      
+      # Get the valsi best guesses list.
+      my $valsiquery = $dbh->prepare("SELECT v.word, vbg.* from
+          valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
+          AND v.valsiid=vbg.valsiid
+          ORDER BY v.word");
+      
+      $valsiquery->execute;
+      
+      # Print the lojban -> foo section
+      while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
+      {
+          my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
+      	FROM convenientdefinitions
+      	WHERE definitionid=${$valsirow}{'definitionid'}" );
+      
+          my $valsitype = $dbh->selectrow_array("SELECT descriptor
+      	FROM valsi v, definitions d, valsitypes vt
+      	WHERE v.valsiid = d.valsiid
+      	AND d.definitionid = ${$valsirow}{'definitionid'}
+      	AND v.typeid=vt.typeid");
+      
+          my $entry .= "\n\n<valsi ";
+      
+          # Alert about non-standard entries
+          if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo")
+          {
+      	$entry .= $unofficialwarning;
+          };
+      
+          # Basic bits
+          $entry .= qq{word="}.${$convenientDefinition}{'word'}.qq{" type="$valsitype"};
+      
+          # Close the basic bits
+          $entry .= ">";
+      
+          # Clear out silly rafsi spaces
+          my $rafsis = massage( ${$convenientDefinition}{'rafsi'} );
+          $rafsis =~ s/\s+$//;
+          $rafsis =~ s/^\s+//;
+          $rafsis =~ s/\s+/ / ;
+      
+          if( $rafsis )
+          {
+      	foreach my $rafsi (split(/ /, $rafsis))
+      	{
+      	    $entry .= "<rafsi>$rafsi</rafsi>";
+      	}
+          }
+          if( ${$convenientDefinition}{'selmaho'} )
+          {
+      	$entry .= "<selmaho>" .
+      	massage(${$convenientDefinition}{'selmaho'})
+      	. "</selmaho>";
+          }
+      
+          $entry .= "<definition>" .
+          massage("${$convenientDefinition}{'definition'}") .
+          "</definition>\n".
+          "<definitionid>${$valsirow}{'definitionid'}</definitionid>";
+      
+          if( ${$convenientDefinition}{'notes'} )
+          {
+      	$entry .= "<notes>".
+      	massage(${$convenientDefinition}{'notes'})
+      	."</notes>";
+          }
+      
+          # Close the entry
+          $entry .= "</valsi>";
+      
+          #push @lojbanToNatLangEntries, $entry;
+      
+          print $entry;
+      }
+      
+      #print $lojbanToNatLang;
+      print qq{</direction>};
+      print qq{<direction from="$langrealname" to="lojban">};
+      
+      $valsiquery->execute;
+      
+      # Print the foo -> lojban section
+      while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
+      {
+          #print Dumper( $valsirow );
+          my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
+      	nlw.meaning, nlwbg.* from
+      	natlangwordbestguesses nlwbg, natlangwords nlw WHERE
+      	definitionid=${$valsirow}{'definitionid'}
+      	AND nlwbg.natlangwordid = nlw.wordid
+      	ORDER BY nlw.word", "word" );
+          #print Dumper( $nlwbg );
+          foreach my $nlwbgrow (values %{$nlwbg} )
+          {
+      	my $entry .= "\n\n<nlword word=\"".
+      	massage(${$nlwbgrow}{'word'}) ."\"";
+      
+      	if( ${$nlwbgrow}{'meaning'} )
+      	{
+      	    $entry .= " sense=\"".
+      	    massage(${$nlwbgrow}{'meaning'})
+      	    ."\"";
+      	}
+      
+      	my $defvalsi = $dbh->selectrow_array("SELECT word
+      	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
+      	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
+      
+      	$entry .= " valsi=\"" . massage($defvalsi) . "\"";
+      
+      	if( ${$nlwbgrow}{'place'} > 0 )
+      	{
+      	    $entry .= " place=\"${$nlwbgrow}{'place'}\"";
+      	}
+      
+      	# Close the entry
+      	$entry .= " />";
+      
+      	#push @natLangToLojbanEntries, $entry;
+      	#print Dumper( $nlwbgrow );
+      
+      	print $entry;
+          }
+      }
+      
+      sub dictcollate {
+          my $to_be_ignored = $unofficialwarning;
+          my $temp_a = $a;
+          my $temp_b = $b;
+          $temp_a =~ s/\Q$to_be_ignored\E//;
+          $temp_b =~ s/\Q$to_be_ignored\E//;
+          lc($temp_a) cmp lc($temp_b);
+      }
+      
+      #$lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
+      #$natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
+      
+      #print $natLangToLojban;
+      print qq{</direction>};
+      print qq{</dictionary>\n};
+      
+      sub massage
+      {
+          my $input=shift(@_);
+          $input =~ s/\&/\&amp;/g;  # This one *must* go first, or it'll redo the others
+          $input =~ s/"/\&quot;/g;
+          $input =~ s/'/\&apos;/g;
+          $input =~ s/</\&lt;/g;
+          $input =~ s/>/\&gt;/g;
+          return $input;
+      }
+    } else {
+	</%perl>
+	<font size="+3">
+	Captcha failed.
+	<% $recaptcha_challenge_field %>,
+	<% $recaptcha_response_field %>
+	</font>
+	<%perl>
 
-#$lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
-#$natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
-
-#print $natLangToLojban;
-print qq{</direction>};
-print qq{</dictionary>\n};
-
-sub massage
-{
-    my $input=shift(@_);
-    $input =~ s/\&/\&amp;/g;  # This one *must* go first, or it'll redo the others
-    $input =~ s/"/\&quot;/g;
-    $input =~ s/'/\&apos;/g;
-    $input =~ s/</\&lt;/g;
-    $input =~ s/>/\&gt;/g;
-    return $input;
+    }
 }
 
 </%perl>
