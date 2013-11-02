@@ -44,6 +44,7 @@ Usage: $PROG [options] [FILE]
      -D LANG, --definitions=LANG    Check/update the definitions.
      -U, --update             Make the update of the online dictionary.
      -A, --add                Add new words (valsi).
+     -c, --check-only         Check the syntax of the input file and exit.
      -W, --ignore-warnings    Ignore definition check warnings.
      -L URL, --url=URL        Dictionary URL.
      -P, --plain-http         Do not use HTTPS.
@@ -69,9 +70,10 @@ my $verbose = 0;
 GetOptions
 	"u|user=s"	=> \my $user,
 	"p|passwd=s" => \my $pass,
-	"D|definitions=s" => \my $use_definitions,
+	"D|definitions:s" => \my $use_definitions,
 	"U|update" => \my $make_update,
     "A|add" => \my $add_valsi,
+    "c|check-only" => \my $check_only,
     "W|ignore-warnings" => \my $ignore_warnings,
 	"L|url=s" => \my $url,
         "P|plain-http" => \my $plain_http,
@@ -90,14 +92,17 @@ $user = "officialdata" unless $user;
 $pass = "" unless $pass;
 $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0 if $ignore_cert;
 $url =~ s/^https/http/i if $plain_http;
-
+$use_definitions = 'Test Language' if $use_definitions eq '';
 
 # Set up the browser.
 
-my $browser = LWP::UserAgent->new (cookie_jar => {});
-if ($verbose > 3) {
-    $browser->add_handler("request_send",  sub { shift->dump(); return });
-    $browser->add_handler("response_done", sub { shift->dump(); return });
+my $browser;
+if (not $check_only) {
+    $browser = LWP::UserAgent->new (cookie_jar => {});
+    if ($verbose > 3) {
+	$browser->add_handler("request_send",  sub { shift->dump(); return });
+	$browser->add_handler("response_done", sub { shift->dump(); return });
+    }
 }
 
 
@@ -105,6 +110,7 @@ if ($verbose > 3) {
 
 my $loggedin = 0;
 my $currurl = "$url/login.html";
+$ret = 0;
 $ret = browse (
     "Try to log in to $currurl as $user",
     sub {
@@ -127,7 +133,7 @@ $ret = browse (
 	    print "Error: Unable to log in\n" unless $quiet;
 	    return 2;
 	}
-    });
+    }) unless $check_only;
 exit $ret unless $ret == 0;
 
 
@@ -184,7 +190,10 @@ if ($use_definitions) {
 		} else {
 		    foreach my $tag (keys %$tags) {
 			print " \\$tag";
-			print '{'.$tags->{$tag}.'}' unless $tags->{$tag} eq '';
+			my @tagargs = @{$tags->{$tag}};
+			if (@tagargs) {
+			    print '{'.join ('}{', @tagargs).'}';
+			}
 		    }
 		}
 		print "\n";
@@ -203,6 +212,9 @@ if ($use_definitions) {
 	    $malforms++;
 	    next;
 	}
+
+	# Read the next line if in the check-only mode
+	next if $check_only;
 
 	# Process a valsi.
 	print "$valsi: " unless $quiet;
@@ -446,14 +458,18 @@ sub extract_tags {
     my $text = "";
 
     my $pos = 0;
-    while ($input =~ m/\\([^{\s]+)({([^}]*)})?/g) {
+    while ($input =~ m/\\([^{\s]+)(({([^}]*)})+)?/g) {
 	my $next = substr ($input, $pos, (pos ($input) - length ($&) - $pos));
 	$pos = pos ($input);
+	my $tag = $1;
+	my @args = ();
 	if ($2) {
-	    $tags{$1} = $3;
-	} else {
-	    $tags{$1} = '';
+	    my $argsdef = $2;
+	    while ($argsdef =~ m/{([^}]*)}/g) {
+		push @args, $1;
+	    }
 	}
+	$tags{$tag} = \@args;
 	$next =~ s/\s+$//;
 	$text = $text.$next if length ($next);
     }
