@@ -6,8 +6,15 @@ our $titlestr;
 Lojban XML Dictionary Generation
 </%method>
 
+<%args>
+$lang => undef
+$recaptcha_challenge_field => undef
+$recaptcha_response_field => undef
+$bot_key => undef
+</%args>
+
 <%init>
-our($dbh);
+our($dbh,%session);
 use File::Temp qw{ tempfile tempdir };
 use POSIX;
 use Data::Dumper;
@@ -16,14 +23,7 @@ use Captcha::reCAPTCHA;
 my $c = Captcha::reCAPTCHA->new;
 </%init>
 
-<%args>
-$lang => undef
-$recaptcha_challenge_field => undef
-$recaptcha_response_field => undef
-$bot_key => undef
-</%args>
-
-% if( ! defined($session{'userid'}) && ! defined($recaptcha_response_field) && $bot_key != 'z2BsnKYJhAB0VNsl' ) {
+% if( ! defined($session{'userid'}) && ! defined($recaptcha_response_field) && $bot_key ne 'z2BsnKYJhAB0VNsl' ) {
 <html><head></head>
 <body>
 <h1>Login To Skip This Step</h1>
@@ -48,7 +48,7 @@ if( ! defined($session{'userid'}) ) {
 
     # Verify submission
     # Don't bother making logged in users captcha
-    if( ! defined($session{'userid'}) && $bot_key != 'z2BsnKYJhAB0VNsl' ) {
+    if( ! defined($session{'userid'}) && $bot_key ne 'z2BsnKYJhAB0VNsl' ) {
 	$result = $c->check_answer(
 	    # Private key
 	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
@@ -56,14 +56,23 @@ if( ! defined($session{'userid'}) ) {
 	);
     }
 
-    if ( $result->{is_valid} || defined($session{'userid'}) || $bot_key == 'z2BsnKYJhAB0VNsl' ) {
+    if ( $bot_key eq 'z2BsnKYJhAB0VNsl' || $result->{is_valid} || defined($session{'userid'}) ) {
+      my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
+          tag=?", undef, $lang);
+
+      if( $langid !~ m{^[0-9]+$} ) {
+	</%perl>
+	<font size="+3">
+        Bad language tag '<% $lang %>'.
+	</font>
+	<%perl>
+        return;
+      }
+      
       $r->content_type('application/xml; charset=utf-8');
       our $unofficialwarning = 'unofficial="true" ';
       my $langrealname = $dbh->selectrow_array("SELECT realname FROM
           languages WHERE tag=?", undef, $lang);
-      my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
-          tag=?", undef, $lang);
-      
       #print Dumper( $valsibestguesses );
       
       my $lojbanToNatLang;
@@ -231,8 +240,6 @@ if( ! defined($session{'userid'}) ) {
 	</%perl>
 	<font size="+3">
 	Captcha failed.
-	<% $recaptcha_challenge_field %>,
-	<% $recaptcha_response_field %>
 	</font>
 	<%perl>
 
