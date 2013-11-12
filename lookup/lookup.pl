@@ -257,7 +257,7 @@ sub init {
 	}
 
 	use Data::Dumper;
-	open(CACHE,">$cachefile");
+	open(CACHE, '>', $cachefile);
 	print CACHE Dumper({ Choices => \%Choices, Db => \%Db, Dbr => \%Dbr, St => \%St });
 	close(CACHE);
     }
@@ -357,8 +357,10 @@ sub SendForm1 {
 EOF
     foreach my $x (split(/\t/,$Choices{"Strategy"})) {
 	print "        <option value=\"$St{$x}\"";
-	if ($in{"Strategy"} eq $St{$x}) {
+	if (defined($in{"Strategy"}) && defined($St{$x})){
+          if ($in{"Strategy"} eq $St{$x}) {
 	    print " selected";
+          }
 	}
 	print ">$x\n";
     }
@@ -438,7 +440,7 @@ sub SendListing {
     return;
   }
 
-  if ($in{'Database'} =~ /^([\w .<>%-]+|)$/) {
+  if ($in{'Database'} =~ /^([\w .<>%-*]+|)$/) {
     $d = "$1";
   } else {
     warn ("TAINTED DATA for database SENT BY $ENV{'REMOTE_ADDR'}: $d: $!");
@@ -467,7 +469,7 @@ sub SendListing {
   my $user_agent = "";
   if( defined $ENV{'HTTP_USER_AGENT'} ) {
     $user_agent = $ENV{'HTTP_USER_AGENT'};
-    if ($user_agent =~ /^([:\(\);\/-\@0-9\s\w.]+)$/) {
+    if ($user_agent =~ /^([:+,\(\);\/-\@0-9\s\w.]+)$/) {
       $user_agent = "$1";
     } else {
       warn ("TAINTED DATA for user_agent SENT BY $ENV{'REMOTE_ADDR'}: $user_agent: $!");
