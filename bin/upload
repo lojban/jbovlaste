@@ -189,10 +189,12 @@ if ($use_definitions) {
 		    print " (no tags)";
 		} else {
 		    foreach my $tag (keys %$tags) {
-			print " \\$tag";
-			my @tagargs = @{$tags->{$tag}};
-			if (@tagargs) {
-			    print '{'.join ('}{', @tagargs).'}';
+			my @taginstances = @{$tags->{$tag}};
+			foreach my $tagargs (@taginstances) {
+			    print " \\$tag";
+			    if ($tagargs) {
+				print '{'.join ('}{', @$tagargs).'}';
+			    }
 			}
 		    }
 		}
@@ -271,6 +273,8 @@ if ($use_definitions) {
 		    [ 'definitiontxt' => $def,
 		      'notes' => $notes,
 		      'check' => "Check Definition",
+		      getglossparams ($tags),
+		      getplaceparams ($tags),
 		      %hidden ]);
 	    },
 	    sub {
@@ -469,7 +473,8 @@ sub extract_tags {
 		push @args, $1;
 	    }
 	}
-	$tags{$tag} = \@args;
+	$tags{$tag} = [] unless $tags{$tag};
+	push ($tags{$tag}, \@args);
 	$next =~ s/\s+$//;
 	$text = $text.$next if length ($next);
     }
@@ -497,4 +502,34 @@ sub browse {
     } else {
 	die "\nHTTP request error";
     }
+}
+
+sub getglossparams {
+    my $tags = shift;
+    my %params = {};
+    if ($tags->{'gloss'}) {
+	my $i = 1;
+	foreach my $gloss (@{$tags->{'gloss'}}) {
+	    $params{"glossw$i"} = $gloss->[0];
+	    $params{"glossm$i"} = $gloss->[1];
+	    $i++;
+	}
+    }
+
+    return %params;
+}
+
+sub getplaceparams {
+    my $tags = shift;
+    my %params = {};
+    if ($tags->{'place'}) {
+	my $i = 1;
+	foreach my $place (@{$tags->{'place'}}) {
+	    $params{"placew$i"} = $place->[0];
+	    $params{"placem$i"} = $place->[1];
+	    $i++;
+	}
+    }
+
+    return %params;
 }
