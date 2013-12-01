@@ -286,6 +286,7 @@ if ($use_definitions) {
 		    return 0;
 		} else {
 		    print "FAILED (check)\n" unless $quiet;
+		    $deferrs++;
 		    return 1;
 		}
 	    });
