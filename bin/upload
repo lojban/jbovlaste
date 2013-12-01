@@ -264,11 +264,12 @@ if ($use_definitions) {
 	    });
 	next $ret unless $ret == 0;
 
+	# Compose the hash of parameters
+	my %params = ( %hidden, getglossparams ($tags), getplaceparams ($tags) );
 	# Checking the definition.
 	$ret = browse (
 	    "Try to check the definition at $currurl",
-	    sub {
-		my %params = ( %hidden, getglossparams ($tags), getplaceparams ($tags) );
+	    sub {	
 		return $browser->post (
 		    $currurl,
 		    [ 'definitiontxt' => $def,
@@ -281,13 +282,8 @@ if ($use_definitions) {
 		if (($response->content() !~ /WARNING/ || $ignore_warnings) && $response->content() =~ /name="final"\s+value="Submit Definition"/)
 		{
 		    print "CHECKED " unless $quiet;
-		    if ($make_update) {
-			%hidden = ();
-			return gethidden ($response->content(), "adddef.html", \$currurl, \%hidden);
-		    } else {
-			print "\n" unless $quiet;
-			return 1;
-		    }
+		    print "\n" unless $make_update;
+		    return 0;
 		} else {
 		    print "FAILED (check)\n" unless $quiet;
 		    return 1;
@@ -304,7 +300,7 @@ if ($use_definitions) {
 		    [ 'definitiontxt' => $def,
 		      'notes' => $notes,
 		      'final' => "Submit Definition",
-		      %hidden ]);
+		      %params ]);
 	    },
 	    sub {
 		my $response = shift;
