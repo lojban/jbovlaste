@@ -171,7 +171,7 @@ if ($use_definitions) {
     }
 
     my ($valsi, $def, $tags, $notes);
-    while ($ret == 0 && ($_ = <INFILE>)) {
+    while ($ret < 2 && ($_ = <INFILE>)) {
 	$ln++;
 
 	# Parse the next line of input.
