@@ -268,14 +268,13 @@ if ($use_definitions) {
 	$ret = browse (
 	    "Try to check the definition at $currurl",
 	    sub {
+		my %params = ( %hidden, getglossparams ($tags), getplaceparams ($tags) );
 		return $browser->post (
 		    $currurl,
 		    [ 'definitiontxt' => $def,
 		      'notes' => $notes,
 		      'check' => "Check Definition",
-		      getglossparams ($tags),
-		      getplaceparams ($tags),
-		      %hidden ]);
+		      %params ]);
 	    },
 	    sub {
 		my $response = shift;
@@ -506,7 +505,7 @@ sub browse {
 
 sub getglossparams {
     my $tags = shift;
-    my %params = {};
+    my %params = ();
     if ($tags->{'gloss'}) {
 	my $i = 1;
 	foreach my $gloss (@{$tags->{'gloss'}}) {
@@ -519,6 +518,7 @@ sub getglossparams {
 	    }
 	    $i++;
 	}
+	$params{"glossmax"} = $i - 1;
     }
 
     return %params;
@@ -526,7 +526,7 @@ sub getglossparams {
 
 sub getplaceparams {
     my $tags = shift;
-    my %params = {};
+    my %params = ();
     if ($tags->{'place'}) {
 	my $i = 1;
 	foreach my $place (@{$tags->{'place'}}) {
@@ -534,6 +534,7 @@ sub getplaceparams {
 	    $params{"placem$i"} = $place->[1];
 	    $i++;
 	}
+	$params{"placemax"} = $i - 1;
     }
 
     return %params;
