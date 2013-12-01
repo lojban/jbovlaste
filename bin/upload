@@ -511,7 +511,12 @@ sub getglossparams {
 	my $i = 1;
 	foreach my $gloss (@{$tags->{'gloss'}}) {
 	    $params{"glossw$i"} = $gloss->[0];
-	    $params{"glossm$i"} = $gloss->[1];
+	    if ($gloss->[1] && $gloss->[1] ne '') {
+		$params{"glossm$i"} = $gloss->[1];
+	    }
+	    if ($gloss->[2] && $gloss->[2] ne '') {
+		$params{"glossn$i"} = $gloss->[2];
+	    }
 	    $i++;
 	}
     }
