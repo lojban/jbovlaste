@@ -507,6 +507,7 @@ sub getglossparams {
 	my $i = 1;
 	foreach my $gloss (@{$tags->{'gloss'}}) {
 	    $params{"glossw$i"} = $gloss->[0];
+	    $params{"glossc$i"} = 'checked';
 	    if ($gloss->[1] && $gloss->[1] ne '') {
 		$params{"glossm$i"} = $gloss->[1];
 	    }
