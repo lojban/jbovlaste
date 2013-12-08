@@ -291,6 +291,7 @@ if ($use_definitions) {
 		}
 	    });
 	next unless $ret == 0;
+	next unless $make_update;
 
 	# Write the checked definition into the dictionary.
 	$ret = browse (
