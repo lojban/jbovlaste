@@ -92,7 +92,7 @@ $user = "officialdata" unless $user;
 $pass = "" unless $pass;
 $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0 if $ignore_cert;
 $url =~ s/^https/http/i if $plain_http;
-$use_definitions = 'Test Language' if $use_definitions eq '';
+$use_definitions ||= 'Test Language';
 
 # Set up the browser.
 
@@ -141,7 +141,7 @@ exit $ret unless $ret == 0;
 
 my $infile = $ARGV[0] || "-";
 if (not open (INFILE, "< $infile")) {
-    if ($infile == "-") {
+    if ($infile eq "-") {
 	die "Unable to open standard input for reading\n";
     } else {
 	die "Unable to open file '$infile' for reading\n";
@@ -220,11 +220,11 @@ if ($use_definitions) {
 
 	# Process a valsi.
 	print "$valsi: " unless $quiet;
-	my $valsiid;
-	my $langid;
 
 	# Check is the valsi already in the dictionary.
 	my $currurl = "$url/dict/$valsi";
+	my $langid;
+	my %hidden = ();
 	$ret = browse (
 	    "Try to access $currurl",
 	    sub {
@@ -233,36 +233,81 @@ if ($use_definitions) {
 	    sub {
 		my $response = shift;
 		if ($response->content() =~ /Word\s+not\s+found!/) {
-		    $errs++;
-		    $valsierrs++;
-		    printf "FAILED (not found)\n" unless $quiet;
+		    unless ($add_valsi) {
+			$errs++;
+			$valsierrs++;
+			printf "FAILED (not found)\n" unless $quiet;
+			return 1;
+		    } else {
+			$currurl = "$url/dict/addvalsi.html";
+			$ret = browse (
+			    "Check the possibility of adding the new valsi",
+			    sub {
+				return $browser->post (
+				    $currurl,
+				    [ 'valsi' => "$valsi" ]
+				);
+			    },
+			    sub {
+				$response = shift;
+				unless ($response->content() =~ /Adding\s+valsi\s+"$valsi"/) {
+				    printf " FAILED (unable to add)\n" unless $quiet;
+				    return 1;
+				} else {
+				    return 0;
+				};
+			    });
+		    }
+		}
+
+		return $ret unless $ret == 0;
+
+		$ret = gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		unless ($ret == 0) {
+		    printf " FAILED (unexpected reply)\n" unless $quiet;
+		    return $ret;
+		}
+		unless ($hidden{"valsiid"} || $hidden{"valsiword"}) {
+		    printf " FAILED (no valsi found)\n" unless $quiet;
 		    return 1;
 		}
-		return getdefids ($response->content(), $lang, \$currurl, \$valsiid, \$langid);
+		$ret = getlangid ($response->content(), $lang, \$langid);
+		unless ($ret == 0) {
+		    printf " FAILED (no langid found)\n" unless $quiet;
+		    return $ret;
+		}
+		return $ret;
 	    });
 	next unless $ret == 0;
 
 	# Check the valsiid and langid.
-	my %hidden = ();
 	$ret = browse (
 	    "Try to check valsi and language at $currurl",
 	    sub {
 		return $browser->post (
 		    $currurl,
-		    [ 'valsiid' => "$valsiid",
-		      'langid' => "$langid" ]);
+		    [
+		     'langid' => $langid,
+		     %hidden,
+		    ]
+		);
 	    },
 	    sub {
 		my $response = shift;
 		if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/)
 		{
-		    return gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		    $ret = gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		    unless ($ret == 0) {
+			printf " FAILED (unexpected reply)\n" unless $quiet;
+			return $ret;
+		    }
+		    return $ret;
 		} else {
 		    printf " FAILED (unexpected page)\n" unless $quiet;
 		    return 1;
 		}
 	    });
-	next $ret unless $ret == 0;
+	next unless $ret == 0;
 
 	# Compose the hash of parameters
 	my %params = ( %hidden, getglossparams ($tags), getplaceparams ($tags) );
@@ -272,10 +317,11 @@ if ($use_definitions) {
 	    sub {	
 		return $browser->post (
 		    $currurl,
-		    [ 'definitiontxt' => $def,
-		      'notes' => $notes,
-		      'check' => "Check Definition",
-		      %params ]);
+		    [
+		     'definitiontxt' => $def,
+		     'notes' => $notes,
+		     'check' => "Check Definition",
+		     %params ]);
 	    },
 	    sub {
 		my $response = shift;
@@ -400,50 +446,30 @@ sub gethidden {
 	}
 	$page = $2;
     } else {
-	die "\nUnable to find form '$formname'" unless $quiet;
+	print STDERR "\nUnable to find form '$formname'\n" unless $quiet;
+	return 1;
     }
 
     return 0;
 }
 
-sub getdefids {
-    my ($page, $lang, $url, $valsiid, $langid) = @_;
-
-    if ($page =~ /<form\s+[^>]*action="([^"]*adddef\.html)"(.*)$/s) {
-	print STDERR "\nRead action URL value: $1" if $verbose > 2;
-	$$url = actionurl ($$url, $1);
-	$page = $2;
-	if ($page =~ /(<input\s+[^>]*name="valsiid"[^>]*>)(.*)$/s) {
-	    my $tag = $1;
-	    $page = $2;
-	    if ($tag =~ /value="([^"]+)"/) {
-		print STDERR "\nRead valsi ID value: $1\n" if $verbose > 2;
-		$$valsiid = $1;
-	    } else {
-		die "\nUnable to find the valsiid value";
+sub getlangid {
+    my ($page, $lang, $langid) = @_;
+    if ($page =~ /<select\s+[^>]*name="langid"[^>]*>(.*)$/s) {
+	$page = $1;
+	while ($page =~ /(.*)<\/?select[^>]*>.*$/s) {
+	    $page = $1;
+	}
+	while ($page =~ /<option\s+[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option[^>]*>/sg) {
+	    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
+	    if ($2 eq $lang) {
+		$$langid = $1;
+		return 0;
 	    }
-            if ($page =~ /<select\s+[^>]*name="langid"[^>]*>(.*)$/s) {
-		$page = $1;
-		while ($page =~ /(.*)<\/?select[^>]*>.*$/s) {
-		    $page = $1;
-		}
-	        while ($page =~ /<option\s+[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option[^>]*>/sg) {
-		    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
-		    if ($2 eq $lang) {
-			$$langid = $1;
-			return 0;
-		    }
-		}
-	    }
-	    die "\nUnable to find ID for the language '$lang'";
-        } else {
-            die "\nUnable to find the valsiid value";
         }
-
-	return 0;
-    } else {
-	die "\nUnable to find 'adddef' form";
     }
+
+    return 1;
 }
 
 sub trim {
@@ -497,7 +523,8 @@ sub browse {
     if ($response->is_success()) {
 	return &$on_response ($response);
     } else {
-	die "\nHTTP request error";
+	print STDERR "\nHTTP request error\n" unless $quiet;
+	return 1;
     }
 }
 
