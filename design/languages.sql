@@ -38,7 +38,7 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('pl', 'Polish', '', 'Polski');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('da', 'Danish', '', 'Dansk');
+ VALUES ('da', 'Danish', 'danseke', 'Dansk');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('it', 'Italian', '', 'Italiano');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
@@ -50,11 +50,11 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
 INSERT INTO languages (tag, englishname, lojbanname, realname)
 VALUES ('he', 'Hebrew', 'xebybau', 'עברית');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('cs', 'Czech','','Česká');
+ VALUES ('cs', 'Czech','tce''exo','Česká');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
  VALUES ('no', 'Norwegian', '', 'Norsk', 'Lojban');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('fi', 'Finnish', '', 'Suomi');
+ VALUES ('fi', 'Finnish', 'suomne', 'Suomi');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('pt', 'Portuguese', 'potybau', 'Português');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
@@ -64,7 +64,7 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('tr', 'Turkish', 'bangrtirki', 'Türkçe');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('fa', 'Farsi', '', '‮فرسى‬');
+ VALUES ('fa', 'Farsi', 'bangrfarsi', '‮فرسى‬');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('ka', 'Georgian', 'kartuli', 'ქართველი'); 
 INSERT INTO languages (tag, englishname, lojbanname, realname)
@@ -139,8 +139,6 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban )
  VALUES ( 'ta', 'Tamil', 'bangrtamiji', 'தமிழ்', 'யாழ்வாண்' );
 
-
-
 -- "Exotic"
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
  VALUES ('tlh', 'Klingon', 'bangrtlingana', ' ', 'http://www.kli.org/');
@@ -148,6 +146,13 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, url)
  VALUES ('art-loglan', 'Loglan', 'loglan', 'loglan', 'http://www.loglan.net/');
 INSERT INTO languages (tag, englishname, lojbanname, realname, url, forlojban)
  VALUES ('eo', 'Esperanto', 'spe\'atybau', 'Esperanto', 'http://www.esperanto.net/', 'Loĵbano');
+INSERT INTO languages (tag, englishname, lojbanname, realname, url)
+ VALUES ('art-guaspi', 'Gua\spi', 'gaspo', 'gua\spi', 'http://www.loglan.net/');
+
+-- Simple
+INSERT INTO languages (tag, englishname, lojbanname, realname)
+ VALUES ('en-simple', 'Simple English', 'sampu glibau', 'Simple English');
+
 -- ROLLBACK; if there are errors
 
 INSERT INTO languages (tag, englishname, lojbanname, realname, url, forlojban)
