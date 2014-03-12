@@ -1,0 +1,567 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2012  Paul Wolneykien <manowar@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+use strict;
+use warnings;
+use LWP::Simple;
+use Getopt::Long 2.24 qw(GetOptions :config gnu_getopt);
+
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
+
+# Define help and usage procs.
+# Process the command line  options.
+
+(my $PROG = $0) =~ s#.*/##;
+sub help {
+    print STDERR <<EOF;
+$PROG reads the given file with dictionary entries and for each entry
+it sends a request to the jbovlaste-based online dictionary for check
+and/or update.
+
+Usage: $PROG [options] [FILE]
+
+ * Options *
+
+     -u NAME, --user=NAME     Name of the jbovlaste user to log in with.
+     -p PASS, --passwd=PASS   User password.
+     -D LANG, --definitions=LANG    Check/update the definitions.
+     -U, --update             Make the update of the online dictionary.
+     -A, --add                Add new words (valsi).
+     -c, --check-only         Check the syntax of the input file and exit.
+     -W, --ignore-warnings    Ignore definition check warnings.
+     -L URL, --url=URL        Dictionary URL.
+     -P, --plain-http         Do not use HTTPS.
+     -N, --ignore-cert        Ignore SSL host certificate problems.
+     -v, --verbose            Print more messages about the process.
+     -q, --quiet              Do not output anything.
+     -h, --help,--usage       Print this screen.
+
+If FILE is omitted, then standard input is used.
+EOF
+	exit $_[0];
+}
+
+sub usage {
+	print STDERR <<EOF;
+Usage: $PROG [options] [FILE]
+Pass -h, --help or --usage to see brief help screen.
+EOF
+	exit $_[0];
+}
+
+my $verbose = 0;
+GetOptions
+	"u|user=s"	=> \my $user,
+	"p|passwd=s" => \my $pass,
+	"D|definitions:s" => \my $use_definitions,
+	"U|update" => \my $make_update,
+    "A|add" => \my $add_valsi,
+    "c|check-only" => \my $check_only,
+    "W|ignore-warnings" => \my $ignore_warnings,
+	"L|url=s" => \my $url,
+        "P|plain-http" => \my $plain_http,
+        "N|ignore-cert" => \my $ignore_cert,
+	"v|verbose+"    => \$verbose,
+        "q|quiet" => \my $quiet,
+	"h|help|usage"	=> sub { help(0) }
+	or usage(2);
+
+
+# Clean/fix the parameters.
+my $ret = 0;
+$url = "https://jbovlaste.lojban.org" unless $url;
+$url =~ s/\/+$//;
+$user = "officialdata" unless $user;
+$pass = "" unless $pass;
+$ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0 if $ignore_cert;
+$url =~ s/^https/http/i if $plain_http;
+$use_definitions ||= 'Test Language';
+
+# Set up the browser.
+
+my $browser;
+if (not $check_only) {
+    $browser = LWP::UserAgent->new (cookie_jar => {});
+    if ($verbose > 3) {
+	$browser->add_handler("request_send",  sub { shift->dump(); return });
+	$browser->add_handler("response_done", sub { shift->dump(); return });
+    }
+}
+
+
+# Connect to the dictionary, log in.
+
+my $loggedin = 0;
+my $currurl = "$url/login.html";
+$ret = 0;
+$ret = browse (
+    "Try to log in to $currurl as $user",
+    sub {
+	return $browser->post ($currurl,
+			       [ 'username' => "$user",
+				 'password' => "$pass" ]);
+    },
+    sub {
+	my $response = shift;
+	if ($response->content() =~ /You\s+are\s+logged\s+in\s+as:\s+(\S+)/) {
+	    $loggedin = 1;
+	    if ($1 ne $user) {
+		print "Error: Logged in as an other user: $1\n" unless $quiet;
+		return 1;
+	    } else {
+		print "Logged in as $1\n" unless $quiet;
+		return 0;
+	    }
+	} else {
+	    print "Error: Unable to log in\n" unless $quiet;
+	    return 2;
+	}
+    }) unless $check_only;
+exit $ret unless $ret == 0;
+
+
+# Open the input file.
+
+my $infile = $ARGV[0] || "-";
+if (not open (INFILE, "< $infile")) {
+    if ($infile eq "-") {
+	die "Unable to open standard input for reading\n";
+    } else {
+	die "Unable to open file '$infile' for reading\n";
+    }
+}
+
+
+# Process the lines of input.
+
+my $ln = 0;
+my $errs = 0;
+my $defs = 0;
+my $valsierrs = 0;
+my $deferrs = 0;
+my $defsubms = 0;
+my $malforms = 0;
+if ($use_definitions) {
+    my $lang = $use_definitions;
+
+    print "Selected language: $lang\n" unless $quiet;
+    if ($verbose) {
+	if ($infile eq "-") {
+	    print STDERR "Read definitions from standard input\n" unless $quiet;
+	} else {
+	    print STDERR "Read definitions from '$infile'\n" unless $quiet;
+	}
+    }
+
+    my ($valsi, $def, $tags, $notes);
+    while ($ret < 2 && ($_ = <INFILE>)) {
+	$ln++;
+
+	# Parse the next line of input.
+	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
+	    $defs++;
+	    $valsi = trim ($1);
+	    $def = trim ($2);
+	    ($notes, $tags) = extract_tags (trim ($4)) if $3;
+	    if ($verbose > 0) {
+		print "Valsi: $valsi\n";
+		print "Definition: $def\n";
+		print "Notes: $notes\n";
+		print "Tags:";
+		if (scalar(keys %$tags) == 0) {
+		    print " (no tags)";
+		} else {
+		    foreach my $tag (keys %$tags) {
+			my @taginstances = @{$tags->{$tag}};
+			foreach my $tagargs (@taginstances) {
+			    print " \\$tag";
+			    if ($tagargs) {
+				print '{'.join ('}{', @$tagargs).'}';
+			    }
+			}
+		    }
+		}
+		print "\n";
+	    }
+	    if (length($valsi) == 0) {
+		print STDERR "Empty valsi at input line $ln\n" if $verbose > 0;
+		next;
+	    }
+	    if (length($def) == 0) {
+		print STDERR "Empty definition at input line $ln\n" if $verbose > 0;
+		next;
+	    }
+	} else {
+	    print STDERR "Malformed input at line $ln\n" if $verbose > 0;
+	    $errs++;
+	    $malforms++;
+	    next;
+	}
+
+	# Read the next line if in the check-only mode
+	next if $check_only;
+
+	# Process a valsi.
+	print "$valsi: " unless $quiet;
+
+	# Check is the valsi already in the dictionary.
+	my $currurl = "$url/dict/$valsi";
+	my $langid;
+	my %hidden = ();
+	$ret = browse (
+	    "Try to access $currurl",
+	    sub {
+		return $browser->get ($currurl);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Word\s+not\s+found!/) {
+		    unless ($add_valsi) {
+			$errs++;
+			$valsierrs++;
+			printf "FAILED (not found)\n" unless $quiet;
+			return 1;
+		    } else {
+			$currurl = "$url/dict/addvalsi.html";
+			$ret = browse (
+			    "Check the possibility of adding the new valsi",
+			    sub {
+				return $browser->post (
+				    $currurl,
+				    [ 'valsi' => "$valsi" ]
+				);
+			    },
+			    sub {
+				$response = shift;
+				unless ($response->content() =~ /Adding\s+valsi\s+"$valsi"/) {
+				    printf " FAILED (unable to add)\n" unless $quiet;
+				    return 1;
+				} else {
+				    return 0;
+				};
+			    });
+		    }
+		}
+
+		return $ret unless $ret == 0;
+
+		$ret = gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		unless ($ret == 0) {
+		    printf " FAILED (unexpected reply)\n" unless $quiet;
+		    return $ret;
+		}
+		unless ($hidden{"valsiid"} || $hidden{"valsiword"}) {
+		    printf " FAILED (no valsi found)\n" unless $quiet;
+		    return 1;
+		}
+		$ret = getlangid ($response->content(), $lang, \$langid);
+		unless ($ret == 0) {
+		    printf " FAILED (no langid found)\n" unless $quiet;
+		    return $ret;
+		}
+		return $ret;
+	    });
+	next unless $ret == 0;
+
+	# Check the valsiid and langid.
+	$ret = browse (
+	    "Try to check valsi and language at $currurl",
+	    sub {
+		return $browser->post (
+		    $currurl,
+		    [
+		     'langid' => $langid,
+		     %hidden,
+		    ]
+		);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Adding\s+definition\s+for\s+"$valsi"\s+in\s+language\s+"$lang"/)
+		{
+		    $ret = gethidden ($response->content(), "adddef.html", \$currurl,  \%hidden);
+		    unless ($ret == 0) {
+			printf " FAILED (unexpected reply)\n" unless $quiet;
+			return $ret;
+		    }
+		    return $ret;
+		} else {
+		    printf " FAILED (unexpected page)\n" unless $quiet;
+		    return 1;
+		}
+	    });
+	next unless $ret == 0;
+
+	# Compose the hash of parameters
+	my %params = ( %hidden, getglossparams ($tags), getplaceparams ($tags) );
+	# Checking the definition.
+	$ret = browse (
+	    "Try to check the definition at $currurl",
+	    sub {	
+		return $browser->post (
+		    $currurl,
+		    [
+		     'definitiontxt' => $def,
+		     'notes' => $notes,
+		     'check' => "Check Definition",
+		     %params ]);
+	    },
+	    sub {
+		my $response = shift;
+		if (($response->content() !~ /WARNING/ || $ignore_warnings) && $response->content() =~ /name="final"\s+value="Submit Definition"/)
+		{
+		    print "CHECKED " unless $quiet;
+		    print "\n" unless $make_update;
+		    return 0;
+		} else {
+		    print "FAILED (check)\n" unless $quiet;
+		    $deferrs++;
+		    return 1;
+		}
+	    });
+	next unless $ret == 0;
+	next unless $make_update;
+
+	# Write the checked definition into the dictionary.
+	$ret = browse (
+	    "Try to submit the definition at $currurl",
+	    sub {
+		return $browser->post (
+		    $currurl,
+		    [ 'definitiontxt' => $def,
+		      'notes' => $notes,
+		      'final' => "Submit Definition",
+		      %params ]);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /Processing\s+new\s+definition\s+for\s+"$valsi"/ && $response->content() =~ /If\s+you're\s+seeing\s+this,\s+it\s+probably\s+worked/) {
+		    print "SUBMITTED\n" unless $quiet;
+		    $defsubms++;
+		    return 0;
+		} else {
+		    print "FAILED\n" unless $quiet;
+		    $errs++;
+		    return 1;
+		}
+	    });
+    }
+}
+
+
+# Ouput the final report.
+    
+unless ($quiet) {
+    print "\n---\n";
+    print "$defsubms of $defs definitions sumbitted\n";
+    print "Valsi checks failed: $valsierrs\n";
+    print "Definition checks failed: $deferrs\n";
+    print "Malformed entries: $malforms\n";
+}
+
+if ($ret == 0 && $errs > 0) {
+    $ret = 127;
+}
+exit $ret;
+
+
+# Log out before exit.
+END {
+    if ($loggedin) {
+	$currurl = "$url/logout.html";
+	browse (
+	    "Try to log out from $currurl",
+	    sub {
+		return $browser->get ($currurl);
+	    },
+	    sub {
+		my $response = shift;
+		if ($response->content() =~ /You\s+are\s+not\s+.*logged\s+in/) {
+		    print "Log out successful\n" unless $quiet;
+		    return 0;
+		} else {
+		    print "Error: problems with loging out\n" unless $quiet;
+		    return 1;
+		}
+	    });
+    } else {
+	print STDERR "\nNot logged in: not bother to log out.\n" if $verbose > 1;
+    }
+    close (INFILE);
+}
+
+
+# Various subroutines.
+
+sub actionurl {
+    my ($url, $action) = @_;
+
+    if ($action =~ /^http/) {
+	return $action;
+    } elsif ($action =~ /^\//) {
+	$url =~ s/^(https?:\/\/[^\/]+)\/?.*$/$1$action/;
+    } else {
+	$url =~ s/[^\/]+\/?$/$action/;
+    }
+    return $url;
+}
+
+sub gethidden {
+    my ($page, $formname, $url, $hidden) = @_;
+
+    if ($page =~ /<form\s+[^>]*action="($formname)"[^>]*>(.*)$/s) {
+	$$url = actionurl ($$url, $1);
+	
+	while ($page =~ /(<input\s+[^>]*type="hidden"\s+[^>]*>)(.*)$/s) {
+	    my $tag = $1;
+	    $page = $2;
+	    if ($tag =~ /name="([^"]+)"/s) {
+		my $name = $1;
+		$$hidden{$name} = "";
+		if ($tag =~/value="([^"]*)"/s) {
+		    my $val = $1;
+		    print STDERR "\nAdd hidden field: '$name' = '$val'\n" if $verbose > 2;
+		    $$hidden{$name} = $val;
+		}
+	    } else {
+		print STDERR "\nMalformed hidden field: $tag\n" if $verbose > 2;
+	    }
+	}
+	$page = $2;
+    } else {
+	print STDERR "\nUnable to find form '$formname'\n" unless $quiet;
+	return 1;
+    }
+
+    return 0;
+}
+
+sub getlangid {
+    my ($page, $lang, $langid) = @_;
+    if ($page =~ /<select\s+[^>]*name="langid"[^>]*>(.*)$/s) {
+	$page = $1;
+	while ($page =~ /(.*)<\/?select[^>]*>.*$/s) {
+	    $page = $1;
+	}
+	while ($page =~ /<option\s+[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option[^>]*>/sg) {
+	    print STDERR "Read language ID value: $2 = $1\n" if $verbose > 2;
+	    if ($2 eq $lang) {
+		$$langid = $1;
+		return 0;
+	    }
+        }
+    }
+
+    return 1;
+}
+
+sub trim {
+    my $trim_string = shift;
+    $trim_string =~ s/^\s+//;
+    $trim_string =~ s/\s+$//;
+    return $trim_string;
+}
+
+sub extract_tags {
+    my $input = shift;
+    my %tags = ();
+    my $text = "";
+
+    my $pos = 0;
+    while ($input =~ m/\\([^{\s]+)(({([^}]*)})+)?/g) {
+	my $next = substr ($input, $pos, (pos ($input) - length ($&) - $pos));
+	$pos = pos ($input);
+	my $tag = $1;
+	my @args = ();
+	if ($2) {
+	    my $argsdef = $2;
+	    while ($argsdef =~ m/{([^}]*)}/g) {
+		push @args, $1;
+	    }
+	}
+	$tags{$tag} = [] unless $tags{$tag};
+	push ($tags{$tag}, \@args);
+	$next =~ s/\s+$//;
+	$text = $text.$next if length ($next);
+    }
+    if ($pos > 0) {
+	$text = $text.substr($input, $pos);
+    } else {
+	$text = $input;
+    }
+
+    return ($text, \%tags);
+}
+
+sub browse {
+    my $msg = shift;
+    my $action = shift;
+    my $on_response = shift;
+
+    print STDERR "\n$msg\n" if $verbose > 1;
+    my $response = &$action ();
+    print STDERR "Response ".$response->status_line()."\n" if $verbose > 1;
+    print STDERR "---HTTP RESPONSE BEGIN---\n".trim($response->content())."\n---HTTP RESPONSE END---\n" if $verbose > 3;
+
+    if ($response->is_success()) {
+	return &$on_response ($response);
+    } else {
+	print STDERR "\nHTTP request error\n" unless $quiet;
+	return 1;
+    }
+}
+
+sub getglossparams {
+    my $tags = shift;
+    my %params = ();
+    if ($tags->{'gloss'}) {
+	my $i = 1;
+	foreach my $gloss (@{$tags->{'gloss'}}) {
+	    $params{"glossw$i"} = $gloss->[0];
+	    $params{"glossc$i"} = 'checked';
+	    if ($gloss->[1] && $gloss->[1] ne '') {
+		$params{"glossm$i"} = $gloss->[1];
+	    }
+	    if ($gloss->[2] && $gloss->[2] ne '') {
+		$params{"glossn$i"} = $gloss->[2];
+	    }
+	    $i++;
+	}
+	$params{"glossmax"} = $i - 1;
+    }
+
+    return %params;
+}
+
+sub getplaceparams {
+    my $tags = shift;
+    my %params = ();
+    if ($tags->{'place'}) {
+	my $i = 1;
+	foreach my $place (@{$tags->{'place'}}) {
+	    $params{"placew$i"} = $place->[0];
+	    $params{"placem$i"} = $place->[1];
+	    $i++;
+	}
+	$params{"placemax"} = $i - 1;
+    }
+
+    return %params;
+}
