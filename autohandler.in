@@ -151,7 +151,7 @@ what happened leading up to this. Just in case.
     [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
     [ "XML Export", "$base_url/export/xml.html" ],
     [ "user Listing", "$base_url/personal/listing.html" ],
-    [ "Report Bugs", "mailto:jbovlaste\@lojban.org" ],
+    [ "Report Bugs", "https://github.com/lojban/jbovlaste/issues" ],
     [ "Utilities", "$base_url/util/index.html" ],
     [ "Status", "$base_url/status.html" ],
     [ "Help", "$base_url/help/index.html" ],
