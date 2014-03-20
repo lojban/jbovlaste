@@ -125,6 +125,8 @@ INSERT INTO valsi (valsiId, word, typeId, userId, time)
 ALTER TABLE valsi ADD CONSTRAINT valsi_userId
  FOREIGN KEY (userId) REFERENCES users MATCH FULL;
 
+CREATE INDEX valsi_lower_word ON valsi(lower(word));
+
 -- words, things, etc in natural languages, probably be a big big table
 CREATE TABLE natlangwords (
   wordId serial primary key,        -- unique word id
@@ -147,6 +149,8 @@ INSERT INTO natlangwords (wordId, langId, word, meaningNum, userId, time)
 
 ALTER TABLE natlangwords ADD CONSTRAINT natlangwords_langId
  FOREIGN KEY (langId) REFERENCES languages MATCH FULL;
+
+CREATE INDEX natlangwords_lower_word ON natlangwords(lower(word));
 
 -- Definitions of lojban valsi in other languages
 --
