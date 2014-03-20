@@ -78,7 +78,7 @@ what happened leading up to this. Just in case.
   <table width="100%">
    <tr>
     <td align="left" valign="top">
-     <font color="red">Under Development<br />ca farvi gau</font><br />
+      &nbsp;
     </td>
     <td valign="top">
      <a href="<% $base_url %>/recent.html">recent changes</a>
