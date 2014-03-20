@@ -149,6 +149,7 @@ what happened leading up to this. Just in case.
     [ "valsi - Preferred Only", "$base_url/dict/listing.html?bg=1" ],
     [ "natlang - All", "$base_url/natlang/listing.html" ],
     [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
+    [ "Languages", "$base_url/languages.html" ],
     [ "XML Export", "$base_url/export/xml.html" ],
     [ "user Listing", "$base_url/personal/listing.html" ],
     [ "Report Bugs", "https://github.com/lojban/jbovlaste/issues" ],
