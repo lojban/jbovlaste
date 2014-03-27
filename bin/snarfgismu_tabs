@@ -13,8 +13,6 @@
 # this means that the definition must have LaTeX-style $x_1$ places
 # in it, and the notes field must have cross-references like
 # {bacru}.
-# 5. The header line must have a digit of some kind in the first
-# column.
 #
 # The import will fail if the above conditions are not met.
 #
@@ -24,13 +22,6 @@ use warnings;
 
 use DBI;
 
-{
-  local( $| ) = ( 1 );
-  print "This code HAS NOT BEEN TESTED since it was last changed.  Please make backups!"
-  print "Press <Enter> or <Return> to continue: ";
-  my $resp = <STDIN>;
-}
-
 my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 $dbh->{RaiseError} = 1;
 
@@ -39,12 +30,15 @@ my $time = time();
 # I can imagine wanting to change this, but not enough to make it a
 # parameter
 my $votevalue = 1;
+my $defnum = 1;
+my $meaningnum = 1;
 
 use Getopt::Long;
 my $file = undef;
 my $userid = undef;
 my $lang = undef;
 my $result = GetOptions ("file=s" => \$file, "userid=i" => \$userid, "lang=i"   => \$lang );
+my $deluserid = $userid;
 
 if( ! $userid || ! $lang || ! $file ) {
   print "usage: -f data_file -u userid -l langid\n";
@@ -57,8 +51,8 @@ while(<GISMU>) {
   my @columns = split(/\t/);
 
   if( (scalar @columns) < 4 ) {
-    print "Too few columns. The document does not meet the specification criteria (which are in the header of this script). Please check the document.\n";
-    exit 1;
+    print "SKIPPING line with insufficient number of columns: $_\n";
+    next;
   }
 
   # Clean out spaces.
@@ -80,7 +74,7 @@ while(<GISMU>) {
     next;
   }
 
-  if ( $notes !~ /\{.....\}/) {
+  if ( $notes and $notes !~ /\{.....\}/) {
     print "The gismu cross references in the notes for \"$gismu\", \"$notes\", are not formatted properly. Please see that all gismu are enclosed in braces. e.g {basti}.  SKIPPING.\n";
     next;
   }
@@ -110,7 +104,7 @@ while(<GISMU>) {
 
   my $definitionidsref = $dbh->selectall_arrayref("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND userid=?",
     undef,
-    $lang, $valsiid, $userid );
+    $lang, $valsiid, $deluserid );
 
   foreach my $definitionidref (@{$definitionidsref}) {
     my $defid = @{$definitionidref}[0];
@@ -128,7 +122,7 @@ while(<GISMU>) {
   foreach my $keyword (@keywords) {
     my $nlwidsref = $dbh->selectall_arrayref("SELECT wordid from natlangwords WHERE word=? AND langid=? AND userid=?",
       undef,
-      $keyword, $lang, $userid );
+      $keyword, $lang, $deluserid );
 
     foreach my $nlwidref (@{$nlwidsref}) {
       my $nlwid = @{$nlwidref}[0];
@@ -141,30 +135,24 @@ while(<GISMU>) {
     }
   }
 
-  $dbh->commit;
-
   ####
   # Enter the definition information.
   ####
-  $dbh->begin_work;
 
   $dbh->do("INSERT INTO definitions (langid, valsiid, definitionNum, definition, notes, userid, time) VALUES
     (?, ?, ?, ?, ?, ?, ?)",
-    undef, $lang, $valsiid, 1, $definition, $notes, $userid, $time);
+    undef, $lang, $valsiid, $defnum, $definition, $notes, $userid, $time);
 
   # Retrieve the DefinitionID that got generated above.
-  my $defid = $dbh->selectrow_array("SELECT definitionid from defininions WHERE langid=?, valsiid=?, definitionNum=?",
+  my $defid = $dbh->selectrow_array("SELECT definitionid from definitions WHERE langid=? AND valsiid=? AND definitionNum=?",
     undef,
-    $lang, $valsiid, 1 );
+    $lang, $valsiid, $defnum );
 
   print "DEFID: $defid\n";
-
-  $dbh->commit;
 
   ####
   # Enter the vote information.
   ####
-  $dbh->begin_work;
   $dbh->do("INSERT INTO definitionvotes (langid, valsiid, definitionId, value, userid, time)
     VALUES
     (?,
@@ -180,7 +168,6 @@ while(<GISMU>) {
     $votevalue,
     $userid,
     $time);
-  $dbh->commit;
 
   for (my $i = 0; $i <= 5; $i++) {
     my $keyword = $keywords[$i];
@@ -194,7 +181,7 @@ while(<GISMU>) {
     ####
     my $wordid = $dbh->selectrow_array("SELECT wordid from natlangwords WHERE word=? AND langid=? AND meaning is null",
       undef,
-      $glossword, $lang );
+      $keyword, $lang );
 
     print "Pre-found WORDID: $wordid\n";
 
@@ -203,48 +190,48 @@ while(<GISMU>) {
       ####
       # Enter the basic natlang word information for the keyword
       ####
-      $dbh->begin_work;
       $dbh->do("INSERT INTO natlangwords (langid, word, meaningNum, userid, time ) VALUES (?, ?, ?, ?, ?)",
         undef,
-        $lang, $keyword, 1, $userid, $time );
+        $lang, $keyword, $meaningnum, $userid, $time );
 
       ####
       # Retrieve the WordID that got generated above.
       ####
       $wordid = $dbh->selectrow_array("SELECT wordid from natlangwords WHERE word=? AND langid=? AND meaning is null",
         undef,
-        $glossword, $lang );
+        $keyword, $lang );
 
       print "Just-created WORDID: $wordid\n";
 
-      $dbh->commit;
     }
 
-    ####
-    # Enter the vote information.
-    ####
-    $dbh->begin_work;
-    $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
-      VALUES
-      (?,
-      ?,
-      ?,
-      ?,
-      ?,
-      ?)",
+    my $vote = $dbh->selectrow_array("SELECT 1 FROM natlangwordvotes WHERE natlangwordid=? AND userid=?",
       undef,
-      $defid,
-      $wordid,
-      $i,
-      $votevalue,
-      $userid,
-      $time);
-    $dbh->commit;
+      $wordid, $userid );
+    unless ($vote) {
+      ####
+      # Enter the vote information.
+      ####
+      $dbh->do("INSERT INTO natlangwordvotes (definitionid, natlangwordid, place, value, userid, time)
+        VALUES
+        (?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?)",
+        undef,
+        $defid,
+        $wordid,
+        $i,
+        $votevalue,
+        $userid,
+        $time);
+    }
 
     ####
     # Enter the mapping from the keyword to the definition.
     ####
-    $dbh->begin_work;
     $dbh->do("INSERT INTO keywordmapping (definitionId, natlangwordId, place ) VALUES
       (
       ?,
@@ -253,9 +240,10 @@ while(<GISMU>) {
       )",
       undef,
       $defid, $wordid, $i );
-    $dbh->commit;
 
   }
+
+  $dbh->commit;
 }
 
 $dbh->disconnect;
