@@ -557,7 +557,13 @@ sub getplaceparams {
 	my $i = 1;
 	foreach my $place (@{$tags->{'place'}}) {
 	    $params{"placew$i"} = $place->[0];
-	    $params{"placem$i"} = $place->[1];
+	    $params{"placec$i"} = 'checked';
+	    if ($place->[1] && $place->[1] ne '') {
+		$params{"placem$i"} = $place->[1];
+	    }
+	    if ($place->[2] && $place->[2] ne '') {
+		$params{"placen$i"} = $place->[2];
+	    }
 	    $i++;
 	}
 	$params{"placemax"} = $i - 1;
