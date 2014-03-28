@@ -52,44 +52,44 @@ VALUES ('he', 'Hebrew', 'banxe'\ebu', 'עברית');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('cs', 'Czech','bancu\'esu','Česká');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('no', 'Norwegian', '', 'Norsk', 'Lojban');
+ VALUES ('no', 'Norwegian', 'baurnu\'oru', 'Norsk', 'Lojban');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('fi', 'Finnish', 'suomne', 'Suomi');
+ VALUES ('fi', 'Finnish', 'banfu\'inu', 'Suomi');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('pt', 'Portuguese', 'potybau', 'Português');
+ VALUES ('pt', 'Portuguese', 'banpu\'oru', 'Português');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('sv', 'Swedish', '', 'Svenska');
+ VALUES ('sv', 'Swedish', 'bansuve\'e', 'Svenska');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('sr', 'Serbian', '', 'Srpski');
+ VALUES ('sr', 'Serbian', 'bansurupu', 'Srpski');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('tr', 'Turkish', 'bangrtirki', 'Türkçe');
+ VALUES ('tr', 'Turkish', 'bantu\'uru', 'Türkçe');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('fa', 'Farsi', 'bangrfarsi', '‮فرسى‬');
+ VALUES ('fa', 'Farsi', 'banfu\'asu', '‮فرسى‬');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ka', 'Georgian', 'kartuli', 'ქართველი'); 
+ VALUES ('ka', 'Georgian', 'banku\'atu', 'ქართველი'); 
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('gu', 'Gujarati', 'gudjrati', 'ગુજરાતી');
+ VALUES ('gu', 'Gujarati', 'baurgu\'uju', 'ગુજરાતી');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('sq', 'Albanian', 'ckiptare', 'shqiptare');
+ VALUES ('sq', 'Albanian', 'bansuke\'i', 'shqiptare');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('eu', 'Basque', 'skalduna', 'Euskara');
+ VALUES ('eu', 'Basque', 'bange\'usu', 'Euskara');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('be', 'Belarusian', 'labru''obau', 'Беларуски', 'Ложбан');
+ VALUES ('be', 'Belarusian', 'banbu\'elu', 'Беларуски', 'Ложбан');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('id', 'Indonesian', 'bidbau', 'Bahasa Indonesia');
+ VALUES ('id', 'Indonesian', 'banginudu', 'Bahasa Indonesia');
 --INSERT INTO languages (tag, englishname, lojbanname, realname)
 -- VALUES ('ms', 'Malay', 'mejbau', 'Bahasa Melayu');
 --I think the 'e' is actually 0115 (ĕ), but I'm not sure.
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('mg', 'Malagasy', 'malgaci', 'Malagasy');
+ VALUES ('mg', 'Malagasy', 'banmulugu', 'Malagasy');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ne', 'Nepali', 'bangrnepali', 'नेपाली');
+ VALUES ('ne', 'Nepali', 'baurnu\'epu', 'नेपाली');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('sa', 'Sanskrit', 'srito', 'संस्कृत');
+ VALUES ('sa', 'Sanskrit', 'bansu\'anu', 'संस्कृत');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('so', 'Somali', 'bangrsomali', 'Soomaali');
+ VALUES ('so', 'Somali', 'bansu\'omu', 'Soomaali');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('br', 'Breton', 'bre\'one', 'brezhoneg');
+ VALUES ('br', 'Breton', 'banburu\'e', 'brezhoneg');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('ch', 'Chamorro', 'tcamoru', 'Chamoru');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
