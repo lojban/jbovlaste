@@ -15,42 +15,42 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, url)
 
 -- The six base languages
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('en', 'English', 'gli\'icybau', 'English', 'Lojban');
+ VALUES ('en', 'English', 'bangenugu', 'English', 'Lojban');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('hi', 'Hindi', 'xinbau', 'हिन्दी');
+ VALUES ('hi', 'Hindi', 'benxe\'inu', 'हिन्दी');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('es', 'Spanish', 'spa\'anybau', 'Español');
+ VALUES ('es', 'Spanish', 'bansupu\'a', 'Español');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('ru', 'Russian', 'rukybau', 'Русский','Ложбан');
+ VALUES ('ru', 'Russian', 'banru\'usu', 'Русский','Ложбан');
 
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('zh', 'Chinese', 'jugbau', '中文');
+ VALUES ('zh', 'Chinese', 'banzuxe\'o', '中文');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ar', 'Arabic', 'rabybau', '‮العربية‬');
+ VALUES ('ar', 'Arabic', 'bangaru\'a', '‮العربية‬');
 
 -- Others
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('fr', 'French', 'fasybau', 'français');
+ VALUES ('fr', 'French', 'banfuru\'a', 'français');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('de', 'German', 'dotybau', 'Deutsch', 'Lojban');
+ VALUES ('de', 'German', 'bandu\'e\'u', 'Deutsch', 'Lojban');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('ja', 'Japanese', 'ponbau', '日本語', 'ロジバン' );
+ VALUES ('ja', 'Japanese', 'banjupunu', '日本語', 'ロジバン' );
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('pl', 'Polish', '', 'Polski');
+ VALUES ('pl', 'Polish', '', 'banpu\'olu');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('da', 'Danish', 'danseke', 'Dansk');
+ VALUES ('da', 'Danish', 'bandu\'anu', 'Dansk');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('it', 'Italian', '', 'Italiano');
+ VALUES ('it', 'Italian', 'bangitu\'a', 'Italiano');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ko', 'Korean', '', '한국어');
+ VALUES ('ko', 'Korean', 'banku\'oru', '한국어');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ro', 'Romanian', '', 'RomÃ¢nÄ');
+ VALUES ('ro', 'Romanian', 'banru\'onu', 'RomÃ¢nÄ');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
- VALUES ('el', 'Greek', 'xesybau', 'Ελληνικά', 'Λόζμπαν');
+ VALUES ('el', 'Greek', 'bangelulu', 'Ελληνικά', 'Λόζμπαν');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
-VALUES ('he', 'Hebrew', 'xebybau', 'עברית');
+VALUES ('he', 'Hebrew', 'banxe'\ebu', 'עברית');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('cs', 'Czech','tce''exo','Česká');
+ VALUES ('cs', 'Czech','bancu\'esu','Česká');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
  VALUES ('no', 'Norwegian', '', 'Norsk', 'Lojban');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
@@ -73,8 +73,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('sq', 'Albanian', 'ckiptare', 'shqiptare');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('eu', 'Basque', 'skalduna', 'Euskara');
-INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('be', 'Belarusian', 'labru''obau', 'Беларуски');
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
+ VALUES ('be', 'Belarusian', 'labru''obau', 'Беларуски', 'Ложбан');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('id', 'Indonesian', 'bidbau', 'Bahasa Indonesia');
 --INSERT INTO languages (tag, englishname, lojbanname, realname)
@@ -108,8 +108,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('lt', 'Lithuanian', 'bangrlietuva', 'Lietuvių');
 
 -- Not totally sure about the lojbanizations here.
-INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('bg', 'Bulgarian', 'bolgaro', 'Български');
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
+ VALUES ('bg', 'Bulgarian', 'bolgaro', 'Български', 'Ложбан');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('sk', 'Slovak', 'slovako', 'Slovenský');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
