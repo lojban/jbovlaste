@@ -220,7 +220,7 @@ if ($use_definitions) {
 
 	# Process a valsi.
 	print "$valsi: " unless $quiet;
-
+  sleep 60;
 	# Check is the valsi already in the dictionary.
 	my $currurl = "$url/dict/$valsi";
 	my $langid;
@@ -370,7 +370,7 @@ if ($use_definitions) {
     
 unless ($quiet) {
     print "\n---\n";
-    print "$defsubms of $defs definitions sumbitted\n";
+    print "$defsubms of $defs definitions submitted\n";
     print "Valsi checks failed: $valsierrs\n";
     print "Definition checks failed: $deferrs\n";
     print "Malformed entries: $malforms\n";
@@ -564,6 +564,22 @@ sub getplaceparams {
 	    if ($place->[2] && $place->[2] ne '') {
 		$params{"placen$i"} = $place->[2];
 	    }
+	    $i++;
+	}
+	$params{"placemax"} = $i - 1;
+    }
+
+    return %params;
+}
+
+sub getplaceparamsold {
+    my $tags = shift;
+    my %params = ();
+    if ($tags->{'place'}) {
+	my $i = 1;
+	foreach my $place (@{$tags->{'place'}}) {
+	    $params{"placew$i"} = $place->[0];
+	    $params{"placem$i"} = $place->[1];
 	    $i++;
 	}
 	$params{"placemax"} = $i - 1;
