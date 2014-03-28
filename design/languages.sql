@@ -91,9 +91,9 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('br', 'Breton', 'banburu\'e', 'brezhoneg');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('ch', 'Chamorro', 'tcamoru', 'Chamoru');
+ VALUES ('ch', 'Chamorro', 'bancuxe\'a', 'Chamoru');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('kw', 'Cornish', 'kernauke', 'Kernewek');
+ VALUES ('kw', 'Cornish', 'bancu\'oru', 'Kernewek');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('ca', 'Catalan', 'katlana', 'català');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
