@@ -18,7 +18,7 @@ UPDATE natlangwords
 
 ALTER TABLE natlangwords
   ADD CONSTRAINT natlangwords_meaning_nonempty
-  CHECK( length(word) > 0 );
+  CHECK( length(meaning) > 0 );
 
 ALTER TABLE natlangwordvotes
   ALTER value TYPE integer;
