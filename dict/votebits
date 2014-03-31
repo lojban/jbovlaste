@@ -51,7 +51,7 @@ foreach my $keyword (@glosskeywords,@placekeywords)
     {
 	$nlwid = $dbh->selectrow_array("SELECT wordid FROM
 	    natlangwords WHERE langid=? AND word=? AND meaning=?", undef, 
-	    $keyword->[0], $keyword->[1] );
+	    $langid, $keyword->[0], $keyword->[1] );
     } else {
 	$nlwid = $dbh->selectrow_array("SELECT wordid FROM
 	    natlangwords WHERE langid=? AND word=?
