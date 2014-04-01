@@ -24,6 +24,192 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 SET search_path = public, pg_catalog;
 
+--
+-- Name: refresh_natlangwordbestplaces_for_delete(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION refresh_natlangwordbestplaces_for_delete() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+  BEGIN
+    PERFORM reset_natlangwordbestplace(OLD.natlangwordid);
+    RETURN NULL;
+  END;
+$$;
+
+
+ALTER FUNCTION public.refresh_natlangwordbestplaces_for_delete() OWNER TO jbovlaste;
+
+--
+-- Name: refresh_natlangwordbestplaces_for_upsert(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION refresh_natlangwordbestplaces_for_upsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+  BEGIN
+    PERFORM reset_natlangwordbestplace(NEW.natlangwordid);
+    RETURN NULL;
+  END;
+$$;
+
+
+ALTER FUNCTION public.refresh_natlangwordbestplaces_for_upsert() OWNER TO jbovlaste;
+
+--
+-- Name: refresh_valsibestdefinitions_for_delete(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION refresh_valsibestdefinitions_for_delete() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+  BEGIN
+    PERFORM reset_valsibestdefinition(OLD.valsiid, OLD.langid);
+    RETURN NULL;
+  END;
+$$;
+
+
+ALTER FUNCTION public.refresh_valsibestdefinitions_for_delete() OWNER TO jbovlaste;
+
+--
+-- Name: refresh_valsibestdefinitions_for_upsert(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION refresh_valsibestdefinitions_for_upsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+  BEGIN
+    PERFORM reset_valsibestdefinition(NEW.valsiid, NEW.langid);
+    RETURN NULL;
+  END;
+$$;
+
+
+ALTER FUNCTION public.refresh_valsibestdefinitions_for_upsert() OWNER TO jbovlaste;
+
+--
+-- Name: reload_natlangwordbestplaces(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION reload_natlangwordbestplaces() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    _wordid integer;
+  BEGIN
+
+    TRUNCATE natlangwordbestplaces;
+
+    FOR _wordid IN
+      SELECT DISTINCT natlangwordid AS wordid
+        FROM natlangwordvotes
+    LOOP
+      PERFORM reset_natlangwordbestplace(_wordid);
+    END LOOP;
+
+  END;
+$$;
+
+
+ALTER FUNCTION public.reload_natlangwordbestplaces() OWNER TO jbovlaste;
+
+--
+-- Name: reload_valsibestdefinitions(); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION reload_valsibestdefinitions() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    _row RECORD;
+  BEGIN
+
+    TRUNCATE valsibestdefinitions;
+
+    FOR _row IN
+      SELECT DISTINCT valsiid, langid
+        FROM definitionvotes
+    LOOP
+      PERFORM reset_valsibestdefinition(_row.valsiid, _row.langid);
+    END LOOP;
+
+  END;
+$$;
+
+
+ALTER FUNCTION public.reload_valsibestdefinitions() OWNER TO jbovlaste;
+
+--
+-- Name: reset_natlangwordbestplace(integer); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION reset_natlangwordbestplace(_wordid integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    _new RECORD;
+  BEGIN
+
+    SELECT natlangwordid AS wordid, definitionid, place, min(time) AS time, sum(value) AS score
+      INTO _new
+      FROM natlangwordvotes
+      WHERE natlangwordid = _wordid
+      GROUP BY wordid, definitionid, place
+      ORDER BY score DESC, time
+      LIMIT 1;
+
+    DELETE
+      FROM natlangwordbestplaces
+      WHERE wordid = _wordid;
+
+    IF _new IS NOT NULL THEN
+      INSERT
+        INTO natlangwordbestplaces (wordid, definitionid, place, score)
+        VALUES (_new.wordid, _new.definitionid, _new.place, _new.score);
+    END IF;
+
+  END;
+$$;
+
+
+ALTER FUNCTION public.reset_natlangwordbestplace(_wordid integer) OWNER TO jbovlaste;
+
+--
+-- Name: reset_valsibestdefinition(integer, integer); Type: FUNCTION; Schema: public; Owner: jbovlaste
+--
+
+CREATE FUNCTION reset_valsibestdefinition(_valsiid integer, _langid integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    _new RECORD;
+  BEGIN
+
+    SELECT valsiid, langid, definitionid, min(time) as time, sum(value) AS score
+      INTO _new
+      FROM definitionvotes
+      WHERE valsiid = _valsiid AND langid = _langid
+      GROUP BY valsiid, langid, definitionid
+      ORDER BY score DESC, time
+      LIMIT 1;
+
+    DELETE
+      FROM valsibestdefinitions
+      WHERE valsiid = _valsiid AND langid = _langid;
+
+    IF _new IS NOT NULL THEN
+      INSERT
+        INTO valsibestdefinitions (valsiid, langid, definitionid, score)
+        VALUES (_new.valsiid, _new.langid, _new.definitionid, _new.score);
+    END IF;
+
+  END;
+$$;
+
+
+ALTER FUNCTION public.reset_valsibestdefinition(_valsiid integer, _langid integer) OWNER TO jbovlaste;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -90,7 +276,19 @@ ALTER TABLE public.users OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientcomments AS
-    SELECT c.commentid, c.threadid, c.parentid, c.userid, u.username, u.realname, c."time", c.subject, c.content, c.commentnum FROM comments c, users u WHERE (u.userid = c.userid);
+ SELECT c.commentid,
+    c.threadid,
+    c.parentid,
+    c.userid,
+    u.username,
+    u.realname,
+    c."time",
+    c.subject,
+    c.content,
+    c.commentnum
+   FROM comments c,
+    users u
+  WHERE (u.userid = c.userid);
 
 
 ALTER TABLE public.convenientcomments OWNER TO jbovlaste;
@@ -153,7 +351,26 @@ ALTER TABLE public.valsi OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientdefinitions AS
-    SELECT nd.definitionid, l.realname AS langrealname, l.tag, l.langid, v.valsiid, v.word, nd.definition, nd.notes, u.username, u.userid, nd."time", nd.definitionnum, v.rafsi, nd.selmaho, nd.jargon FROM definitions nd, languages l, valsi v, users u WHERE (((nd.langid = l.langid) AND (nd.valsiid = v.valsiid)) AND (nd.userid = u.userid));
+ SELECT nd.definitionid,
+    l.realname AS langrealname,
+    l.tag,
+    l.langid,
+    v.valsiid,
+    v.word,
+    nd.definition,
+    nd.notes,
+    u.username,
+    u.userid,
+    nd."time",
+    nd.definitionnum,
+    v.rafsi,
+    nd.selmaho,
+    nd.jargon
+   FROM definitions nd,
+    languages l,
+    valsi v,
+    users u
+  WHERE (((nd.langid = l.langid) AND (nd.valsiid = v.valsiid)) AND (nd.userid = u.userid));
 
 
 ALTER TABLE public.convenientdefinitions OWNER TO jbovlaste;
@@ -179,7 +396,21 @@ ALTER TABLE public.etymology OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientetymology AS
-    SELECT e.etymologyid, v.word, e.valsiid, l.tag, l.realname, l.langid, e.content, e."time", u.username, u.userid FROM etymology e, valsi v, languages l, users u WHERE (((e.userid = u.userid) AND (e.langid = l.langid)) AND (e.valsiid = v.valsiid));
+ SELECT e.etymologyid,
+    v.word,
+    e.valsiid,
+    l.tag,
+    l.realname,
+    l.langid,
+    e.content,
+    e."time",
+    u.username,
+    u.userid
+   FROM etymology e,
+    valsi v,
+    languages l,
+    users u
+  WHERE (((e.userid = u.userid) AND (e.langid = l.langid)) AND (e.valsiid = v.valsiid));
 
 
 ALTER TABLE public.convenientetymology OWNER TO jbovlaste;
@@ -206,7 +437,19 @@ ALTER TABLE public.example OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientexamples AS
-    SELECT e.exampleid, v.word, e.valsiid, e.content, e."time", u.username, u.userid, e.examplenum, e.definitionid FROM valsi v, example e, users u WHERE ((v.valsiid = e.valsiid) AND (u.userid = e.userid));
+ SELECT e.exampleid,
+    v.word,
+    e.valsiid,
+    e.content,
+    e."time",
+    u.username,
+    u.userid,
+    e.examplenum,
+    e.definitionid
+   FROM valsi v,
+    example e,
+    users u
+  WHERE ((v.valsiid = e.valsiid) AND (u.userid = e.userid));
 
 
 ALTER TABLE public.convenientexamples OWNER TO jbovlaste;
@@ -223,7 +466,8 @@ CREATE TABLE natlangwords (
     meaningnum integer NOT NULL,
     userid integer NOT NULL,
     "time" integer NOT NULL,
-    notes text
+    notes text,
+    CONSTRAINT natlangwords_meaning_nonempty CHECK ((length(meaning) > 0))
 );
 
 
@@ -248,7 +492,18 @@ ALTER TABLE public.threads OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientthreads AS
-    SELECT t.threadid, t.valsiid, v.word AS valsi, t.natlangwordid, nlw.word AS natlangword, l.tag, t.definitionid FROM threads t, valsi v, natlangwords nlw, languages l WHERE (((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid)) AND (nlw.langid = l.langid));
+ SELECT t.threadid,
+    t.valsiid,
+    v.word AS valsi,
+    t.natlangwordid,
+    nlw.word AS natlangword,
+    l.tag,
+    t.definitionid
+   FROM threads t,
+    valsi v,
+    natlangwords nlw,
+    languages l
+  WHERE (((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid)) AND (nlw.langid = l.langid));
 
 
 ALTER TABLE public.convenientthreads OWNER TO jbovlaste;
@@ -270,7 +525,18 @@ ALTER TABLE public.valsitypes OWNER TO jbovlaste;
 --
 
 CREATE VIEW convenientvalsi AS
-    SELECT v.valsiid, v.word, t.descriptor AS type, v.typeid, u.username, v.userid, v."time", v.rafsi FROM valsi v, valsitypes t, users u WHERE ((v.typeid = t.typeid) AND (v.userid = u.userid));
+ SELECT v.valsiid,
+    v.word,
+    t.descriptor AS type,
+    v.typeid,
+    u.username,
+    v.userid,
+    v."time",
+    v.rafsi
+   FROM valsi v,
+    valsitypes t,
+    users u
+  WHERE ((v.typeid = t.typeid) AND (v.userid = u.userid));
 
 
 ALTER TABLE public.convenientvalsi OWNER TO jbovlaste;
@@ -405,14 +671,28 @@ CREATE TABLE natlangword_corrections (
 ALTER TABLE public.natlangword_corrections OWNER TO jbovlaste;
 
 --
--- Name: natlangwordbestguesses; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordbestplaces; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
 --
 
-CREATE TABLE natlangwordbestguesses (
-    natlangwordid integer NOT NULL,
-    definitionid integer,
-    place smallint NOT NULL
+CREATE TABLE natlangwordbestplaces (
+    wordid integer NOT NULL,
+    definitionid integer NOT NULL,
+    place integer NOT NULL,
+    score integer NOT NULL
 );
+
+
+ALTER TABLE public.natlangwordbestplaces OWNER TO jbovlaste;
+
+--
+-- Name: natlangwordbestguesses; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW natlangwordbestguesses AS
+ SELECT natlangwordbestplaces.wordid AS natlangwordid,
+    natlangwordbestplaces.definitionid,
+    natlangwordbestplaces.place
+   FROM natlangwordbestplaces;
 
 
 ALTER TABLE public.natlangwordbestguesses OWNER TO jbovlaste;
@@ -447,7 +727,7 @@ CREATE TABLE natlangwordvotes (
     definitionid integer,
     place integer NOT NULL,
     userid integer NOT NULL,
-    value real NOT NULL,
+    value integer NOT NULL,
     "time" integer NOT NULL
 );
 
@@ -536,14 +816,28 @@ ALTER SEQUENCE valsi_valsiid_seq OWNED BY valsi.valsiid;
 
 
 --
--- Name: valsibestguesses; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsibestdefinitions; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
 --
 
-CREATE TABLE valsibestguesses (
+CREATE TABLE valsibestdefinitions (
     valsiid integer NOT NULL,
     langid integer NOT NULL,
-    definitionid integer NOT NULL
+    definitionid integer NOT NULL,
+    score integer NOT NULL
 );
+
+
+ALTER TABLE public.valsibestdefinitions OWNER TO jbovlaste;
+
+--
+-- Name: valsibestguesses; Type: VIEW; Schema: public; Owner: jbovlaste
+--
+
+CREATE VIEW valsibestguesses AS
+ SELECT valsibestdefinitions.valsiid,
+    valsibestdefinitions.langid,
+    valsibestdefinitions.definitionid
+   FROM valsibestdefinitions;
 
 
 ALTER TABLE public.valsibestguesses OWNER TO jbovlaste;
@@ -690,11 +984,11 @@ ALTER TABLE ONLY languages
 
 
 --
--- Name: natlangwordbestguesses_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordbestplaces_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
 --
 
-ALTER TABLE ONLY natlangwordbestguesses
-    ADD CONSTRAINT natlangwordbestguesses_pkey PRIMARY KEY (natlangwordid);
+ALTER TABLE ONLY natlangwordbestplaces
+    ADD CONSTRAINT natlangwordbestplaces_pkey PRIMARY KEY (wordid);
 
 
 --
@@ -770,11 +1064,11 @@ ALTER TABLE ONLY valsi
 
 
 --
--- Name: valsibestguesses_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsibestdefinitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
 --
 
-ALTER TABLE ONLY valsibestguesses
-    ADD CONSTRAINT valsibestguesses_pkey PRIMARY KEY (valsiid, langid);
+ALTER TABLE ONLY valsibestdefinitions
+    ADD CONSTRAINT valsibestdefinitions_pkey PRIMARY KEY (valsiid, langid);
 
 
 --
@@ -794,27 +1088,88 @@ ALTER TABLE ONLY valsitypes
 
 
 --
+-- Name: natlangwordbestplaces_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE INDEX natlangwordbestplaces_definitionid_key ON natlangwordbestplaces USING btree (definitionid);
+
+
+--
+-- Name: natlangwords_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE INDEX natlangwords_lower_word ON natlangwords USING btree (lower(word));
+
+
+--
+-- Name: natlangwords_unique_langid_word_null; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE UNIQUE INDEX natlangwords_unique_langid_word_null ON natlangwords USING btree (langid, word) WHERE (meaning IS NULL);
+
+
+--
+-- Name: valsi_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE INDEX valsi_lower_word ON valsi USING btree (lower(word));
+
+
+--
+-- Name: valsibestdefinitions_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE INDEX valsibestdefinitions_definitionid_key ON valsibestdefinitions USING btree (definitionid);
+
+
+--
+-- Name: on_definitionvotes_delete; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_definitionvotes_delete AFTER DELETE ON definitionvotes FOR EACH ROW EXECUTE PROCEDURE refresh_valsibestdefinitions_for_delete();
+
+
+--
+-- Name: on_definitionvotes_insert; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_definitionvotes_insert AFTER INSERT ON definitionvotes FOR EACH ROW EXECUTE PROCEDURE refresh_valsibestdefinitions_for_upsert();
+
+
+--
+-- Name: on_definitionvotes_update; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_definitionvotes_update AFTER UPDATE ON definitionvotes FOR EACH ROW EXECUTE PROCEDURE refresh_valsibestdefinitions_for_upsert();
+
+
+--
+-- Name: on_natlangwordvotes_delete; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_natlangwordvotes_delete AFTER DELETE ON natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE refresh_natlangwordbestplaces_for_delete();
+
+
+--
+-- Name: on_natlangwordvotes_insert; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_natlangwordvotes_insert AFTER INSERT ON natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE refresh_natlangwordbestplaces_for_upsert();
+
+
+--
+-- Name: on_natlangwordvotes_update; Type: TRIGGER; Schema: public; Owner: jbovlaste
+--
+
+CREATE TRIGGER on_natlangwordvotes_update AFTER UPDATE ON natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE refresh_natlangwordbestplaces_for_upsert();
+
+
+--
 -- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsi
     ADD CONSTRAINT "$1" FOREIGN KEY (typeid) REFERENCES valsitypes(typeid);
-
-
---
--- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
---
-
-ALTER TABLE ONLY valsibestguesses
-    ADD CONSTRAINT "$1" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
-
-
---
--- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
---
-
-ALTER TABLE ONLY natlangwordbestguesses
-    ADD CONSTRAINT "$1" FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid);
 
 
 --
@@ -839,14 +1194,6 @@ ALTER TABLE ONLY natlangwordvotes
 
 ALTER TABLE ONLY natlangword_corrections
     ADD CONSTRAINT "$1" FOREIGN KEY (wordid) REFERENCES natlangwords(wordid);
-
-
---
--- Name: $2; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
---
-
-ALTER TABLE ONLY natlangwordbestguesses
-    ADD CONSTRAINT "$2" FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
 
 
 --
@@ -1018,19 +1365,19 @@ ALTER TABLE ONLY keywordmapping
 
 
 --
--- Name: natlangwordbestguesses_defbestguessid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+-- Name: natlangwordbestplaces_definitionid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
-ALTER TABLE ONLY natlangwordbestguesses
-    ADD CONSTRAINT natlangwordbestguesses_defbestguessid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
+ALTER TABLE ONLY natlangwordbestplaces
+    ADD CONSTRAINT natlangwordbestplaces_definitionid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
 
 
 --
--- Name: natlangwordbestguesses_natlangwordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+-- Name: natlangwordbestplaces_wordid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
-ALTER TABLE ONLY natlangwordbestguesses
-    ADD CONSTRAINT natlangwordbestguesses_natlangwordid FOREIGN KEY (natlangwordid) REFERENCES natlangwords(wordid) MATCH FULL;
+ALTER TABLE ONLY natlangwordbestplaces
+    ADD CONSTRAINT natlangwordbestplaces_wordid FOREIGN KEY (wordid) REFERENCES natlangwords(wordid);
 
 
 --
@@ -1098,257 +1445,27 @@ ALTER TABLE ONLY valsi
 
 
 --
--- Name: valsibestguesses_defbestguessid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+-- Name: valsibestdefinitions_definitionid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
-ALTER TABLE ONLY valsibestguesses
-    ADD CONSTRAINT valsibestguesses_defbestguessid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid) MATCH FULL;
-
-
---
--- Name: valsibestguesses_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
---
-
-ALTER TABLE ONLY valsibestguesses
-    ADD CONSTRAINT valsibestguesses_langid FOREIGN KEY (langid) REFERENCES languages(langid) MATCH FULL;
+ALTER TABLE ONLY valsibestdefinitions
+    ADD CONSTRAINT valsibestdefinitions_definitionid FOREIGN KEY (definitionid) REFERENCES definitions(definitionid);
 
 
 --
--- Name: valsibestguesses_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
+-- Name: valsibestdefinitions_langid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
-ALTER TABLE ONLY valsibestguesses
-    ADD CONSTRAINT valsibestguesses_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid) MATCH FULL;
-
-
---
--- Name: public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
+ALTER TABLE ONLY valsibestdefinitions
+    ADD CONSTRAINT valsibestdefinitions_langid FOREIGN KEY (langid) REFERENCES languages(langid);
 
 
 --
--- Name: comments; Type: ACL; Schema: public; Owner: jbovlaste
+-- Name: valsibestdefinitions_valsiid; Type: FK CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
-REVOKE ALL ON TABLE comments FROM PUBLIC;
-REVOKE ALL ON TABLE comments FROM jbovlaste;
-GRANT ALL ON TABLE comments TO jbovlaste;
-GRANT SELECT ON TABLE comments TO PUBLIC;
-
-
---
--- Name: users; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE users FROM PUBLIC;
-REVOKE ALL ON TABLE users FROM jbovlaste;
-GRANT ALL ON TABLE users TO jbovlaste;
-GRANT SELECT ON TABLE users TO PUBLIC;
-
-
---
--- Name: convenientcomments; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE convenientcomments FROM PUBLIC;
-REVOKE ALL ON TABLE convenientcomments FROM jbovlaste;
-GRANT ALL ON TABLE convenientcomments TO jbovlaste;
-GRANT SELECT ON TABLE convenientcomments TO PUBLIC;
-
-
---
--- Name: definitions; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE definitions FROM PUBLIC;
-REVOKE ALL ON TABLE definitions FROM jbovlaste;
-GRANT ALL ON TABLE definitions TO jbovlaste;
-GRANT SELECT ON TABLE definitions TO PUBLIC;
-
-
---
--- Name: languages; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE languages FROM PUBLIC;
-REVOKE ALL ON TABLE languages FROM jbovlaste;
-GRANT ALL ON TABLE languages TO jbovlaste;
-GRANT SELECT ON TABLE languages TO PUBLIC;
-
-
---
--- Name: valsi; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE valsi FROM PUBLIC;
-REVOKE ALL ON TABLE valsi FROM jbovlaste;
-GRANT ALL ON TABLE valsi TO jbovlaste;
-GRANT SELECT ON TABLE valsi TO PUBLIC;
-
-
---
--- Name: etymology; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE etymology FROM PUBLIC;
-REVOKE ALL ON TABLE etymology FROM jbovlaste;
-GRANT ALL ON TABLE etymology TO jbovlaste;
-GRANT SELECT ON TABLE etymology TO PUBLIC;
-
-
---
--- Name: convenientetymology; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE convenientetymology FROM PUBLIC;
-REVOKE ALL ON TABLE convenientetymology FROM jbovlaste;
-GRANT ALL ON TABLE convenientetymology TO jbovlaste;
-GRANT SELECT ON TABLE convenientetymology TO PUBLIC;
-
-
---
--- Name: example; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE example FROM PUBLIC;
-REVOKE ALL ON TABLE example FROM jbovlaste;
-GRANT ALL ON TABLE example TO jbovlaste;
-GRANT SELECT ON TABLE example TO PUBLIC;
-
-
---
--- Name: convenientexamples; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE convenientexamples FROM PUBLIC;
-REVOKE ALL ON TABLE convenientexamples FROM jbovlaste;
-GRANT ALL ON TABLE convenientexamples TO jbovlaste;
-GRANT SELECT ON TABLE convenientexamples TO PUBLIC;
-
-
---
--- Name: natlangwords; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE natlangwords FROM PUBLIC;
-REVOKE ALL ON TABLE natlangwords FROM jbovlaste;
-GRANT ALL ON TABLE natlangwords TO jbovlaste;
-GRANT SELECT ON TABLE natlangwords TO PUBLIC;
-
-
---
--- Name: threads; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE threads FROM PUBLIC;
-REVOKE ALL ON TABLE threads FROM jbovlaste;
-GRANT ALL ON TABLE threads TO jbovlaste;
-GRANT SELECT ON TABLE threads TO PUBLIC;
-
-
---
--- Name: convenientthreads; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE convenientthreads FROM PUBLIC;
-REVOKE ALL ON TABLE convenientthreads FROM jbovlaste;
-GRANT ALL ON TABLE convenientthreads TO jbovlaste;
-GRANT SELECT ON TABLE convenientthreads TO PUBLIC;
-
-
---
--- Name: valsitypes; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE valsitypes FROM PUBLIC;
-REVOKE ALL ON TABLE valsitypes FROM jbovlaste;
-GRANT ALL ON TABLE valsitypes TO jbovlaste;
-GRANT SELECT ON TABLE valsitypes TO PUBLIC;
-
-
---
--- Name: convenientvalsi; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE convenientvalsi FROM PUBLIC;
-REVOKE ALL ON TABLE convenientvalsi FROM jbovlaste;
-GRANT ALL ON TABLE convenientvalsi TO jbovlaste;
-GRANT SELECT ON TABLE convenientvalsi TO PUBLIC;
-
-
---
--- Name: definitionvotes; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE definitionvotes FROM PUBLIC;
-REVOKE ALL ON TABLE definitionvotes FROM jbovlaste;
-GRANT ALL ON TABLE definitionvotes TO jbovlaste;
-GRANT SELECT ON TABLE definitionvotes TO PUBLIC;
-
-
---
--- Name: keywordmapping; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE keywordmapping FROM PUBLIC;
-REVOKE ALL ON TABLE keywordmapping FROM jbovlaste;
-GRANT ALL ON TABLE keywordmapping TO jbovlaste;
-GRANT SELECT ON TABLE keywordmapping TO PUBLIC;
-
-
---
--- Name: natlangwordbestguesses; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE natlangwordbestguesses FROM PUBLIC;
-REVOKE ALL ON TABLE natlangwordbestguesses FROM jbovlaste;
-GRANT ALL ON TABLE natlangwordbestguesses TO jbovlaste;
-GRANT SELECT ON TABLE natlangwordbestguesses TO PUBLIC;
-
-
---
--- Name: natlangwordvotes; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE natlangwordvotes FROM PUBLIC;
-REVOKE ALL ON TABLE natlangwordvotes FROM jbovlaste;
-GRANT ALL ON TABLE natlangwordvotes TO jbovlaste;
-GRANT SELECT ON TABLE natlangwordvotes TO PUBLIC;
-
-
---
--- Name: pages; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE pages FROM PUBLIC;
-REVOKE ALL ON TABLE pages FROM jbovlaste;
-GRANT ALL ON TABLE pages TO jbovlaste;
-GRANT SELECT ON TABLE pages TO PUBLIC;
-
-
---
--- Name: valsibestguesses; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE valsibestguesses FROM PUBLIC;
-REVOKE ALL ON TABLE valsibestguesses FROM jbovlaste;
-GRANT ALL ON TABLE valsibestguesses TO jbovlaste;
-GRANT SELECT ON TABLE valsibestguesses TO PUBLIC;
-
-
---
--- Name: xrefs; Type: ACL; Schema: public; Owner: jbovlaste
---
-
-REVOKE ALL ON TABLE xrefs FROM PUBLIC;
-REVOKE ALL ON TABLE xrefs FROM jbovlaste;
-GRANT ALL ON TABLE xrefs TO jbovlaste;
-GRANT SELECT ON TABLE xrefs TO PUBLIC;
+ALTER TABLE ONLY valsibestdefinitions
+    ADD CONSTRAINT valsibestdefinitions_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid);
 
 
 --

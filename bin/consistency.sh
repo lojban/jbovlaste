@@ -27,9 +27,5 @@ delete from natlangwordvotes where natlangwordid in (
 select wordid from natlangwords where wordid not in (select natlangwordid from keywordmapping) and wordid != 0
 );
 
-delete from natlangwordbestguesses where natlangwordid in (
-select wordid from natlangwords where wordid not in (select natlangwordid from keywordmapping) and wordid != 0
-);
-
 delete from natlangwords where wordid not in (select natlangwordid from keywordmapping) and wordid != 0;
 EOF

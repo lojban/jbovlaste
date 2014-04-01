@@ -1,8 +1,8 @@
 BEGIN;
 
-DROP TABLE comments, definitions ,definitionvotes, etymology, example,
-keywordmapping, languages, natlangwordbestguesses ,natlangwords, pages,
-threads, users, valsi, valsibestguesses, valsitypes, natlangwordvotes, xrefs
+DROP TABLE comments, definitions, definitionvotes, etymology, example,
+keywordmapping, languages, natlangwords, pages,
+threads, users, valsi, valsitypes, natlangwordvotes, xrefs
 CASCADE;
 
 -- DROP VIEW convenientcomments, convenientdefinitions, convenientetymology,
@@ -190,36 +190,6 @@ ALTER TABLE definitions ADD CONSTRAINT definitions_valsiId
  FOREIGN KEY (valsiId) REFERENCES valsi MATCH FULL;
 ALTER TABLE definitions ADD CONSTRAINT definitions_userId
  FOREIGN KEY (userId) REFERENCES users MATCH FULL;
-
--- Our best guess as to which definition for a given lojban valsi is best
--- (within a given language).
-CREATE TABLE valsibestguesses (
-  valsiId int4 not null,    -- the valsi we're recording the best guess for
-  langId int4 not null,     -- the language of the best guess
-  definitionId int4 not null references definitions, -- the definition which is the best guess
-  PRIMARY KEY (valsiId, langId) -- Should only be one definition per-language, per-valsi
-);
-
-ALTER TABLE valsibestguesses ADD CONSTRAINT valsibestguesses_valsiId
- FOREIGN KEY (valsiId) REFERENCES valsi MATCH FULL;
-ALTER TABLE valsibestguesses ADD CONSTRAINT valsibestguesses_langId
- FOREIGN KEY (langId) REFERENCES languages MATCH FULL;
-ALTER TABLE valsibestguesses ADD CONSTRAINT valsibestguesses_defbestguessId
-  FOREIGN KEY (definitionId) REFERENCES definitions MATCH FULL;
-
--- Our best guess as to which valsi a natlang word maps to
-CREATE TABLE natlangwordbestguesses (
-  natlangwordId int4 references natlangwords,-- the natlang word we're recording a guess for
-  definitionid int4 references definitions, -- The definition this vote is for
-  place int2 not null,      -- the place corresponding to the natlang word
-			    -- place zero is a gloss word
-  PRIMARY KEY (natlangwordid) -- only one defn/place per natlangword
-);
-
-ALTER TABLE natlangwordbestguesses ADD CONSTRAINT natlangwordbestguesses_natlangwordId
- FOREIGN KEY (natlangwordId) REFERENCES natlangwords MATCH FULL;
-ALTER TABLE natlangwordbestguesses ADD CONSTRAINT natlangwordbestguesses_defbestguessId
-  FOREIGN KEY (definitionId) REFERENCES definitions MATCH FULL;
 
 -- provides the keywords for each defined place of a given definition,
 -- including the gloss word (which is place 0)

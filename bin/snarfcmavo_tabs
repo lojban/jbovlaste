@@ -101,8 +101,6 @@ while(<CMAVO>) {
 
     print "\nDefinition id $defid found for valsi id $valsiid, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
 
-    $dbh->do("DELETE FROM valsibestguesses WHERE definitionid=?", undef, $defid );
-    $dbh->do("DELETE FROM natlangwordbestguesses WHERE definitionid=?", undef, $defid );
     $dbh->do("DELETE FROM keywordmapping WHERE definitionid=?", undef, $defid );
     $dbh->do("DELETE FROM natlangwordvotes WHERE definitionid=?", undef, $defid);
     $dbh->do("DELETE FROM definitionvotes WHERE definitionid=?", undef, $defid);
@@ -118,7 +116,6 @@ while(<CMAVO>) {
 
     print "\nNatlang word id $nlwid found for word id $glossword, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
 
-    $dbh->do("DELETE FROM natlangwordbestguesses WHERE natlangwordid=?", undef, $nlwid );
     $dbh->do("DELETE FROM keywordmapping WHERE natlangwordid=?", undef, $nlwid );
     $dbh->do("DELETE FROM natlangwordvotes WHERE natlangwordid=?", undef, $nlwid);
     $dbh->do("DELETE FROM natlangwords WHERE wordid=?", undef, $nlwid); 

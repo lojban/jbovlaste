@@ -61,7 +61,6 @@ while(<CMAVO>) {
         {
             $dbh->begin_work;
             print "\nValsi id $valsiid found, deletions beginning.\nPlease ignore any errors about referential integrity.\n\n";
-	    $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?", undef, $valsiid, $lang );
             $dbh->do("DELETE FROM definitionvotes WHERE valsiid=?", undef, $valsiid);
             if( $wordid )
             {

@@ -45,9 +45,6 @@ while( my @voteInfo = $voteSearch->fetchrow_array )
 		$dbh->do("update keywordmapping set natlangwordid=?
 		where natlangwordid=?", undef, $firstid, $id );
 
-		$dbh->do("delete from natlangwordbestguesses where
-		natlangwordid=?", undef, $id );
-
 		$dbh->do("delete from natlangwordvotes where
 		natlangwordid=?", undef, $id );
 

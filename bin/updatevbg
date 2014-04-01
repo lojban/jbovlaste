@@ -35,6 +35,7 @@ if( $#ARGV != 4 )
 }
 
 use DBI;
+use File::Path qw(mkpath);
 
 my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 
@@ -42,18 +43,12 @@ my $time = time();
 
 my $userid = 1; # officialdata
 
+mkpath("$jbovlastedir/needed/valsi");
+
 #########
 #
-# Various cases:
-#
-# 1.  If one definition has a higher total vote value than any other,
-# great, that's our best guess.
-#
-# 2.  If there are no votes on any definition, this fact gets added to
+# If there are no votes on any definition, this fact gets added to
 # the VotesNeeded page.
-#
-# 3.  If there is a tie, the first one we encountered wins, because
-# that's *WAY* easier then actually handling them.
 #
 #########
 
@@ -67,17 +62,7 @@ my $userid = 1; # officialdata
 #####
 
 # Prepare searches
-my $votequery = "SELECT valsiid, langid, definitionid, sum(value)
-    FROM definitionvotes
-    WHERE valsiid=$inpvalsiid AND definitionid <> 0
-    GROUP BY valsiid, langid, definitionid
-    HAVING sum(value) >= 1.0
-    ORDER BY valsiid, langid, definitionid
-    ";
-print "vq: $votequery";
-my $voteSearch = $dbh->prepare( $votequery );
 
-#my $langSearch = $dbh->prepare("SELECT langid FROM languages WHERE langid > 0 ORDER BY langid");
 my $valsiSearch = $dbh->prepare("
     SELECT valsiid FROM valsi
     WHERE valsiid > 0
@@ -90,127 +75,33 @@ my $valsiSearch = $dbh->prepare("
 # The userid bit there is to ignore votes from noralujv, whose words
 # all suck ass.
 
-
-#######
-# Deal with those words that *HAVE* at least one definition.
-#######
-
-$voteSearch->execute();
-
-my $valsiid=0;
-my $langid=0;
-my $definitionid=0;
-my $sum=0;
-my $at_least_one=0;
-
-while( my @voteInfo = $voteSearch->fetchrow_array )
-{
-  print "seen one\n";
-    # We've seen at least one >= 1.0 vote
-    $at_least_one=1;
-
-    my @tieDefns=();
-    print( "vi: @voteInfo\n");
-    print( "$valsiid == $voteInfo[0] && $langid == $voteInfo[1]\n");
-
-    if( $valsiid == $voteInfo[0] && $langid == $voteInfo[1] )
-    {
-	print "Second vote found.\n";
-	if( $sum > $voteInfo[3] )
-	{
-	    print "Former def'n $definitionid wins; new id was $voteInfo[2].\n";
-	}
-	else
-	{
-	    print "New def'n $voteInfo[2] wins; old id was $definitionid.\n";
-	    $valsiid=$voteInfo[0];
-	    $langid=$voteInfo[1];
-	    $definitionid=$voteInfo[2];
-	    $sum=$voteInfo[3];
-	}
-    }
-    else
-    {
-	$valsiid=$voteInfo[0];
-	$langid=$voteInfo[1];
-	$definitionid=$voteInfo[2];
-	$sum=$voteInfo[3];
-    }
-
-    print "v: $valsiid, l: $langid, d: $definitionid, s: $sum\n";
-}
-
-# Last item
-
-if( $valsiid != 0 && $langid != 0 ) # etc..
-{
-  print "No other def'n found; record def'n $definitionid.\n";
-
-  $dbh->begin_work;
-
-  $dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
-    undef,
-    $valsiid, $langid );
-
-  $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
-    undef,
-    $valsiid, $langid, $definitionid );
-  $dbh->commit;
-}
-
-
-$dbh->begin_work;
-
-#print "deleting $inpvalsiid.\n";
-$dbh->do("DELETE FROM valsibestguesses WHERE valsiid=? AND langid=?",
-    undef,
-    $inpvalsiid, $inplangid );
-
-# Only record a best guess if at least one vote >= 1.0 exists.
-if( $at_least_one )
-{
-    #print "adding $valsiid.\n";
-    $dbh->do("INSERT INTO valsibestguesses (valsiid, langid, definitionid) VALUES (?, ?, ?)",
-	undef,
-	$valsiid, $langid, $definitionid );
-}
-
-$dbh->commit;
-
-####
-# exit here to skip wiki creation.
-#exit;
-
 #######
 # Loop through valsi using the given language looking for word/language
 # combos with no definitions at all.
 #######
-#$langSearch->execute( );
-#while ( my @langid = $langSearch->fetchrow_array )
-#{
 
-#print "Next step.\n";
-    my $htmlString="";
 
-    # Loop through valsi
-    $valsiSearch->execute( );
-    while ( my @valsiid = $valsiSearch->fetchrow_array )
-    {
-	#print "valsi id needs votes: $valsiid[0] in language $inplangid\n";
+my $htmlString="";
 
-	$htmlString .= "\n<li> <a href=\"../../dict/";
+# Loop through valsi
+$valsiSearch->execute( );
+while ( my @valsiid = $valsiSearch->fetchrow_array )
+{
+    #print "valsi id needs votes: $valsiid[0] in language $inplangid\n";
 
-	my $valsiWord = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsiid[0]");
+    $htmlString .= "\n<li> <a href=\"../../dict/";
 
-	$htmlString .= $valsiWord;
-	$htmlString .= "\">$valsiWord</a> </li>\n";
-    };
+    my $valsiWord = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsiid[0]");
 
-    if( $htmlString )
-    {
-	my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE langid=$inplangid");
+    $htmlString .= $valsiWord;
+    $htmlString .= "\">$valsiWord</a> </li>\n";
+};
 
-	$htmlString="<h3>Definitions Or Votes Needed</h3>
+if( $htmlString )
+{
+    my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE langid=$inplangid");
+
+    $htmlString="<h3>Definitions Or Votes Needed</h3>
 
 The words on this page either have no definitions defined for them in the language $langrealname,
 or the definitions have no votes.  Please help.\n\n".$htmlString."
@@ -219,17 +110,17 @@ Definitions And Votes Needed in $langrealname
 </%method>
 ";
 
-	my $langtag = $dbh->selectrow_array("SELECT tag FROM languages WHERE langid=$inplangid");
+    my $langtag = $dbh->selectrow_array("SELECT tag FROM languages WHERE langid=$inplangid");
 
-	open( HTMLOUT, ">$jbovlastedir/needed/valsi/$langtag.html");
+    open( HTMLOUT, ">$jbovlastedir/needed/valsi/$langtag.html");
+    binmode(HTMLOUT, ":utf8");
 
-	print HTMLOUT $htmlString;
+    print HTMLOUT $htmlString;
 
-	close( HTMLOUT );
+    close( HTMLOUT );
 
-	#print $htmlString;
-    }
-#};
+    #print $htmlString;
+}
 
 $dbh->disconnect;
 

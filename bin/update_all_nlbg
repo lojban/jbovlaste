@@ -13,8 +13,6 @@ $| = 1;
 #
 ######
 
-my ($jbovalstedir);
-
 # Five arguments; perl counts from zero.
 if( $#ARGV != 0 )
 {
@@ -26,6 +24,7 @@ if( $#ARGV != 0 )
 }
 
 use DBI;
+use File::Path qw(mkpath);
 
 my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
 
@@ -33,124 +32,14 @@ my $time = time();
 
 my $userid = 1;  # officialdata
 
+mkpath("$jbovlastedir/needed/natlang");
+
 #########
 #
-# Various cases:
-#
-# 1.  If one natlang word has a higher total vote value than any other,
-# great, that's our best guess.
-#
-# 2.  If there are no votes on any natlang word, this fact gets added to
+#  If there are no votes on any natlang word, this fact gets added to
 # the VotesNeeded page.
 #
-# 3.  If there is a tie, the first one we encountered wins, because
-# that's *WAY* easier then actually handling them.
-#
 #########
-
-####
-# First we clear all the crap out.
-####
-
-$dbh->do("DELETE FROM natlangwordbestguesses", undef );
-
-#####
-# NatLang best guesses.
-#
-# First we select all the valsivotes and pick the best one.
-#
-# Then we walk through by language and valsi and spit out all the values
-# that need a voted-upon definition.
-#####
-
-# Prepare searches
-my $bigWordSearch = $dbh->prepare("SELECT wordid FROM natlangwords order by wordid");
-
-my $voteSearch = $dbh->prepare("SELECT definitionid, place, natlangwordid, sum(value)
-    FROM natlangwordvotes
-    WHERE natlangwordid=? AND definitionid <> 0
-    GROUP BY natlangwordid, definitionid, place
-    HAVING sum(value) >= 1.0
-    ORDER BY natlangwordid, definitionid, place
-    ");
-
-#######
-# Deal with those words that *HAVE* at least one natlangwordid
-# correspondance..
-#######
-
-
-my $definitionid=0;
-my $place=0;
-my $natlangwordid=0;
-my $sum=0;
-
-$bigWordSearch->execute( );
-while ( my @inpwordid = $bigWordSearch->fetchrow_array )
-{
-	$voteSearch->execute( $inpwordid[0] );
-	while( my @voteInfo = $voteSearch->fetchrow_array )
-	{
-		my @tieDefns=();
-print( "vi: @voteInfo\n");
-
-		if( $natlangwordid == $voteInfo[2] )
-		{
-			print "Second vote found for nlw $natlangwordid.\n";
-			if( $sum > $voteInfo[3] )
-			{
-				print "Former $definitionid/$place wins; new defn/place $voteInfo[0]/$voteInfo[1].\n";
-			}
-			else
-			{
-				print "New defn/place $voteInfo[0]/$voteInfo[1] wins; old one was $definitionid/$place.\n";
-				$definitionid=$voteInfo[0];
-				$place=$voteInfo[1];
-				$natlangwordid=$voteInfo[2];
-				$sum=$voteInfo[3];
-			}
-		}
-		else
-		{
-			if( $definitionid != 0 && $natlangwordid != 0 )
-			{
-				print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
-
-				$dbh->begin_work;
-
-				$dbh->do("INSERT INTO natlangwordbestguesses (natlangwordid, place, definitionid) VALUES (?, ?, ?)",
-						undef,
-						$natlangwordid, $place, $definitionid );
-				$dbh->commit;
-			}
-
-			$definitionid=$voteInfo[0];
-			$place=$voteInfo[1];
-			$natlangwordid=$voteInfo[2];
-			$sum=$voteInfo[3];
-		}
-
-#print "d: $definitionid, p: $place, nl: $natlangwordid, s: $sum\n";
-	}
-}
-
-#
-# For the very last definition.
-#
-print "No other defn/place found; recording $definitionid/$place for $natlangwordid.\n";
-
-$dbh->begin_work;
-
-$dbh->do("INSERT INTO natlangwordbestguesses (natlangwordid, place, definitionid) VALUES (?, ?, ?)",
-    undef,
-    $natlangwordid, $place, $definitionid );
-
-$dbh->commit;
-
-# exit for mass runnings.
-# exit;
-
-print "Done writing natlangwordbestguesses.\n";
 
 # banana is not a word that needs a definition in Klingon or Latin.
 #
@@ -242,6 +131,7 @@ Definitions And Votes Needed in $langrealname
 #	$dbh->commit;
 
 	open( HTMLOUT, ">$jbovlastedir/needed/natlang/$langtag.html");
+	binmode(HTMLOUT, ":utf8");
 
 	print HTMLOUT $htmlString;
 
@@ -261,6 +151,7 @@ List Of NatLang Word Definitions Or Votes Needed Files
 };
 
 open( HTMLOUT, ">$jbovlastedir/needed/natlang.html");
+binmode(HTMLOUT, ":utf8");
 
 print HTMLOUT $indexString;
 
