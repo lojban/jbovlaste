@@ -209,7 +209,7 @@ sub init {
 
     # ----- suck in the database/strategy names from the server
 
-    my $cachefile = "/srv/jbovlaste/lookup/dict.cache.pl";
+    my $cachefile = "/srv/jbovlaste/current/lookup/dict.cache.pl";
     my @results = stat($cachefile);
     if(-T _ && -r _ && ($results[9]+3600)>time())
     {
