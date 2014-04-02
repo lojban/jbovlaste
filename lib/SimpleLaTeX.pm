@@ -86,7 +86,7 @@ sub interpret {
 	$dir =~ s!/tmp!/tmp!;
 	$tmpout =~ s/.*<BODY[^>]*>//s;
 	$tmpout =~ s/<BR[^>]*><HR[^>]*>.*//s;
-	$tmpout =~ s/SRC="/SRC="http:\/\/jbovlaste.lojban.org$dir\//gs;
+	$tmpout =~ s/SRC="/SRC="$dir\//gs;
 
 	$InputText=$tmpout;
     }

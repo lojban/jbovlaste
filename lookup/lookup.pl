@@ -66,10 +66,7 @@ $ENV{'PATH'} = "/usr/bin:/bin";
 my $Debug        = 0;
 
 my $Pgm          = "lookup.pl";
-#my $hostUrl      = "http://www.dict.org";
-my $hostUrl      = "http://jbovlaste.lojban.org";
-my $cgiPath      = "$hostUrl/";
-my $ReturnUrl    = "$cgiPath/$Pgm";
+my $ReturnUrl    = "/$Pgm";
 my $bin          = "/srv/jbovlaste/lookup";
 
 #my $CRInfo   = "$ReturnUrl?Form=$Pgm".
@@ -83,7 +80,7 @@ my $SInfo	= "http://www.lojban.org/whats_new.html";
 my $Dict    = "/usr/bin/dict -h dict.lojban.org";
 #my $DictAlt = "/usr/local/bin/dict -h dega.cs.unc.edu";
 my $Counter = "/usr/local/etc/Counter/data/$Pgm.dat";
-my $Count   = "$cgiPath/Count.cgi";
+my $Count   = "/Count.cgi";
 #my $Background = "/gifs/grayback.jpg";
 my $Background = "";
 my $Heading1= "The Logical Language Group: Online Dictionary Query";
@@ -666,7 +663,7 @@ sub SendEnding {
 	Questions or comments about this site?
 	Contact $WebMaster
         <br />
-        Submit corrections or error reports via <a href="http://jbovlaste.lojban.org/">jbovlaste</a>.
+        Submit corrections or error reports via <a href="/">jbovlaste</a>.
     </font>
 </center>
 </body>

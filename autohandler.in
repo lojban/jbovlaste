@@ -31,7 +31,7 @@ what happened leading up to this. Just in case.
  <head>
  <STYLE type="text/css">
   <!--
-    BODY { /*background-image:url(<% $base_url %>/images/gaufarvica.jpg);*/
+    BODY { /*background-image:url(/images/gaufarvica.jpg);*/
            background-attachment:fixed;
            background-repeat:no-repeat;
            background-position:bottom right; }
@@ -81,10 +81,10 @@ what happened leading up to this. Just in case.
       &nbsp;
     </td>
     <td valign="top">
-     <a href="<% $base_url %>/recent.html">recent changes</a>
+     <a href="/recent.html">recent changes</a>
     </td>
     <td align="right" valign="top">
-     <a href="<% $base_url %>/">jbovlaste main</a>
+     <a href="/">jbovlaste main</a>
     </td>
    </tr>
    <tr>
@@ -103,10 +103,10 @@ what happened leading up to this. Just in case.
     <td align="right" valign="bottom">
      <font size="-1">
 % if(!defined($session{'username'})) {
-      care to <a href="<% $base_url %>/login.html">log in</a>?
+      care to <a href="/login.html">log in</a>?
 % } else {
       you're logged in as <% $session{'username'} %>.<br />
-      <a href="<% $base_url %>/logout.html">click here to logout</a>.
+      <a href="/logout.html">click here to logout</a>.
 % }
      </font>
     </td>
@@ -125,46 +125,32 @@ what happened leading up to this. Just in case.
 </%once>
 
 <%init>
-    # The stuff below (about base_url) has been copied copied to
-    # bits/menuhandler, and should be kept in synch with it.
-    my $base_url=$r->hostname()."/".$r->unparsed_uri();
-    $base_url =~ s{//+}{/}g;
-    $base_url =~ s{\?.*}{}g;
-    $base_url = "http://".$base_url;
-
-    my $path=($m->fetch_next)->path;
-
-    $path =~ s/dhandler/\.\*/;
-
-    $base_url =~ s/$path//;
-    $base_url =~ s{/*$}{};
-
  my $menu =
-  [ [ "Home", "$base_url/" ],
-    [ "Get A Printable Dictionary", "$base_url/export/latex.html" ],
-    [ "Search Best Words", "http://jbovlaste.lojban.org/lookup" ],
-    [ "Recent Changes", "$base_url/recent.html" ],
-    [ "How You Can Help", "$base_url/help/howtohelp.html" ],
-    [ "valsi - All", "$base_url/dict/listing.html" ],
-    [ "valsi - Preferred Only", "$base_url/dict/listing.html?bg=1" ],
-    [ "natlang - All", "$base_url/natlang/listing.html" ],
-    [ "natlang - Preferred Only", "$base_url/natlang/listing.html?bg=1" ],
-    [ "Languages", "$base_url/languages.html" ],
-    [ "XML Export", "$base_url/export/xml.html" ],
-    [ "user Listing", "$base_url/personal/listing.html" ],
+  [ [ "Home", "/" ],
+    [ "Get A Printable Dictionary", "/export/latex.html" ],
+    [ "Search Best Words", "/lookup" ],
+    [ "Recent Changes", "/recent.html" ],
+    [ "How You Can Help", "/help/howtohelp.html" ],
+    [ "valsi - All", "/dict/listing.html" ],
+    [ "valsi - Preferred Only", "/dict/listing.html?bg=1" ],
+    [ "natlang - All", "/natlang/listing.html" ],
+    [ "natlang - Preferred Only", "/natlang/listing.html?bg=1" ],
+    [ "Languages", "/languages.html" ],
+    [ "XML Export", "/export/xml.html" ],
+    [ "user Listing", "/personal/listing.html" ],
     [ "Report Bugs", "https://github.com/lojban/jbovlaste/issues" ],
-    [ "Utilities", "$base_url/util/index.html" ],
-    [ "Status", "$base_url/status.html" ],
-    [ "Help", "$base_url/help/index.html" ],
+    [ "Utilities", "/util/index.html" ],
+    [ "Status", "/status.html" ],
+    [ "Help", "/help/index.html" ],
     ];
 
     if(!defined($session{'username'})) {
-	push @{ $menu }, [ "Create Account", "$base_url/newaccount.html" ];
+	push @{ $menu }, [ "Create Account", "/newaccount.html" ];
     } else {
-	push @{ $menu }, [ "Change Password", "$base_url/changepass.html" ];
+	push @{ $menu }, [ "Change Password", "/changepass.html" ];
     }
 
-    push @{ $menu }, [ "Admin Request", "$base_url/moderation.html" ];
+    push @{ $menu }, [ "Admin Request", "/moderation.html" ];
 
     if( $m->fetch_next->attr_if_exists('menu') )
     {

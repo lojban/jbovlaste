@@ -1,11 +1,4 @@
 <%perl>
-    my $base_url=$r->uri;
-    my $path=($m->fetch_next)->path;
-
-    $path =~ s/dhandler.*//;
-
-    $base_url =~ s=$path.*==;
-
  our($dbh,%session);
  my @langcountdata =
   $dbh->selectall_arrayref("SELECT count(*) FROM languages");
@@ -14,11 +7,11 @@
 <table border="1" width="100%">
  <tr><td>
   Currently, jbovlaste will accept data for <% $langcount %>
-  <a href="<% $base_url %>/languages.html">languages</a>.<br />
+  <a href="/languages.html">languages</a>.<br />
 % if(defined($session{'username'})) {
   You are logged in as: <% $session{'username'} %>
 % } else {
-  You are not <a href="<% $base_url %>/login.html">logged in</a>.
+  You are not <a href="/login.html">logged in</a>.
 % }
  </td></tr>
 </table>
