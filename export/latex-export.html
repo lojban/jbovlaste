@@ -209,6 +209,7 @@ $natLangToLojban. q(
     # allow $ _ {} ^ (used in tex definitions)
     sub escapetex {
       my $term = shift;
+      my $lang = shift;
       $term =~ s/\\/\\textbackslash{}/g;
       $term =~ s/\~/\\textasciitilde{}/g;
       if ($lang eq 'art-guaspi') {
