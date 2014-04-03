@@ -211,6 +211,9 @@ $natLangToLojban. q(
       my $term = shift;
       $term =~ s/\\/\\textbackslash{}/g;
       $term =~ s/\~/\\textasciitilde{}/g;
+      if ($lang eq 'art-guaspi') {
+        $term =~ s/\^/\\textasciicircum{}/g;
+      }
       $term =~ s{/}{\\slash{}}g;
       $term =~ s/([#%&])/\\$1/g;
       return $term;
