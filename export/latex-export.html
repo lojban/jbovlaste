@@ -8,8 +8,6 @@
 
     my $langrealname = $dbh->selectrow_array("SELECT realname FROM
 	languages WHERE tag=?", undef, $lang);
-    my $englishname = $dbh->selectrow_array("SELECT englishname FROM
-	languages WHERE tag=?", undef, $lang);
     my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
 	tag=?", undef, $lang);
 #    my $words = $dbh->selectall_arrayref("SELECT word, meaning, wordId FROM natlangwords WHERE langId=$langid ORDER BY word");
@@ -157,7 +155,7 @@
 
 \setlength{\parindent}{1 em}
 
-\title{). $langrealname . q( To lojban and lojban To ). $langrealname .q( Dictionary}
+\title{). escapeall($langrealname) . q( To lojban and lojban To ). escapeall($langrealname) .q( Dictionary}
 \author{Lojbanic Community}
 \date{\today}
 
@@ -165,10 +163,10 @@
 
 \maketitle
 
-\chapter{lojban to ). $langrealname .q(}).
+\chapter{lojban to ). escapeall($langrealname) .q(}).
 $lojbanToNatLang. q(
 
-\chapter{). $langrealname .q( to lojban}).
+\chapter{). escapeall($langrealname) .q( to lojban}).
 $natLangToLojban. q(
 
 \end{document}
