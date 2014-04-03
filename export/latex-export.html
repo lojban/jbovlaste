@@ -13,34 +13,6 @@
     my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
 	tag=?", undef, $lang);
 #    my $words = $dbh->selectall_arrayref("SELECT word, meaning, wordId FROM natlangwords WHERE langId=$langid ORDER BY word");
-#    my @words = map
-#    {
-#	my $inword=$_->[2];
-#	my $defwords=$dbh->selectall_arrayref("SELECT valsi.word,
-#	    pk.place FROM valsi,
-#	    placekeywordmapping pk, natlangdefs nld WHERE
-#	    pk.wordId=$inword AND
-#	    pk.definitionID = nld.definitionID AND
-#	    nld.valsiId=valsi.valsiId
-#	    ");
-#	my @defwords=map
-#	{
-#	    "\\item $_->[0] place $_->[1]\n"
-#	} @{ $defwords };
-#
-#	"\n\\item [" . $_->[0] . "] " .
-#	( $_->[1] ? "in the sense of " . $_->[1] : " in the default sense") .
-#	"\n" .
-#	( @defwords ?
-#	    "\\begin{itemize}\n" .
-#	    join("", @defwords) .
-#	    "\n\\end{itemize}"
-#
-#	    : ""
-#	)
-#    } @{ $words };
-#
-#    my $joinedwords=join("",@words);
 
     my $shortfilename=$filename;
     $shortfilename =~ s{/tmp/jbovlaste_export}{/jbovlaste_export};
@@ -50,7 +22,6 @@
 	valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
 	AND v.valsiid=vbg.valsiid
 	ORDER BY v.word", "word" );
-    #print Dumper( $valsibestguesses );
 
     my $lojbanToNatLang;
     my @lojbanToNatLangEntries;
@@ -77,20 +48,18 @@
         # Alert about non-standard entries
         if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
-        $entry .= massage(${$convenientDefinition}{'word'} ) ."}";
+        $entry .= escapeall(${$convenientDefinition}{'word'} ) ."}";
 
 	# \markboth is for the top-of-page markings.
 	$entry .= "\\markboth{".
-	    massage(${$convenientDefinition}{'word'} ) .
+	    escapeall(${$convenientDefinition}{'word'} ) .
 	    "}{" .
-	    massage(${$convenientDefinition}{'word'} ) .
+	    escapeall(${$convenientDefinition}{'word'} ) .
 	    "}";
 
 	# Clear out silly rafsi spaces
-	my $rafsi = massage( ${$convenientDefinition}{'rafsi'} );
-	$rafsi =~ s/\s+$//;
-	$rafsi =~ s/^\s+//;
-	$rafsi =~ s/\s+/ / ;
+	my $rafsi = escapeall( ${$convenientDefinition}{'rafsi'} );
+        $rafsi = compact($rafsi);
 
 	if( $rafsi )
 	{
@@ -99,53 +68,40 @@
 	if( ${$convenientDefinition}{'selmaho'} )
 	{
 	    $entry .= "\\enspace {\\sffamily\\bfseries[".
-		massage(${$convenientDefinition}{'selmaho'})
+		escapeall(${$convenientDefinition}{'selmaho'})
 		."]} "
 	}
-	$entry .= " " . massage("${$convenientDefinition}{'definition'}");
+	$entry .= " " . escapetex("${$convenientDefinition}{'definition'}");
 	if( ${$convenientDefinition}{'notes'} )
 	{
 	    $entry .= " (".
-		massage(${$convenientDefinition}{'notes'})
+		escapeall(${$convenientDefinition}{'notes'})
 		.")";
 	}
-
-# This doesn't work because etymologies are in their own table.
-# Moreover, a definition can have more than one etymology.
-#	if( ${$convenientDefinition}{'etymology'} )
-#	{
-#	    $entry .= " {\\small ".
-#		massage(${$convenientDefinition}{'etymology'})
-#		."}";
-#	}
-
-            $entry = &inserthyphenations($entry);
 
 	push @lojbanToNatLangEntries, $entry;
     }
 
     foreach my $valsirow ( values %{$valsibestguesses} )
     {
-	#print Dumper( $valsirow );
 	my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
 	    nlw.meaning, nlwbg.* from
 	    natlangwordbestguesses nlwbg, natlangwords nlw WHERE
 	    definitionid=${$valsirow}{'definitionid'}
 	    AND nlwbg.natlangwordid = nlw.wordid
 	    ORDER BY nlw.word", "word" );
-	#print Dumper( $nlwbg );
 	foreach my $nlwbgrow (values %{$nlwbg} )
 	{
-	    my $entry .= "\n\n{\\sffamily\\bfseries ". massage(${$nlwbgrow}{'word'}) ."} ";
+	    my $entry .= "\n\n{\\sffamily\\bfseries ". escapeall(${$nlwbgrow}{'word'}) ."} ";
 
 	    # \markboth is for the top-of-page markings.
-	    $entry .= "\\markboth{". massage(${$nlwbgrow}{'word'}) 
-		."}{". massage(${$nlwbgrow}{'word'}) ."}";
+	    $entry .= "\\markboth{". escapeall(${$nlwbgrow}{'word'}) 
+		."}{". escapeall(${$nlwbgrow}{'word'}) ."}";
 
 	    if( ${$nlwbgrow}{'meaning'} )
 	    {
 		$entry .= "\\textit{(".
-		    massage(${$nlwbgrow}{'meaning'})
+		    escapeall(${$nlwbgrow}{'meaning'})
 		    .")} ";
 	    }
 
@@ -153,45 +109,20 @@
 	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
 	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
 		
-	    #my $defvalsitype = $dbh->selectrow_array("SELECT descriptor
-	    #FROM valsi v, definitions d, valsitypes vt
-	    #WHERE v.valsiid = d.valsiid
-	    #AND d.definitionid = ${$nlwbgrow}{'definitionid'}
-	    #AND v.typeid=vt.typeid");
 
-	    $entry .= " " . massage($defvalsi);
+	    $entry .= " " . escapeall($defvalsi);
 
-	    #if( $defvalsitype eq "gismu" )
-	    #{
-		if( ${$nlwbgrow}{'place'} > 0 )
-		{
-		#    $entry .= ", gloss word";
-		#} else {
-		    $entry .= ", place ${$nlwbgrow}{'place'}";
-		}
-	    #}
-
-            $entry = &inserthyphenations($entry);
+            if( ${$nlwbgrow}{'place'} > 0 )
+            {
+                $entry .= ", place ${$nlwbgrow}{'place'}";
+            }
 
 	    push @natLangToLojbanEntries, $entry;
-	    #print Dumper( $nlwbgrow );
 	}
     }
 
-   sub dictcollate {
-     my $to_be_ignored = $unofficialwarning;
-     my $temp_a = $a;
-     my $temp_b = $b;
-     $temp_a =~ s/\Q$to_be_ignored\E//;
-     $temp_b =~ s/\Q$to_be_ignored\E//;
-     lc($temp_a) cmp lc($temp_b);
-   }
-
     $lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
     $natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
-
-    #print Dumper($lojbanToNatLang);
-    #print Dumper($natLangToLojban);
 
     print TMP q(
 %!TEX encoding = UTF-8 Unicode
@@ -203,22 +134,7 @@
 \usepackage{fancyhdr} % important, lets us actually pull this stuff off.
 \pagestyle{fancy}     % turns on the magic provided by fancyhdr
 
-% This currently fails with a stack overflow.  This is *probably* a
-% problem interacting with other packages, but maybe not; it would
-% need testing.  It might be that wrapping all of the bits in each
-% language with \textrussian or \textenglish or whatever so that
-% polyglossia doesn't have to guess would solve the problem, and in
-% any case that's the right thing to do with polyglossia anyway, but
-% it's a lot of work.  See
-% http://www.math.washington.edu/tex-archive/macros/xetex/latex/polyglossia/polyglossia.pdf
-% for some details.
-%
-% \usepackage{polyglossia}
-
-% \setdefaultlanguage{). lc($englishname) . q(}
-
 % Packages from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
-%\usepackage[utf8]{inputenc} % not needed by XeTex
 \usepackage{xunicode} % for XeTeX!
 \usepackage{fontspec} % for XeTeX!
 \usepackage{xltxtra} % for XeTeX!
@@ -226,20 +142,12 @@
 \usepackage{fontspec}
 
 % Font definitions mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
-\defaultfontfeatures{Scale=MatchLowercase}% to adjust all used fonts to the same x−height
-\setromanfont[Mapping=tex−text]{Linux Libertine O}
-\setsansfont[Mapping=tex−text]{Linux Biolinum O}
-%\setmonofont[Mapping=tex−text]{Liberation Mono}
-%\setmonofont[Mapping=tex−text, Scale=0.9]{Courier New}
+\defaultfontfeatures{Scale=MatchLowercase}% to adjust all used fonts to the same x-height
+\setromanfont[Mapping=tex-text]{Linux Libertine O}
+\setsansfont[Mapping=tex-text]{Linux Biolinum O}
 
-%% Formatting, mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf , not working
-%\setlength{\marginparwidth}{0cm}
-%\setlength{\oddsidemargin}{0cm}
-%\setlength{\evensidemargin}{0cm}
-%\setlength{\textwidth}{15cm}
-%\setlength{\textheight}{24cm}
-%%\setlength{\topmargin}{−1cm}
-%\setlength{\parindent}{0pt}
+\usepackage{xeCJK}
+\setCJKmainfont[Mapping=tex-text]{Code2000}
 
 \fancyhead{}          % empty out the header
 \fancyfoot{}          % empty out the footer
@@ -279,24 +187,43 @@ $natLangToLojban. q(
     my $pdffilename=$shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
 
-    sub inserthyphenations{
-    # Suggest LaTeX linebreak points after slashes.
-        my ($line) = @_;
-        while( s#(^\{[^{}]\}.*)/#/\\linebreak[0]#g ) {};
-        return $line;
+    sub dictcollate {
+      my $to_be_ignored = $unofficialwarning;
+      my $temp_a = $a;
+      my $temp_b = $b;
+      $temp_a =~ s/\Q$to_be_ignored\E//;
+      $temp_b =~ s/\Q$to_be_ignored\E//;
+      lc($temp_a) cmp lc($temp_b);
     }
 
-    sub massage
-    {
-	my $input=shift(@_);
-        # Protect special characters
-	$input =~ s/([&%#\\])/\\$1/g;
+    sub escapeall {
+      my $term = shift;
+      $term =~ s/\\/\\textbackslash{}/g;
+      $term =~ s/(?<!\\textbackslash)([{])/\\$1/g;
+      $term =~ s/(?<!\\textbackslash{)([}])/\\$1/g;
+      $term =~ s/\~/\\textasciitilde{}/g;
+      $term =~ s/\^/\\textasciicircum{}/g;
+      $term =~ s{/}{\\slash{}}g;
+      $term =~ s/([#%&$_])/\\$1/g;
+      return $term;
+    }
 
-        # Allow breaking at /
-        # FIXME: There's probably a better way to do this (breaking
-        # at slash)
-	$input =~ s{/}{/\\-}g;
-	return $input;
+    # allow $ _ {} ^ (used in tex definitions)
+    sub escapetex {
+      my $term = shift;
+      $term =~ s/\\/\\textbackslash{}/g;
+      $term =~ s/\~/\\textasciitilde{}/g;
+      $term =~ s{/}{\\slash{}}g;
+      $term =~ s/([#%&])/\\$1/g;
+      return $term;
+    }
+
+    sub compact {
+      my $text = shift;
+      $text =~ s/\s+$//;
+      $text =~ s/^\s+//;
+      $text =~ s/\s+/ / ;
+      return $text;
     }
 
 </%perl>
@@ -317,7 +244,6 @@ $natLangToLojban. q(
     our($dbh);
     use File::Temp qw{ tempfile tempdir };
     use POSIX;
-    use Data::Dumper;
 </%init>
 
 <%args>
