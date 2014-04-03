@@ -69,7 +69,7 @@
 		escapeall(${$convenientDefinition}{'selmaho'})
 		."]} "
 	}
-	$entry .= " " . escapetex("${$convenientDefinition}{'definition'}");
+	$entry .= " " . escapetex("${$convenientDefinition}{'definition'}", $lang);
 	if( ${$convenientDefinition}{'notes'} )
 	{
 	    $entry .= " (".
