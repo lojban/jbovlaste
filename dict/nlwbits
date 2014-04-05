@@ -15,10 +15,10 @@ use utils;
 my @glosskeywords;
 for(my $i=1; $i<=$glossmax; $i++) #>
 {
-    if( $ARGS{"glossw".$i} )
+    if( my $glossword = $ARGS{"glossw".$i} )
     {
-	push @glosskeywords, [ $ARGS{"glossw".$i},
-	     $ARGS{"glossm".$i}, $ARGS{"glossn".$i} ];
+	$glosskeywords[$i-1] =
+          [ $glossword, $ARGS{"glossm".$i}, $ARGS{"glossn".$i} ];
     }
 }
 #print "<pre>".Dumper(\@glosskeywords)."\n</pre>";
@@ -26,10 +26,10 @@ for(my $i=1; $i<=$glossmax; $i++) #>
 my @placekeywords;
 for(my $i=1; $i<=$placemax; $i++) #>
 {
-    if( $ARGS{"placew".$i} )
+    if( my $placeword = $ARGS{"placew".$i} )
     {
-	push @placekeywords, [ $ARGS{"placew".$i},
-	$ARGS{"placem".$i}, $ARGS{"placen".$i} ];
+	$placekeywords[$i-1] =
+          [ $placeword, $ARGS{"placem".$i}, $ARGS{"placen".$i} ];
     }
 }
 #print "<pre>".Dumper(\@placekeywords)."\n</pre>";
