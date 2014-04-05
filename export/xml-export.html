@@ -86,9 +86,16 @@ if( ! defined($session{'userid'}) ) {
       
       
       # Get the valsi best guesses list.
-      my $valsiquery = $dbh->prepare("SELECT v.word, vbg.* from
-          valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
-          AND v.valsiid=vbg.valsiid
+      my $valsiquery = $dbh->prepare("
+          SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor
+          FROM valsibestguesses vbg
+          JOIN valsi v
+            ON v.valsiid = vbg.valsiid
+          JOIN convenientdefinitions c
+            ON c.definitionid = vbg.definitionid
+          JOIN valsitypes t
+            ON t.typeid = v.typeid
+          WHERE vbg.langid=$langid
           ORDER BY v.word");
       
       $valsiquery->execute;
@@ -96,32 +103,23 @@ if( ! defined($session{'userid'}) ) {
       # Print the lojban -> foo section
       while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
       {
-          my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
-      	FROM convenientdefinitions
-      	WHERE definitionid=${$valsirow}{'definitionid'}" );
-      
-          my $valsitype = $dbh->selectrow_array("SELECT descriptor
-      	FROM valsi v, definitions d, valsitypes vt
-      	WHERE v.valsiid = d.valsiid
-      	AND d.definitionid = ${$valsirow}{'definitionid'}
-      	AND v.typeid=vt.typeid");
-      
           my $entry .= "\n\n<valsi ";
       
           # Alert about non-standard entries
+          my $valsitype = $valsirow->{'descriptor'};
           if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo")
           {
       	$entry .= $unofficialwarning;
           };
       
           # Basic bits
-          $entry .= qq{word="}.${$convenientDefinition}{'word'}.qq{" type="$valsitype"};
+          $entry .= qq{word="}.${$valsirow}{'word'}.qq{" type="$valsitype"};
       
           # Close the basic bits
           $entry .= ">";
       
           # Clear out silly rafsi spaces
-          my $rafsis = massage( ${$convenientDefinition}{'rafsi'} );
+          my $rafsis = massage( ${$valsirow}{'rafsi'} );
           $rafsis =~ s/\s+$//;
           $rafsis =~ s/^\s+//;
           $rafsis =~ s/\s+/ / ;
@@ -133,22 +131,22 @@ if( ! defined($session{'userid'}) ) {
       	    $entry .= "<rafsi>$rafsi</rafsi>";
       	}
           }
-          if( ${$convenientDefinition}{'selmaho'} )
+          if( ${$valsirow}{'selmaho'} )
           {
       	$entry .= "<selmaho>" .
-      	massage(${$convenientDefinition}{'selmaho'})
+      	massage(${$valsirow}{'selmaho'})
       	. "</selmaho>";
           }
       
           $entry .= "<definition>" .
-          massage("${$convenientDefinition}{'definition'}") .
+          massage("${$valsirow}{'definition'}") .
           "</definition>\n".
           "<definitionid>${$valsirow}{'definitionid'}</definitionid>";
       
-          if( ${$convenientDefinition}{'notes'} )
+          if( ${$valsirow}{'notes'} )
           {
       	$entry .= "<notes>".
-      	massage(${$convenientDefinition}{'notes'})
+      	massage(${$valsirow}{'notes'})
       	."</notes>";
           }
       
@@ -164,50 +162,48 @@ if( ! defined($session{'userid'}) ) {
       print qq{</direction>};
       print qq{<direction from="$langrealname" to="lojban">};
       
-      $valsiquery->execute;
-      
+      my $nlquery = $dbh->prepare("
+        SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
+        FROM valsibestguesses vbg
+        JOIN valsi v
+          ON v.valsiid = vbg.valsiid
+        JOIN natlangwordbestguesses nlwbg
+          ON nlwbg.definitionid = vbg.definitionid
+        JOIN natlangwords nlw
+          ON nlw.wordid = nlwbg.natlangwordid
+        WHERE vbg.langid=$langid
+        ORDER BY valsi, nlw.word
+        ");
+      $nlquery->execute;
+
       # Print the foo -> lojban section
-      while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
+      while(defined(my $nlwbgrow=$nlquery->fetchrow_hashref))
       {
           #print Dumper( $valsirow );
-          my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
-      	nlw.meaning, nlwbg.* from
-      	natlangwordbestguesses nlwbg, natlangwords nlw WHERE
-      	definitionid=${$valsirow}{'definitionid'}
-      	AND nlwbg.natlangwordid = nlw.wordid
-      	ORDER BY nlw.word", "word" );
-          #print Dumper( $nlwbg );
-          foreach my $nlwbgrow (values %{$nlwbg} )
+          my $entry .= "\n\n<nlword word=\"".
+          massage(${$nlwbgrow}{'word'}) ."\"";
+        
+          if( ${$nlwbgrow}{'meaning'} )
           {
-      	my $entry .= "\n\n<nlword word=\"".
-      	massage(${$nlwbgrow}{'word'}) ."\"";
-      
-      	if( ${$nlwbgrow}{'meaning'} )
-      	{
-      	    $entry .= " sense=\"".
-      	    massage(${$nlwbgrow}{'meaning'})
-      	    ."\"";
-      	}
-      
-      	my $defvalsi = $dbh->selectrow_array("SELECT word
-      	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
-      	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
-      
-      	$entry .= " valsi=\"" . massage($defvalsi) . "\"";
-      
-      	if( ${$nlwbgrow}{'place'} > 0 )
-      	{
-      	    $entry .= " place=\"${$nlwbgrow}{'place'}\"";
-      	}
-      
-      	# Close the entry
-      	$entry .= " />";
-      
-      	#push @natLangToLojbanEntries, $entry;
-      	#print Dumper( $nlwbgrow );
-      
-      	print $entry;
+              $entry .= " sense=\"".
+              massage(${$nlwbgrow}{'meaning'})
+              ."\"";
           }
+        
+          $entry .= " valsi=\"" . massage($nlwbgrow->{'valsi'}) . "\"";
+        
+          if( ${$nlwbgrow}{'place'} > 0 )
+          {
+              $entry .= " place=\"${$nlwbgrow}{'place'}\"";
+          }
+        
+          # Close the entry
+          $entry .= " />";
+        
+          #push @natLangToLojbanEntries, $entry;
+          #print Dumper( $nlwbgrow );
+        
+          print $entry;
       }
       
       sub dictcollate {
