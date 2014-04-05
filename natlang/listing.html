@@ -21,7 +21,9 @@
  $titlestr = $mapping{$lang};
 </%perl>
 
-<font size="+3">Word listings for "<% $mapping{$lang} %>"</font>
+% if( $titlestr ) {
+<font size="+3">Word listings for "<% $titlestr %>"</font>
+% }
 % # If using bestguesses
 % if( $bg )
 % {
