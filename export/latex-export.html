@@ -1,4 +1,7 @@
 <%perl>
+
+    our $unofficialwarning = '$\\triangle$ ';
+
     # Make a temp directory and file.
     mkdir "/tmp/jbovlaste_export/";
     my $dir = tempdir( DIR => "/tmp/jbovlaste_export/" );
@@ -6,117 +9,116 @@
 
     open(TMP, ">$filename") or die "Couldn't open a temporary file.\n";
 
-    my $langrealname = $dbh->selectrow_array("SELECT realname FROM
-	languages WHERE tag=?", undef, $lang);
-    my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE
-	tag=?", undef, $lang);
-#    my $words = $dbh->selectall_arrayref("SELECT word, meaning, wordId FROM natlangwords WHERE langId=$langid ORDER BY word");
+    my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang);
+    my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE tag=?", undef, $lang);
 
     my $shortfilename=$filename;
     $shortfilename =~ s{/tmp/jbovlaste_export}{/jbovlaste_export};
 
-    # Get the valsi best guesses list.
-    my $valsibestguesses = $dbh->selectall_hashref("SELECT v.word, vbg.* from
-	valsibestguesses vbg, valsi v WHERE vbg.langid=$langid
-	AND v.valsiid=vbg.valsiid
-	ORDER BY v.word", "word" );
+    ####
 
     my $lojbanToNatLang;
     my @lojbanToNatLangEntries;
-    my $natLangToLojban;
-    my @natLangToLojbanEntries;
 
-# Print the lojban -> foo section
-    our $unofficialwarning = '$\\triangle$ ';
-    foreach my $valsirow ( values %{$valsibestguesses} )
+    # Get the valsi best guesses list.
+    my $valsiquery = $dbh->prepare("
+        SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor
+        FROM valsibestguesses vbg
+        JOIN valsi v
+          ON v.valsiid = vbg.valsiid
+        JOIN convenientdefinitions c
+          ON c.definitionid = vbg.definitionid
+        JOIN valsitypes t
+          ON t.typeid = v.typeid
+        WHERE vbg.langid=$langid
+        ORDER BY v.word");
+    $valsiquery->execute;
+
+    # my $valsibestguesses 
+    # v.word, vbg.* hashed by word
+
+    # Print the lojban -> foo section
+    while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
     {
-	my $convenientDefinition = $dbh->selectrow_hashref("SELECT *
-	    FROM convenientdefinitions
-	    WHERE definitionid=${$valsirow}{'definitionid'}" );
-
-	my $valsitype = $dbh->selectrow_array("SELECT descriptor
-	    FROM valsi v, definitions d, valsitypes vt
-	    WHERE v.valsiid = d.valsiid
-	    AND d.definitionid = ${$valsirow}{'definitionid'}
-	    AND v.typeid=vt.typeid");
-#        my $valsitype = "gismu"; # Debug.
-	
 	my $entry .= "\n\n{\\sffamily\\bfseries ";
 
         # Alert about non-standard entries
+        my $valsitype = $valsirow->{'descriptor'};
         if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
 	
-        $entry .= escapeall(${$convenientDefinition}{'word'} ) ."}";
+        my $escapedword = escapeall($valsirow->{'word'});
+        $entry .= $escapedword ."}";
 
 	# \markboth is for the top-of-page markings.
-	$entry .= "\\markboth{".
-	    escapeall(${$convenientDefinition}{'word'} ) .
-	    "}{" .
-	    escapeall(${$convenientDefinition}{'word'} ) .
-	    "}";
+	$entry .= "\\markboth{". $escapedword . "}{" . $escapedword . "}";
 
 	# Clear out silly rafsi spaces
-	my $rafsi = escapeall( ${$convenientDefinition}{'rafsi'} );
+	my $rafsi = escapeall( ${$valsirow}{'rafsi'} );
         $rafsi = compact($rafsi);
 
 	if( $rafsi )
 	{
 	    $entry .= "\\enspace {\\ttfamily\\bfseries[$rafsi]} "
 	}
-	if( ${$convenientDefinition}{'selmaho'} )
+	if( ${$valsirow}{'selmaho'} )
 	{
 	    $entry .= "\\enspace {\\sffamily\\bfseries[".
-		escapeall(${$convenientDefinition}{'selmaho'})
+		escapeall(${$valsirow}{'selmaho'})
 		."]} "
 	}
-	$entry .= " " . escapetex("${$convenientDefinition}{'definition'}", $lang);
-	if( ${$convenientDefinition}{'notes'} )
+	$entry .= " " . escapetex("${$valsirow}{'definition'}", $lang);
+	if( ${$valsirow}{'notes'} )
 	{
 	    $entry .= " (".
-		escapeall(${$convenientDefinition}{'notes'})
+		escapeall(${$valsirow}{'notes'})
 		.")";
 	}
 
 	push @lojbanToNatLangEntries, $entry;
     }
 
-    foreach my $valsirow ( values %{$valsibestguesses} )
+    ####
+
+    my $natLangToLojban;
+    my @natLangToLojbanEntries;
+
+    my $nlquery = $dbh->prepare("
+      SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
+      FROM valsibestguesses vbg
+      JOIN valsi v
+        ON v.valsiid = vbg.valsiid
+      JOIN natlangwordbestguesses nlwbg
+        ON nlwbg.definitionid = vbg.definitionid
+      JOIN natlangwords nlw
+        ON nlw.wordid = nlwbg.natlangwordid
+      WHERE vbg.langid=$langid
+      ORDER BY valsi, nlw.word
+      ");
+    $nlquery->execute;
+
+    while(defined(my $nlwbgrow=$nlquery->fetchrow_hashref))
     {
-	my $nlwbg = $dbh->selectall_hashref("SELECT nlw.word,
-	    nlw.meaning, nlwbg.* from
-	    natlangwordbestguesses nlwbg, natlangwords nlw WHERE
-	    definitionid=${$valsirow}{'definitionid'}
-	    AND nlwbg.natlangwordid = nlw.wordid
-	    ORDER BY nlw.word", "word" );
-	foreach my $nlwbgrow (values %{$nlwbg} )
-	{
-	    my $entry .= "\n\n{\\sffamily\\bfseries ". escapeall(${$nlwbgrow}{'word'}) ."} ";
+        my $entry .= "\n\n{\\sffamily\\bfseries ". escapeall(${$nlwbgrow}{'word'}) ."} ";
 
-	    # \markboth is for the top-of-page markings.
-	    $entry .= "\\markboth{". escapeall(${$nlwbgrow}{'word'}) 
-		."}{". escapeall(${$nlwbgrow}{'word'}) ."}";
+        # \markboth is for the top-of-page markings.
+        $entry .= "\\markboth{". escapeall(${$nlwbgrow}{'word'}) 
+            ."}{". escapeall(${$nlwbgrow}{'word'}) ."}";
 
-	    if( ${$nlwbgrow}{'meaning'} )
-	    {
-		$entry .= "\\textit{(".
-		    escapeall(${$nlwbgrow}{'meaning'})
-		    .")} ";
-	    }
+        if( ${$nlwbgrow}{'meaning'} )
+        {
+            $entry .= "\\textit{(".
+                escapeall(${$nlwbgrow}{'meaning'})
+                .")} ";
+        }
 
-	    my $defvalsi = $dbh->selectrow_array("SELECT word
-	    FROM valsi v, definitions d WHERE v.valsiid = d.valsiid
-	    AND d.definitionid = ${$nlwbgrow}{'definitionid'}");
-		
+        $entry .= " " . escapeall($nlwbgrow->{'valsi'});
 
-	    $entry .= " " . escapeall($defvalsi);
+        if( ${$nlwbgrow}{'place'} > 0 )
+        {
+            $entry .= ", place ${$nlwbgrow}{'place'}";
+        }
 
-            if( ${$nlwbgrow}{'place'} > 0 )
-            {
-                $entry .= ", place ${$nlwbgrow}{'place'}";
-            }
-
-	    push @natLangToLojbanEntries, $entry;
-	}
+        push @natLangToLojbanEntries, $entry;
     }
 
     $lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
