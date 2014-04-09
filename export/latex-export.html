@@ -98,11 +98,12 @@
 
     while(defined(my $nlwbgrow=$nlquery->fetchrow_hashref))
     {
-        my $entry .= "\n\n{\\sffamily\\bfseries ". escapeall(${$nlwbgrow}{'word'}) ."} ";
+        my $escapedword = escapeall(${$nlwbgrow}{'word'});
+
+        my $entry .= "\n\n{\\sffamily\\bfseries ". $escapedword ."} ";
 
         # \markboth is for the top-of-page markings.
-        $entry .= "\\markboth{". escapeall(${$nlwbgrow}{'word'}) 
-            ."}{". escapeall(${$nlwbgrow}{'word'}) ."}";
+        $entry .= "\\markboth{". $escapedword ."}{". $escapedword ."}";
 
         if( ${$nlwbgrow}{'meaning'} )
         {
@@ -123,6 +124,8 @@
 
     $lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
     $natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
+
+    my $escapedlang = escapeall($langrealname);
 
     print TMP q(
 %!TEX encoding = UTF-8 Unicode
@@ -157,7 +160,7 @@
 
 \setlength{\parindent}{1 em}
 
-\title{). escapeall($langrealname) . q( To lojban and lojban To ). escapeall($langrealname) .q( Dictionary}
+\title{). $escapedlang . q( To lojban and lojban To ). $escapedlang .q( Dictionary}
 \author{Lojbanic Community}
 \date{\today}
 
@@ -165,10 +168,10 @@
 
 \maketitle
 
-\chapter{lojban to ). escapeall($langrealname) .q(}).
+\chapter{lojban to ). $escapedlang .q(}).
 $lojbanToNatLang. q(
 
-\chapter{). escapeall($langrealname) .q( to lojban}).
+\chapter{). $escapedlang .q( to lojban}).
 $natLangToLojban. q(
 
 \end{document}
@@ -204,7 +207,7 @@ $natLangToLojban. q(
       $term =~ s/\~/\\textasciitilde{}/g;
       $term =~ s/\^/\\textasciicircum{}/g;
       $term =~ s{/}{\\slash{}}g;
-      $term =~ s/([#%&$_])/\\$1/g;
+      $term =~ s/([#\%\&\$_])/\\$1/g;
       return $term;
     }
 
@@ -218,7 +221,7 @@ $natLangToLojban. q(
         $term =~ s/\^/\\textasciicircum{}/g;
       }
       $term =~ s{/}{\\slash{}}g;
-      $term =~ s/([#%&])/\\$1/g;
+      $term =~ s/([#\%\&])/\\$1/g;
       return $term;
     }
 
