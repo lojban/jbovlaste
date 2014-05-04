@@ -437,7 +437,7 @@ sub SendListing {
     return;
   }
 
-  if ($in{'Database'} =~ /^([\w .<>%-*]+|)$/) {
+  if ($in{'Database'} =~ /^([\w .<>*-]+|)$/) {
     $d = "$1";
   } else {
     warn ("TAINTED DATA for database SENT BY $ENV{'REMOTE_ADDR'}: $d: $!");
@@ -491,6 +491,8 @@ sub SendListing {
 #	    $command .= " -s exact \"". $q ."\"";
 #	}
     else {
+      $s =~ /(\*|regexp|suffix|exact|substring|rafsi|prefix)/;
+      $s = $1;
       $command .= " -s $s -m \"". $q ."\"";
     }
   }
