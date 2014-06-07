@@ -47,8 +47,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('ro', 'Romanian', '', 'RomÃ¢nÄ');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
  VALUES ('el', 'Greek', 'xesybau', 'Ελληνικά', 'Λόζμπαν');
-INSERT INTO languages (tag, englishname, lojbanname, realname)
-VALUES ('he', 'Hebrew', 'xebybau', 'עברית');
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
+VALUES ('he', 'Hebrew', 'xebybau', 'עברית', 'לוז''בן');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('cs', 'Czech','tce''exo','Česká');
 INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban)
