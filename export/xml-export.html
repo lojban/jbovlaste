@@ -107,7 +107,7 @@ if( ! defined($session{'userid'}) ) {
       
           # Alert about non-standard entries
           my $valsitype = $valsirow->{'descriptor'};
-          if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo")
+          if ($valsitype =~ /^(experimental|obsolete)/)
           {
       	$entry .= $unofficialwarning;
           };

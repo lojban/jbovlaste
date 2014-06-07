@@ -1,0 +1,6 @@
+
+# virtualenv .virtual
+# source .virtual/bin/activate
+# pip install parsimonious
+# git clone https://github.com/teleological/camxes-py.git
+

@@ -44,7 +44,7 @@
 
         # Alert about non-standard entries
         my $valsitype = $valsirow->{'descriptor'};
-        if ($valsitype eq "experimental gismu" or $valsitype eq "experimental cmavo") { $entry .= $unofficialwarning};
+        if ($valsitype =~ /^(experimental|obsolete)/) { $entry .= $unofficialwarning};
 	
         my $escapedword = escapeall($valsirow->{'word'});
         $entry .= $escapedword ."}";

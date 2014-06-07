@@ -163,8 +163,9 @@ necessary.
 </%doc>
 <%perl>
 if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
-    !( $type eq "cmavo" || $type eq "cmavo cluster" ||
-	$type eq "experimental cmavo" || $type eq "cmene") ) {
+    !( $type eq "cmavo" || $type eq "cmavo-compound" ||
+	$type eq "experimental cmavo" || $type eq "cmene" ||
+	$type eq "obsolete cmene" || $type eq "bu-letteral" ) ) {
     $notready = 1;
 </%perl>
 
@@ -242,8 +243,8 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
 % }
    </td>
   </tr>
-% if( $type eq "cmavo" || $type eq "cmavo cluster" ||
-% $type eq "experimental cmavo" )
+% if( $type eq "cmavo" || $type eq "cmavo-compound" ||
+% $type eq "experimental cmavo" || $type eq "bu-letteral")
 % {
   <tr>
    <td>selma'o</td>

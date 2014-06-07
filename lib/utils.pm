@@ -4,6 +4,17 @@ use strict;
 use utf8;
 use Unicode::String qw(utf8);
 
+use File::Basename;
+use File::Spec;
+
+my $util_dir = dirname(__FILE__);
+my $python_dir = File::Spec->catdir($util_dir, "..", "python");
+my $python_path = File::Spec->catfile($python_dir, ".virtual", "bin", "python");
+my $vlatai_path = File::Spec->catfile($python_dir, "camxes-py", "vlatai.py");
+
+my $PYTHON = File::Spec->rel2abs($python_path);
+my $VLATAI = "$PYTHON " . File::Spec->rel2abs($vlatai_path);
+
 sub armorutf8inhtml {
     my $utf8 = utf8(shift());
     my @chars = $utf8->unpack;
@@ -30,92 +41,41 @@ sub decrypt {
     return $str;
 }
 
-sub grokzei {
-    my ($valsi) = @_;
-
-    # grok the first word
-    if ($valsi =~ /([\w\']+) zei (.*)/) {
-    	my ($part, $rest) = ($1, $2);
-
-	# zo can't be used with zei
-	return "nalvla" if $part eq "zo";
-
-	# make sure vlatai groks the first word, then
-	# let it grok the part after the zei (which will
-	# recurse back into this function if it hits another
-	# zei-formed lujvo
-	return "nalvla" if vlatai($part) eq "nalvla";
-	return "nalvla" if vlatai($rest) eq "nalvla";
-
-	# it seems to be a correct lujvo
-	return "lujvo";
-    }
-
-    # mi na jimpe
-    return "nalvla";
-}
-
 sub vlatai {
     my $valsi = shift;
     unless(length($valsi)) {
 	return "nalvla";
     }
-    my(@tmp) = ($|,$/);
-    $| = 1; undef $/;
-    my $safevalsi = $valsi;
-
-    # handle zei lujvo (vlatai doesn't grok it for us)
-    return grokzei($valsi) if $valsi =~ /.*zei.*/;
-
-    $safevalsi =~ s/[^\'\w,]//g;
-    $safevalsi =~ s/\'/\\\'/g;
-    open(VLATAI, "/usr/local/bin/vlatai $safevalsi|");
-    my $result = <VLATAI>;
-    $result =~ s/\s+$//g;
-    close(VLATAI);
-    ($|,$/) = @tmp;
-    my($vlataivalsi,$type,$extra,@crap) = split/\s*:\s*/,$result;
-    if($vlataivalsi ne $valsi) {
-	return "nalvla";
-    }
-    if(($type eq "gismu") && $extra !~ /\s/) {
+    my $type = run_vlatai($valsi);
+    # ASSUME: only running vlatai on words that couldn't be looked up in db,
+    #         so any morphological gismu or cmavo are "experimental"
+    if ($type eq "gismu") {
 	return "experimental gismu";
     }
-    if($type eq "cmavo(s)") {
-	if($extra =~ /\s/) {
-	    return "cmavo cluster";
-	} else {
-	    return "experimental cmavo";
-	}
+    if($type eq "cmavo") {
+	return "experimental cmavo";
     }
-    if($extra !~ /\s/) {
-	if($type eq "lujvo" || $type eq "lujvo (with cultural rafsi)") {
-	    return "lujvo";
-	}
-	if($type =~ /^fu'ivla/) {
-	    return "fu'ivla";
-	}
-	if($type eq "cmene") {
-	    return "cmene";
-	}
-    }
-    return "nalvla";
+    return $type;
 }
 
-my %type =
-  ('1' => 'gismu',
-   '2' => 'cmavo',
-   '3' => 'lujvo',
-   '4' => 'fu\'ivla',
-   '5' => 'cmene',
-
-   '6' => 'cmavo cluster',
-
-   '7' => 'experimental gismu',
-   '8' => 'experimental cmavo'
-  );
-
-my %revtype = reverse %type;
+sub run_vlatai {
+    my $valsi = shift;
+    my $tmp = $/;
+    undef $/; # slurp mode
+    my $safevalsi = $valsi;
+    $safevalsi =~ s/[^\'\w, ]//g; # NOTE: spaces are significant
+    $safevalsi =~ s/\'/\\\'/g;
+    if (open(VLATAI, "$VLATAI $safevalsi|")) {
+      my $type = <VLATAI>;
+      close(VLATAI);
+      $/ = $tmp;
+      chomp $type;
+      return $type;
+    }
+    $/ = $tmp;
+    warn "Failed to run vlatai($VLATAI): $!";
+    return "nalvla";
+}
 
 sub processkeywordlisting {
   my $textblob = shift;

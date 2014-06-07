@@ -8,6 +8,8 @@ I'm not going to let you add a valsi unless you log in.
 %   return;
 % }
 
+% $valsi =~ s/^\s+|\s+$//g;
+
 % unless(defined($confirm)) {
 <font size="+3">Adding valsi "<% $valsi %>"</font>
 <hr />
@@ -33,7 +35,6 @@ my $verifier = &produce_verifier($valsi.$typestr);
 
 % if($typestr eq "nalvla") {
 <p>Sorry, that isn't actually a word in Lojban.</p>
-<p>(Did you remember to strip leading and/or trailing pauses?)</p>
 %   return;
 % }
 

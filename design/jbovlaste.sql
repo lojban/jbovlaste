@@ -95,7 +95,7 @@ CREATE TRIGGER pages_sanity_check BEFORE INSERT ON pages
 -- allowable wordtypes
 CREATE TABLE valsitypes (
   typeId int2 primary key,        -- arbitrary ID
-  descriptor varchar(128) unique  -- "gismu", "lujvo", "cmavo cluster", etc
+  descriptor varchar(128) unique  -- "gismu", "lujvo", "cmavo-compound", etc
 );
 
 INSERT INTO valsitypes (typeId, descriptor) VALUES (0, 'nalvla');
@@ -104,9 +104,13 @@ INSERT INTO valsitypes (typeId, descriptor) VALUES (2, 'cmavo');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (3, 'cmene');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (4, 'lujvo');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (5, 'fu\'ivla');
-INSERT INTO valsitypes (typeId, descriptor) VALUES (6, 'cmavo cluster');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (6, 'cmavo-compound');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (7, 'experimental gismu');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (8, 'experimental cmavo');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (9, 'bu-letteral');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (10, 'zei-lujvo');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (11, 'obsolete cmene');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (12, 'obsolete fu\'ivla');
 
 -- table of lojban words
 CREATE TABLE valsi (
