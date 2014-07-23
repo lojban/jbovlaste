@@ -142,12 +142,12 @@ if( ! defined($session{'userid'}) ) {
           
           $entry .= "<user>" .
           "<username>" .
-          massage("${valsirow}{'username'}") .
+          massage("${$valsirow}{'username'}") .
           "</username>";
-          if( ${valsirow}{'realname'} )
+          if( ${$valsirow}{'realname'} )
           {
               $entry .= "<realname>" .
-              massage("${valsirow}{'realname'}") .
+              massage("${$valsirow}{'realname'}") .
               "</realname>";
           }
           $entry .= "</user>";
