@@ -88,7 +88,7 @@ if( ! defined($session{'userid'}) ) {
           JOIN valsitypes t
             ON t.typeid = v.typeid
           JOIN users u
-            ON v.userId = u.userId
+            ON u.userid = c.userid
           WHERE vbg.langid=$langid
           ORDER BY v.word");
       $sth->execute;
