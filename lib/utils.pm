@@ -9,11 +9,9 @@ use File::Spec;
 
 my $util_dir = dirname(__FILE__);
 my $python_dir = File::Spec->catdir($util_dir, "..", "python");
-my $python_path = File::Spec->catfile($python_dir, ".virtual", "bin", "python");
 my $vlatai_path = File::Spec->catfile($python_dir, "camxes-py", "vlatai.py");
 
-my $PYTHON = File::Spec->rel2abs($python_path);
-my $VLATAI = "$PYTHON " . File::Spec->rel2abs($vlatai_path);
+my $VLATAI = File::Spec->rel2abs($vlatai_path);
 
 sub armorutf8inhtml {
     my $utf8 = utf8(shift());
@@ -70,7 +68,7 @@ sub run_vlatai {
       close(VLATAI);
       $/ = $tmp;
       chomp $type;
-      return $type;
+      return $type || "nalvla";
     }
     $/ = $tmp;
     warn "Failed to run vlatai($VLATAI): $!";
