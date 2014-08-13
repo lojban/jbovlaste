@@ -17,7 +17,6 @@ $bot_key => undef
 our($dbh,%session);
 use File::Temp qw{ tempfile tempdir };
 use POSIX;
-use Data::Dumper;
 use Captcha::reCAPTCHA;
 
 my $c = Captcha::reCAPTCHA->new;
@@ -68,25 +67,18 @@ if( ! defined($session{'userid'}) ) {
 	<%perl>
         return;
       }
-      
+
       $r->content_type('application/xml; charset=utf-8');
+
       our $unofficialwarning = 'unofficial="true" ';
       my $langrealname = $dbh->selectrow_array("SELECT realname FROM
           languages WHERE tag=?", undef, $lang);
-      #print Dumper( $valsibestguesses );
-      
-      my $lojbanToNatLang;
-      my @lojbanToNatLangEntries;
-      my $natLangToLojban;
-      my @natLangToLojbanEntries;
-      
+
       print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
       print qq{<dictionary>\n};
-      print qq{<direction from="lojban" to="$langrealname">};
-      
-      
-      # Get the valsi best guesses list.
-      my $valsiquery = $dbh->prepare("
+
+      my $natlangwords = fetchwords($langid);
+      my $sth = $dbh->prepare("
           SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
           FROM valsibestguesses vbg
           JOIN valsi v
@@ -99,84 +91,18 @@ if( ! defined($session{'userid'}) ) {
             ON v.userId = u.userId
           WHERE vbg.langid=$langid
           ORDER BY v.word");
-      
-      $valsiquery->execute;
-      
+      $sth->execute;
+
       # Print the lojban -> foo section
-      while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
+      print qq{<direction from="lojban" to="$langrealname">};
+      while(defined(my $valsirow=$sth->fetchrow_hashref))
       {
-          my $entry .= "\n\n<valsi ";
-      
-          # Alert about non-standard entries
-          my $valsitype = $valsirow->{'descriptor'};
-          if ($valsitype =~ /^(experimental|obsolete)/)
-          {
-      	$entry .= $unofficialwarning;
-          };
-      
-          # Basic bits
-          $entry .= qq{word="}.${$valsirow}{'word'}.qq{" type="$valsitype"};
-      
-          # Close the basic bits
-          $entry .= ">";
-      
-          # Clear out silly rafsi spaces
-          my $rafsis = massage( ${$valsirow}{'rafsi'} );
-          $rafsis =~ s/\s+$//;
-          $rafsis =~ s/^\s+//;
-          $rafsis =~ s/\s+/ / ;
-      
-          if( $rafsis )
-          {
-      	foreach my $rafsi (split(/ /, $rafsis))
-      	{
-      	    $entry .= "<rafsi>$rafsi</rafsi>";
-      	}
-          }
-          if( ${$valsirow}{'selmaho'} )
-          {
-      	$entry .= "<selmaho>" .
-      	massage(${$valsirow}{'selmaho'})
-      	. "</selmaho>";
-          }
-          
-          $entry .= "<user>" .
-          "<username>" .
-          massage("${$valsirow}{'username'}") .
-          "</username>";
-          if( ${$valsirow}{'realname'} )
-          {
-              $entry .= "<realname>" .
-              massage("${$valsirow}{'realname'}") .
-              "</realname>";
-          }
-          $entry .= "</user>";
-      
-          $entry .= "<definition>" .
-          massage("${$valsirow}{'definition'}") .
-          "</definition>\n".
-          "<definitionid>${$valsirow}{'definitionid'}</definitionid>";
-      
-          if( ${$valsirow}{'notes'} )
-          {
-      	$entry .= "<notes>".
-      	massage(${$valsirow}{'notes'})
-      	."</notes>";
-          }
-      
-          # Close the entry
-          $entry .= "</valsi>";
-      
-          #push @lojbanToNatLangEntries, $entry;
-      
-          print $entry;
+          my $tag = valsitag($valsirow, $natlangwords);
+          print "$tag\n";
       }
-      
-      #print $lojbanToNatLang;
       print qq{</direction>};
-      print qq{<direction from="$langrealname" to="lojban">};
-      
-      my $nlquery = $dbh->prepare("
+
+      $sth = $dbh->prepare("
         SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
         FROM valsibestguesses vbg
         JOIN valsi v
@@ -188,38 +114,168 @@ if( ! defined($session{'userid'}) ) {
         WHERE vbg.langid=$langid
         ORDER BY valsi, nlw.word
         ");
-      $nlquery->execute;
+      $sth->execute;
 
       # Print the foo -> lojban section
-      while(defined(my $nlwbgrow=$nlquery->fetchrow_hashref))
-      {
-          #print Dumper( $valsirow );
-          my $entry .= "\n\n<nlword word=\"".
-          massage(${$nlwbgrow}{'word'}) ."\"";
-        
-          if( ${$nlwbgrow}{'meaning'} )
-          {
-              $entry .= " sense=\"".
-              massage(${$nlwbgrow}{'meaning'})
-              ."\"";
+      print qq{<direction from="$langrealname" to="lojban">};
+      while(my ($definitionid, $words) = each %$natlangwords) {
+          foreach my $nlwbgrow (@$words) {
+              my $tag = nlwordtag($nlwbgrow);
+              print "$tag\n";
           }
-        
-          $entry .= " valsi=\"" . massage($nlwbgrow->{'valsi'}) . "\"";
-        
-          if( ${$nlwbgrow}{'place'} > 0 )
-          {
-              $entry .= " place=\"${$nlwbgrow}{'place'}\"";
-          }
-        
-          # Close the entry
-          $entry .= " />";
-        
-          #push @natLangToLojbanEntries, $entry;
-          #print Dumper( $nlwbgrow );
-        
-          print $entry;
       }
-      
+      print qq{</direction>};
+
+      print qq{</dictionary>\n};
+
+      ####
+
+      sub fetchwords {
+          my $langid = shift;
+
+          my $sth = $dbh->prepare("
+            SELECT nlw.word, nlw.meaning, nlwbg.place, nlwbg.definitionid, v.word as valsi
+            FROM natlangwordbestguesses nlwbg
+            JOIN natlangwords nlw
+              ON nlw.wordid = nlwbg.natlangwordid
+            JOIN valsibestguesses vbg
+              ON vbg.definitionid = nlwbg.definitionid
+            JOIN valsi v
+              ON v.valsiid = vbg.valsiid
+            WHERE vbg.langid=$langid
+            ORDER BY nlwbg.definitionid, nlwbg.place
+            ");
+          $sth->execute();
+
+          my %natlangwords;
+          while(defined(my $valsirow = $sth->fetchrow_hashref)) {
+              my $definitionid = $valsirow->{'definitionid'};
+              $natlangwords{$definitionid} ||= [];
+              push @{$natlangwords{$definitionid}}, $valsirow;
+          }
+          return \%natlangwords;
+      }
+
+      sub valsitag {
+          my ($valsirow, $natlangwords) = @_;
+
+          my $tag .= "<valsi ";
+          my $valsitype = $valsirow->{'descriptor'};
+          if ($valsitype =~ /^(experimental|obsolete)/) {
+            $tag .= $unofficialwarning;
+          };
+          $tag .= qq{word="}.$valsirow->{'word'}.qq{" type="$valsitype"};
+          $tag .= ">";
+
+          my $rafsis = massage( $valsirow->{'rafsi'} );
+          $rafsis =~ s/\s+$//;
+          $rafsis =~ s/^\s+//;
+          $rafsis =~ s/\s+/ / ;
+          if( $rafsis ) {
+              foreach my $rafsi (split(/ /, $rafsis)) {
+                  $tag .= "\n  <rafsi>$rafsi</rafsi>";
+              }
+          }
+
+          if( $valsirow->{'selmaho'} ) {
+              $tag .= "\n  <selmaho>" .
+                massage($valsirow->{'selmaho'})
+                . "</selmaho>";
+          }
+
+          my $definitionid = $valsirow->{'definitionid'};
+          $tag .= "\n  <definition>" .
+            massage("$valsirow->{'definition'}") .
+            "</definition>".
+            "\n  <definitionid>$definitionid</definitionid>";
+
+          if( $valsirow->{'notes'} ) {
+              $tag .= "\n  <notes>".
+                massage($valsirow->{'notes'})
+                ."</notes>";
+          }
+
+          if( exists $natlangwords->{$definitionid} ) {
+              foreach my $keyword (@{$natlangwords->{$definitionid}}) {
+                  if ($keyword->{'place'} == 0) {
+                      my $gwtag = glosswordtag($keyword);
+                      $tag .= "\n  $gwtag";
+                  }
+                  else {
+                      my $kwtag = keywordtag($keyword);
+                      $tag .= "\n  $kwtag";
+                  }
+              }
+          }
+
+          $tag .= "\n</valsi>";
+
+          return $tag;
+      }
+
+      sub nlwordtag {
+          my $nlwrow = shift;
+
+          my $tag .= "<nlword word=\"".
+            massage($nlwrow->{'word'}) ."\"";
+
+          if($nlwrow->{'meaning'} ) {
+              $tag .= " sense=\"".
+                massage($nlwrow->{'meaning'})
+                ."\"";
+          }
+
+          $tag .= " valsi=\"" .
+            massage($nlwrow->{'valsi'})
+            . "\"";
+
+          if($nlwrow->{'place'} > 0 ) {
+              $tag .= " place=\"$nlwrow->{'place'}\"";
+          }
+
+          $tag .= " />";
+
+          return $tag;
+      }
+
+      sub glosswordtag {
+          my $keyword = shift;
+
+          my $tag = "<glossword word=\"".
+            massage($keyword->{'word'})
+            ."\"";
+
+          if ($keyword->{'meaning'}) {
+              $tag .= " sense=\"".
+                massage($keyword->{'meaning'}).
+                "\""
+          }
+
+          $tag .= " />";
+
+          return $tag;
+      }
+
+      sub keywordtag {
+          my $keyword = shift;
+
+          my $tag .= "<keyword word=\"".
+            massage($keyword->{'word'})
+            ."\" place=\"".
+            $keyword->{'place'} .
+            "\"";
+
+          if ($keyword->{'meaning'}) {
+              $tag .= " sense=\"".
+                massage($keyword->{'meaning'}).
+                "\""
+          }
+
+          $tag .= " />";
+
+          return $tag;
+      }
+
       sub dictcollate {
           my $to_be_ignored = $unofficialwarning;
           my $temp_a = $a;
@@ -228,14 +284,7 @@ if( ! defined($session{'userid'}) ) {
           $temp_b =~ s/\Q$to_be_ignored\E//;
           lc($temp_a) cmp lc($temp_b);
       }
-      
-      #$lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
-      #$natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
-      
-      #print $natLangToLojban;
-      print qq{</direction>};
-      print qq{</dictionary>\n};
-      
+
       sub massage
       {
           my $input=shift(@_);
