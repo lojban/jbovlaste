@@ -183,6 +183,18 @@ if( ! defined($session{'userid'}) ) {
                 . "</selmaho>";
           }
 
+          $tag .= "\n  <user>" .
+            "\n    <username>" .
+            massage("$valsirow->{'username'}") .
+            "</username>";
+          if( $valsirow->{'realname'} )
+          {
+              $tag .= "\n    <realname>" .
+                massage("$valsirow->{'realname'}") .
+                "</realname>";
+          }
+          $tag .= "\n  </user>";
+
           my $definitionid = $valsirow->{'definitionid'};
           $tag .= "\n  <definition>" .
             massage("$valsirow->{'definition'}") .
