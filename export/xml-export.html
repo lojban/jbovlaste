@@ -77,52 +77,24 @@ if( ! defined($session{'userid'}) ) {
       print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
       print qq{<dictionary>\n};
 
-      my $natlangwords = fetchwords($langid);
-      my $sth = $dbh->prepare("
-          SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
-          FROM valsibestguesses vbg
-          JOIN valsi v
-            ON v.valsiid = vbg.valsiid
-          JOIN convenientdefinitions c
-            ON c.definitionid = vbg.definitionid
-          JOIN valsitypes t
-            ON t.typeid = v.typeid
-          JOIN users u
-            ON u.userid = c.userid
-          WHERE vbg.langid=$langid
-          ORDER BY v.word");
-      $sth->execute;
+      my $keywords = fetchkeywords($dbh, $langid);
 
       # Print the lojban -> foo section
+      my $sth = selectvalsi($dbh, $langid);
       print qq{<direction from="lojban" to="$langrealname">};
       while(defined(my $valsirow=$sth->fetchrow_hashref))
       {
-          my $tag = valsitag($valsirow, $natlangwords);
+          my $tag = valsitag($valsirow, $keywords);
           print "$tag\n";
       }
       print qq{</direction>};
 
-      $sth = $dbh->prepare("
-        SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
-        FROM valsibestguesses vbg
-        JOIN valsi v
-          ON v.valsiid = vbg.valsiid
-        JOIN natlangwordbestguesses nlwbg
-          ON nlwbg.definitionid = vbg.definitionid
-        JOIN natlangwords nlw
-          ON nlw.wordid = nlwbg.natlangwordid
-        WHERE vbg.langid=$langid
-        ORDER BY valsi, nlw.word
-        ");
-      $sth->execute;
-
       # Print the foo -> lojban section
       print qq{<direction from="$langrealname" to="lojban">};
-      while(my ($definitionid, $words) = each %$natlangwords) {
-          foreach my $nlwbgrow (@$words) {
-              my $tag = nlwordtag($nlwbgrow);
-              print "$tag\n";
-          }
+      $sth = selectwords($dbh, $langid);
+      while(defined(my $nlwordrow = $sth->fetchrow_hashref)) {
+          my $tag = nlwordtag($nlwordrow);
+          print "$tag\n";
       }
       print qq{</direction>};
 
@@ -130,34 +102,82 @@ if( ! defined($session{'userid'}) ) {
 
       ####
 
-      sub fetchwords {
-          my $langid = shift;
+      sub fetchkeywords {
+          my ($dbh, $langid) = @_;
+
+          my $sth = selectkeywords($dbh, $langid);
+          my %keywords;
+          while(defined(my $kwrow = $sth->fetchrow_hashref)) {
+              my $definitionid = $kwrow->{'definitionid'};
+              $keywords{$definitionid} ||= [];
+              push @{$keywords{$definitionid}}, $kwrow;
+          }
+          return \%keywords;
+      }
+
+      sub selectkeywords {
+          my ($dbh, $langid) = @_;
 
           my $sth = $dbh->prepare("
-            SELECT nlw.word, nlw.meaning, nlwbg.place, nlwbg.definitionid, v.word as valsi
-            FROM natlangwordbestguesses nlwbg
+            SELECT vbg.definitionid, nlw.word, nlw.meaning, km.place
+            FROM valsibestguesses vbg
+            JOIN keywordmapping km
+              ON km.definitionid = vbg.definitionid
             JOIN natlangwords nlw
-              ON nlw.wordid = nlwbg.natlangwordid
-            JOIN valsibestguesses vbg
-              ON vbg.definitionid = nlwbg.definitionid
-            JOIN valsi v
-              ON v.valsiid = vbg.valsiid
+              ON nlw.wordid = km.natlangwordid
             WHERE vbg.langid=$langid
-            ORDER BY nlwbg.definitionid, nlwbg.place
+            ORDER BY vbg.definitionid, km.place
             ");
           $sth->execute();
 
-          my %natlangwords;
-          while(defined(my $valsirow = $sth->fetchrow_hashref)) {
-              my $definitionid = $valsirow->{'definitionid'};
-              $natlangwords{$definitionid} ||= [];
-              push @{$natlangwords{$definitionid}}, $valsirow;
-          }
-          return \%natlangwords;
+          return $sth;
+      }
+
+      # Get the valsi best guesses list.
+      sub selectvalsi {
+        my ($dbh, $langid) = @_;
+
+        # Get the valsi best guesses list.
+        my $sth = $dbh->prepare("
+            SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
+            FROM valsibestguesses vbg
+            JOIN valsi v
+              ON v.valsiid = vbg.valsiid
+            JOIN convenientdefinitions c
+              ON c.definitionid = vbg.definitionid
+            JOIN valsitypes t
+              ON t.typeid = v.typeid
+            JOIN users u
+              ON u.userid = c.userid
+            WHERE vbg.langid=$langid
+            ORDER BY v.word");
+        $sth->execute();
+
+        return $sth;
+      }
+
+      sub selectwords {
+          my ($dbh, $langid) = @_;
+
+          my $sth = $dbh->prepare("
+            SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
+            FROM valsibestguesses vbg
+            JOIN valsi v
+              ON v.valsiid = vbg.valsiid
+            JOIN natlangwordbestguesses nlwbg
+              ON nlwbg.definitionid = vbg.definitionid
+            JOIN natlangwords nlw
+              ON nlw.wordid = nlwbg.natlangwordid
+            WHERE vbg.langid=$langid
+            ORDER BY valsi, nlw.word
+            ");
+          $sth->execute();
+
+          return $sth;
       }
 
       sub valsitag {
-          my ($valsirow, $natlangwords) = @_;
+          my ($valsirow, $keywords) = @_;
 
           my $tag .= "<valsi ";
           my $valsitype = $valsirow->{'descriptor'};
@@ -207,8 +227,8 @@ if( ! defined($session{'userid'}) ) {
                 ."</notes>";
           }
 
-          if( exists $natlangwords->{$definitionid} ) {
-              foreach my $keyword (@{$natlangwords->{$definitionid}}) {
+          if( exists $keywords->{$definitionid} ) {
+              foreach my $keyword (@{$keywords->{$definitionid}}) {
                   if ($keyword->{'place'} == 0) {
                       my $gwtag = glosswordtag($keyword);
                       $tag .= "\n  $gwtag";
