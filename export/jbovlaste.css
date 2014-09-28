@@ -1,0 +1,22 @@
+
+dt {
+  font-weight: bold;
+}
+
+dl dl dt {
+  clear: both;
+  float: left;
+}
+
+dl dl dt {
+  float: left;
+}
+
+.valsi dl dl dt {
+  width: 100px;
+}
+
+.nlword dl dl dt {
+  width: 50px;
+}
+
