@@ -152,6 +152,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, url)
 -- Simple
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('en-simple', 'Simple English', 'sampu glibau', 'Simple English');
+INSERT INTO languages (tag, englishname, lojbanname, realname)
+ VALUES ('fr-facile', 'Easy French', 'frili fasybau', 'Français facile');
 
 -- ROLLBACK; if there are errors
 
