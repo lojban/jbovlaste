@@ -127,6 +127,30 @@
 
     my $escapedlang = escapeall($langrealname);
 
+    my ($vlaste_languages, $content);
+    if ($escapedlang eq "lojban") {
+      $vlaste_languages = "la .lojban.";
+      my $vlaste_from_jbo  = "lo smuni be bau la .lojban.";
+      $content =
+        qq(\\chapter{$vlaste_from_jbo}).
+        $lojbanToNatLang;
+    }
+    else {
+      $vlaste_languages = "la .lojban. jo'u la'o zoi $escapedlang zoi";
+      my $vlaste_from_jbo  = "fanva fo la'o zoi $escapedlang zoi";
+      my $vlaste_to_jbo    = "fanva fi la'o zoi $escapedlang zoi";
+      $content =
+        qq(\\chapter{$vlaste_from_jbo}).
+        $lojbanToNatLang.
+        "\n".
+        qq(\\chapter{$vlaste_to_jbo}).
+        $natLangToLojban;
+    }
+    my $vlaste_title = "lo vlaste be fu $vlaste_languages";
+
+    my @d = localtime;
+    my $jbo_date = "de'i li " . (1900 + $d[5]) . " pi'e " . (1 + $d[4]) . " pi'e " . $d[3];
+
     print TMP q(
 %!TEX encoding = UTF-8 Unicode
 %!TEX TS-program = xelatex
@@ -160,19 +184,15 @@
 
 \setlength{\parindent}{1 em}
 
-\title{). $escapedlang . q( To lojban and lojban To ). $escapedlang .q( Dictionary}
-\author{Lojbanic Community}
-\date{\today}
+\title{). $vlaste_title . q(}
+\author{lo jboce'u}
+\date{). $jbo_date . q(}
 
 \begin{document}
 
 \maketitle
 
-\chapter{lojban to ). $escapedlang .q(}).
-$lojbanToNatLang. q(
-
-\chapter{). $escapedlang .q( to lojban}).
-$natLangToLojban. q(
+). $content .q(
 
 \end{document}
 );
