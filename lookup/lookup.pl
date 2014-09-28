@@ -348,7 +348,7 @@ sub SendForm1 {
 	<table><tr><td align="right">
 	<b>Query string:</b></td><td>
 	<input type="text" name="Query" size=40 value="$q">
-        <br></td></tr><td align="right">
+        <br></td></tr><tr><td align="right">
         <b>Search type:</b></td><td align="left">
         <select name="Strategy">
 EOF
@@ -363,7 +363,7 @@ EOF
     }
     print <<EOF2;
         </select>
-	<br></td></tr><td align="right">
+	<br></td></tr><tr><td align="right">
         <b>Database:</b></td><td>
         <select name="Database">
 EOF2
