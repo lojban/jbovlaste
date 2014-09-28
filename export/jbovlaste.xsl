@@ -47,7 +47,11 @@
 <xsl:template match="valsi">
   <dt><xsl:value-of select="@word"/></dt>
   <dd>
-    <p><xsl:value-of select="definition"/></p>
+    <p>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="definition"/>
+      </xsl:call-template>
+    </p>
     <xsl:call-template name="valsi-attributes"/>
   </dd>
 </xsl:template>
@@ -104,6 +108,50 @@
       </xsl:if>
     </dl>
   </dd>
+</xsl:template>
+
+<xsl:template name="delatex">
+  <xsl:param name="string" />
+  <xsl:choose>
+    <xsl:when test="contains($string, '$x_1$')">
+      <xsl:value-of select="substring-before($string, '$x_1$')" />
+      <em>x1</em>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="substring-after($string, '$x_1$')" />
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:when test="contains($string, '$x_2$')">
+      <xsl:value-of select="substring-before($string, '$x_2$')" />
+      <em>x2</em>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="substring-after($string, '$x_2$')" />
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:when test="contains($string, '$x_3$')">
+      <xsl:value-of select="substring-before($string, '$x_3$')" />
+      <em>x3</em>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="substring-after($string, '$x_3$')" />
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:when test="contains($string, '$x_4$')">
+      <xsl:value-of select="substring-before($string, '$x_4$')" />
+      <em>x4</em>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="substring-after($string, '$x_4$')" />
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:when test="contains($string, '$x_5$')">
+      <xsl:value-of select="substring-before($string, '$x_5$')" />
+      <em>x5</em>
+      <xsl:call-template name="delatex">
+        <xsl:with-param name="string" select="substring-after($string, '$x_5$')" />
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="$string" />
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>
