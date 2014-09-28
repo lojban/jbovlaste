@@ -342,12 +342,12 @@ sub SendForm1 {
 #$Counter2
 
     print <<EOF;
-<form method=GET action=$ReturnUrl>
+<form method="GET" action="$ReturnUrl">
     <input type="hidden" name="Form" value="${Pgm}1">
     <center>
 	<table><tr><td align="right">
 	<b>Query string:</b></td><td>
-	<input type="text" name="Query" size=40 value="$q">
+	<input type="text" name="Query" size="40" value="$q">
         <br></td></tr><tr><td align="right">
         <b>Search type:</b></td><td align="left">
         <select name="Strategy">
