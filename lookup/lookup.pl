@@ -367,8 +367,12 @@ EOF
         <b>Database:</b></td><td>
         <select name="Database">
 EOF2
-    foreach my $x (sort(split(/\t/,$Choices{"Database"}))) { 
-	print "        <option value=\"$Db{$x}\"";    
+    my @sorted_dbs =
+      sort {lc $a cmp lc $b}
+      map { s/^\s+|\s+$//g; }
+      (split(/\t/, $Choices{"Database"}));
+    foreach my $x (@sorted_dbs) {
+	print "        <option value=\"$Db{$x}\"";
 	if ($in{"Database"} eq $Db{$x}) {
 	    print " selected";
 	}
