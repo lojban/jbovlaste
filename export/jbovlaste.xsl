@@ -56,16 +56,25 @@
   <dl>
     <dt>type</dt>
     <dd><xsl:value-of select="@type"/></dd>
-    <xsl:apply-templates select="rafsi"/>
+    <xsl:call-template name="rafsi-list"/>
     <xsl:apply-templates select="glossword"/>
     <xsl:apply-templates select="keyword"/>
     <xsl:apply-templates select="user"/>
   </dl>
 </xsl:template>
 
-<xsl:template match="rafsi">
-  <dt>rafsi</dt>
-  <dd><xsl:value-of select="text()"/></dd>
+<xsl:template name="rafsi-list">
+  <xsl:if test="rafsi">
+    <dt>rafsi</dt>
+    <dd>
+      <xsl:for-each select="rafsi">
+        <xsl:value-of select="text()"/>
+        <xsl:if test="position() != last()">
+          <xsl:text>, </xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+    </dd>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="glossword">
