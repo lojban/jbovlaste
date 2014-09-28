@@ -137,19 +137,19 @@ if( ! defined($definitiontxt) || defined($check) ||
 % if( defined( $valsiid ) ) {
 	<input type="hidden" name="valsiid" value="<% $valsiid %>">
 % }
-    <input type="hidden" name="definition" value="<% $definition %>">
-    <input type="hidden" name="valsiword" value="<% $valsiword %>">
+    <input type="hidden" name="definition" value="<% $definition | h %>">
+    <input type="hidden" name="valsiword" value="<% $valsiword | h %>">
     <input type="hidden" name="langid" value="<% $langid %>">
-    <input type="hidden" name="type" value="<% $type %>">
-    <input type="hidden" name="valsitxt" value="<% $valsiword %>">
-    <input type="hidden" name="langtag" value="<% $langtag %>">
+    <input type="hidden" name="type" value="<% $type | h %>">
+    <input type="hidden" name="valsitxt" value="<% $valsiword | h %>">
+    <input type="hidden" name="langtag" value="<% $langtag | h %>">
     <input type="hidden" name="glossmax" value="<% $glossmax %>">
     <input type="hidden" name="placemax" value="<% $placemax %>">
    </td>
   </tr>
   <tr>
    <td>Definition</td>
-   <td><input type="text" name="definitiontxt" value="<% $definitiontxt %>" size="80"></td>
+   <td><input type="text" name="definitiontxt" value="<% $definitiontxt | h %>" size="80"></td>
    <td>
 	For information on how to format the definition, see <a
 	href="../help/definitions.html">the definition help file</a>.
@@ -248,7 +248,7 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
 % {
   <tr>
    <td>selma'o</td>
-   <td><input type="text" name="selmaho" value="<% $selmaho %>" size="15"></td>
+   <td><input type="text" name="selmaho" value="<% $selmaho | h %>" size="15"></td>
     <td>
 	Don't enter a selma'o unless you're sure you understand the
 	implications, please.  Ask people to comment on the word and
@@ -260,7 +260,7 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
   <tr>
    <td>Jargon</td>
    <td>
-    <textarea rows="1" cols="60" name="jargon"><% $jargon %></textarea>
+    <textarea rows="1" cols="60" name="jargon"><% $jargon | h %></textarea>
    </td>
    <td>Briefly describe the activity or group that uses this word,
        or: 
@@ -275,7 +275,7 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
   <tr>
    <td>Notes</td>
    <td>
-    <textarea rows="4" cols="60" name="notes"><% $notes %></textarea>
+    <textarea rows="4" cols="60" name="notes"><% $notes | h %></textarea>
    </td>
    <td>Please do not insert any newlines.  <strong>Please link to 
    other valsi you use! (wrap them in {...})</strong></td>
@@ -367,8 +367,8 @@ if( ! $notyet && defined( $check ) && ( ! defined( $notready ) || ! $notready ) 
 	# Test comment
 	</%perl>
 	<p>
-	<% $typeName %> Word #<% $i %>: <input type="text" value="<% $word %>" name="<% $type %>w<% $i %>" size="20">
-	In Sense: <input type="text" value="<% $sense %>" name="<% $type %>m<% $i %>" size="30">
+	<% $typeName %> Word #<% $i %>: <input type="text" value="<% $word | h %>" name="<% $type %>w<% $i %>" size="20">
+	In Sense: <input type="text" value="<% $sense | h %>" name="<% $type | h %>m<% $i %>" size="30">
 	</p>
 	<%perl>
 
@@ -395,10 +395,10 @@ if( ! $notyet && defined( $check ) && ( ! defined( $notready ) || ! $notready ) 
 	{
 	    </%perl>
 	    <div class="form-notice">
-	    Notes: <input type="text" value="<% $notes %>" name="<% $type %>n<% $i %>" size="30">
+	    Notes: <input type="text" value="<% $notes | h %>" name="<% $type | h %>n<% $i %>" size="30">
 	    <p><strong>This word doesn't exist</strong>; if you're
 	    sure you want to add it, please check this box: <input
-	    type="checkbox" name="<% $checkedname %>"
+	    type="checkbox" name="<% $checkedname | h %>"
 	    <% $checked ? 'checked' : '' %>>
 	    <%perl>
 
