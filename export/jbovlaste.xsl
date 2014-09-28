@@ -9,7 +9,7 @@
         <xsl:call-template name="direction-title"/>
       </xsl:for-each>
     </title>
-    <link rel="stylesheet" type="text/css" href="/export/jbovlaste.css"/>
+    <link rel="stylesheet" type="text/css" href="jbovlaste.css"/>
   </head>
   <body>
     <xsl:for-each select="direction[1]">

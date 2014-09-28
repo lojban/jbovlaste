@@ -75,7 +75,7 @@ if( ! defined($session{'userid'}) ) {
           languages WHERE tag=?", undef, $lang);
 
       print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
-      print qq{<?xml-stylesheet type="text/xsl" href="/export/jbovlaste.xsl"?>\n};
+      print qq{<?xml-stylesheet type="text/xsl" href="jbovlaste.xsl"?>\n};
       print qq{<dictionary>\n};
 
       my $keywords = fetchkeywords($dbh, $langid);
