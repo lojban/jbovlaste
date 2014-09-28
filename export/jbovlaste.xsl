@@ -45,7 +45,15 @@
 </xsl:template>
 
 <xsl:template match="valsi">
-  <dt><xsl:value-of select="@word"/></dt>
+
+  <dt>
+    <a>
+      <xsl:attribute name="id">
+        <xsl:value-of select="@word"/>
+      </xsl:attribute>
+    </a>
+    <xsl:value-of select="@word"/>
+  </dt>
   <dd>
     <p>
       <xsl:call-template name="delatex">
@@ -93,7 +101,15 @@
 
 <xsl:template match="user">
   <dt>user</dt>
-  <dd><xsl:value-of select="realname"/></dd>
+  <dd>
+    <a>
+      <xsl:attribute name="href">
+        <xsl:text>/personal/</xsl:text>
+        <xsl:value-of select="username"/>
+      </xsl:attribute>
+      <xsl:value-of select="realname"/>
+    </a>
+  </dd>
 </xsl:template>
 
 <xsl:template match="nlword">
@@ -101,7 +117,15 @@
   <dd>
     <dl>
       <dt>valsi</dt>
-      <dd><xsl:value-of select="@valsi"/></dd>
+      <dd>
+        <a>
+          <xsl:attribute name="href">
+            <xsl:text>#</xsl:text>
+            <xsl:value-of select="@valsi"/>
+          </xsl:attribute>
+          <xsl:value-of select="@valsi"/>
+        </a>
+      </dd>
       <xsl:if test="@place">
         <dt>place</dt>
         <dd><xsl:value-of select="@place"/></dd>
