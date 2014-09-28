@@ -128,6 +128,9 @@ if( ! defined($definitiontxt) || defined($check) ||
 	return;
     }
 
+    utf8::decode($definitiontxt);
+    utf8::decode($jargon);
+    utf8::decode($notes);
 </%perl>
 
 <form method="post" action="<% $actionPage %>">
@@ -362,6 +365,11 @@ if( ! $notyet && defined( $check ) && ( ! defined( $notready ) || ! $notready ) 
 	my $word = $ARGS{$type.'w'.$i};
 	my $sense = $ARGS{$type.'m'.$i};
 	my $notes = $ARGS{$type.'n'.$i};
+
+utf8::decode($word);
+utf8::decode($sense);
+utf8::decode($notes);
+
 	my $checkedname = $type.'c'.$i;
 	my $checked = $ARGS{$type.'c'.$i};
 	# Test comment
