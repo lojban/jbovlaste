@@ -369,7 +369,7 @@ EOF
 EOF2
     my @sorted_dbs =
       sort {lc $a cmp lc $b}
-      map { s/^\s+|\s+$//g; }
+      map { s/^\s+|\s+$//g; $_; }
       (split(/\t/, $Choices{"Database"}));
     foreach my $x (@sorted_dbs) {
 	print "        <option value=\"$Db{$x}\"";
