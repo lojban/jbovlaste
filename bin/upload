@@ -175,13 +175,13 @@ if ($use_definitions) {
 	$ln++;
 
 	# Parse the next line of input.
-	if (/^([.'A-Za-z]+)\t([^\t]+)(\t(.*))?$/) {
+	if (/^([.'A-Za-z ]+)\t([^\t]+)(\t(.*))?$/) {
 	    $defs++;
 	    $valsi = trim ($1);
 	    $def = trim ($2);
 	    ($notes, $tags) = extract_tags (trim ($4)) if $3;
 	    if ($verbose > 0) {
-		print "Valsi: $valsi\n";
+		print "\nValsi: $valsi\n";
 		print "Definition: $def\n";
 		print "Notes: $notes\n";
 		print "Tags:";
@@ -219,8 +219,8 @@ if ($use_definitions) {
 	next if $check_only;
 
 	# Process a valsi.
+	sleep 10;
 	print "$valsi: " unless $quiet;
-  sleep 60;
 	# Check is the valsi already in the dictionary.
 	my $currurl = "$url/dict/$valsi";
 	my $langid;
