@@ -353,13 +353,13 @@ sub SendForm1 {
         <select name="Strategy">
 EOF
     foreach my $x (split(/\t/,$Choices{"Strategy"})) {
-	print "        <option value=\"$St{$x}\"";
-	if (defined($in{"Strategy"}) && defined($St{$x})){
-          if ($in{"Strategy"} eq $St{$x}) {
-	    print " selected";
-          }
-	}
-	print ">$x\n";
+        print "        <option value=\"$St{$x}\"";
+        if (defined($in{"Strategy"}) && defined($St{$x})){
+            if ($in{"Strategy"} eq $St{$x}) {
+                print " selected";
+            }
+        }
+        print ">$x\n";
     }
     print <<EOF2;
         </select>
@@ -367,16 +367,18 @@ EOF
         <b>Database:</b></td><td>
         <select name="Database">
 EOF2
-    my @sorted_dbs =
-      sort {lc $a cmp lc $b}
-      map { s/^\s+|\s+$//g; $_; }
-      (split(/\t/, $Choices{"Database"}));
-    foreach my $x (@sorted_dbs) {
-	print "        <option value=\"$Db{$x}\"";
-	if ($in{"Database"} eq $Db{$x}) {
-	    print " selected";
-	}
-	print ">$x\n";
+    my %unsorted_dbs =
+        map { my $a = $b = $_;
+              $a =~ s/^\s+|\s+$//g;
+              ($a => $b); }
+            (split(/\t/, $Choices{"Database"}));
+    foreach my $k (sort {lc $a cmp lc $b} keys %unsorted_dbs) {
+        my $v = $unsorted_dbs{$k};
+        print "        <option value=\"$Db{$v}\"";
+        if ($in{"Database"} eq $Db{$v}) {
+            print " selected";
+        }
+        print ">$k\n";
     }
     print <<EOF3;
         </select>
