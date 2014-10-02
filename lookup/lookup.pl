@@ -229,7 +229,7 @@ sub init {
 	    ++$flag;
 	    chomp;
 	    last LOOP if  /^Strategies/;
-	    /^\s(\S+)\s(.*)$/;
+	    /^\s+(\S+)\s+(.*?)\s*$/;
 	    ($name,$desc) = ($1, $2);
 	    $Choices{"Database"} .= "\t$desc";
 	    $Db{$desc} = $name;
@@ -369,7 +369,6 @@ EOF
 EOF2
     my @sorted_dbs =
       sort {lc $a cmp lc $b}
-      map { s/^\s+|\s+$//g; $_; }
       (split(/\t/, $Choices{"Database"}));
     foreach my $x (@sorted_dbs) {
 	print "        <option value=\"$Db{$x}\"";
