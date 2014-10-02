@@ -102,6 +102,7 @@ if( ! defined( $check ) )
     }
     #print "<pre>".Dumper(\%glosses)."</pre>";
     #print "<pre>".Dumper(\%places)."</pre>";
+    utf8::decode($defrow->{'langrealname'});
     </%perl>
 
 <font size="+3">
