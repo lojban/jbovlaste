@@ -69,9 +69,8 @@
 	$entry .= " " . escapetex("${$valsirow}{'definition'}", $lang);
 	if( ${$valsirow}{'notes'} )
 	{
-	    $entry .= " (".
-		escapeall(${$valsirow}{'notes'})
-		.")";
+	    $entry .= " – ".
+		escapeall(${$valsirow}{'notes'});
 	}
 
 	push @lojbanToNatLangEntries, $entry;
