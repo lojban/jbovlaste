@@ -115,7 +115,7 @@
 
         if( ${$nlwbgrow}{'place'} > 0 )
         {
-            $entry .= ", place ${$nlwbgrow}{'place'}";
+          $entry .= '$_' . $nlwbgrow->{'place'} . '$';
         }
 
         push @natLangToLojbanEntries, $entry;
