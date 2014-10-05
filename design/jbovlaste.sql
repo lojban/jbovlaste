@@ -101,7 +101,7 @@ CREATE TABLE valsitypes (
 INSERT INTO valsitypes (typeId, descriptor) VALUES (0, 'nalvla');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (1, 'gismu');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (2, 'cmavo');
-INSERT INTO valsitypes (typeId, descriptor) VALUES (3, 'cmene');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (3, 'cmevla');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (4, 'lujvo');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (5, 'fu\'ivla');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (6, 'cmavo-compound');
@@ -109,14 +109,14 @@ INSERT INTO valsitypes (typeId, descriptor) VALUES (7, 'experimental gismu');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (8, 'experimental cmavo');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (9, 'bu-letteral');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (10, 'zei-lujvo');
-INSERT INTO valsitypes (typeId, descriptor) VALUES (11, 'obsolete cmene');
+INSERT INTO valsitypes (typeId, descriptor) VALUES (11, 'obsolete cmevla');
 INSERT INTO valsitypes (typeId, descriptor) VALUES (12, 'obsolete fu\'ivla');
 
 -- table of lojban words
 CREATE TABLE valsi (
   valsiId serial primary key, -- the unique id
   word text not null unique,  -- the word itself
-  typeId int2 references valsitypes, -- gismu, cmavo, lujvo, etc etc
+  typeId int2 not null references valsitypes, -- gismu, cmavo, lujvo, etc etc
   userId int4 not null,       -- user id of the submitter
   rafsi text,		      -- space-seperated list of rafsi this word has, if any
   time int4 not null          -- time of submission
@@ -130,6 +130,8 @@ ALTER TABLE valsi ADD CONSTRAINT valsi_userId
  FOREIGN KEY (userId) REFERENCES users MATCH FULL;
 
 CREATE INDEX valsi_lower_word ON valsi(lower(word));
+
+CREATE UNIQUE INDEX valsi_unique_word_nospaces ON valsi (replace(word, ' ', ''));
 
 -- words, things, etc in natural languages, probably be a big big table
 CREATE TABLE natlangwords (
@@ -317,7 +319,7 @@ CREATE TABLE xrefs (
 );
 
 -- stores origin information for a word
--- * particularly useful for fu'ivla and cmene
+-- * particularly useful for fu'ivla and cmevla
 -- * could also be used to store the whatnot that went into the gismu
 -- * creation algorithm, in the case of gismu.
 

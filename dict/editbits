@@ -172,15 +172,15 @@ necessary.
 <%perl>
 if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
     !( $type eq "cmavo" || $type eq "cmavo-compound" ||
-	$type eq "experimental cmavo" || $type eq "cmene" ||
-	$type eq "obsolete cmene" || $type eq "bu-letteral" ) ) {
+	$type eq "experimental cmavo" || $type eq "cmevla" ||
+	$type eq "obsolete cmevla" || $type eq "bu-letteral" ) ) {
     $notready = 1;
 </%perl>
 
     <p><strong><font color="red">WARNING!</font></strong>
 	I see that there are less than two dollar signs in your
 	definition.  This implies that your word has no place
-	structure. This is only okay for cmavo and cmene. However, it
+	structure. This is only okay for cmavo and cmevla. However, it
         appears that your word is of type: <strong><% $type %></strong>.
 	Please <a
 	href="../help/definitions.html">read the instructions</a>.
