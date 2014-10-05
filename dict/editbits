@@ -131,6 +131,11 @@ if( ! defined($definitiontxt) || defined($check) ||
     utf8::decode($definitiontxt);
     utf8::decode($jargon);
     utf8::decode($notes);
+
+    $notes =~ s/\s*[\r\n]+\s*/ /g;
+    $notes =~ s/^\s+//g;
+    $notes =~ s/\s+$//g;
+
 </%perl>
 
 <form method="post" action="<% $actionPage %>">
@@ -280,7 +285,7 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
    <td>
     <textarea rows="4" cols="60" name="notes"><% $notes | h %></textarea>
    </td>
-   <td>Please do not insert any newlines.  <strong>Please link to 
+   <td>Line breaks will be converted to spaces. <strong>Please link to 
    other valsi you use! (wrap them in {...})</strong></td>
   </tr>
   <tr>
