@@ -1,0 +1,9 @@
+
+BEGIN;
+
+  ALTER TABLE valsi 
+  ALTER COLUMN typeid
+  SET NOT NULL;
+
+COMMIT;
+
