@@ -24,9 +24,9 @@ Adding valsi <% $valsi %>
 
 <%perl>
 
-my @result = $dbh->selectrow_array("SELECT count(*) FROM valsi WHERE word=?",{},$valsi);
+my @result = $dbh->selectrow_array("SELECT word FROM valsi WHERE replace(word, ' ', '')=?",{},$valsi);
 
-   if($result[0]<1) {
+   if (! $result[0]) {
 
 use Digest::MD5 qw(md5_hex);
 my $typestr = utils::vlatai($valsi);
@@ -83,7 +83,7 @@ Initial Definition In:
 
 <%perl>
    } else {
-       $m->redirect( $valsi );
+       $m->redirect( $result[0] );
    }
 
  } else {
