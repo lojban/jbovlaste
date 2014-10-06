@@ -78,7 +78,6 @@
 
     ####
 
-    my $natLangToLojban;
     my @natLangToLojbanEntries;
 
     my $nlquery = $dbh->prepare("
@@ -91,7 +90,7 @@
       JOIN natlangwords nlw
         ON nlw.wordid = nlwbg.natlangwordid
       WHERE vbg.langid=$langid
-      ORDER BY valsi, nlw.word
+      ORDER BY nlw.word
       ");
     $nlquery->execute;
 
@@ -115,14 +114,13 @@
 
         if( ${$nlwbgrow}{'place'} > 0 )
         {
-          $entry .= '$_' . $nlwbgrow->{'place'} . '$';
+            $entry .= '$_{' . $nlwbgrow->{'place'} . '}$';
         }
 
         push @natLangToLojbanEntries, $entry;
     }
 
-    $lojbanToNatLang = join('', sort dictcollate @lojbanToNatLangEntries);
-    $natLangToLojban = join('', sort dictcollate @natLangToLojbanEntries);
+    $lojbanToNatLang = join('', @lojbanToNatLangEntries);
 
     my $escapedlang = escapeall($langrealname);
 
@@ -138,6 +136,7 @@
       $vlaste_languages = "la .lojban. jo'u la'o zoi $escapedlang zoi";
       my $vlaste_from_jbo  = "fanva fi la'o zoi $escapedlang zoi";
       my $vlaste_to_jbo    = "fanva fo la'o zoi $escapedlang zoi";
+      my $natLangToLojban = join('', @natLangToLojbanEntries);
       $content =
         qq(\\chapter{$vlaste_from_jbo}).
         $lojbanToNatLang.
@@ -209,15 +208,6 @@
     # Get the xelatex generated file's name.
     my $pdffilename=$shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
-
-    sub dictcollate {
-      my $to_be_ignored = $unofficialwarning;
-      my $temp_a = $a;
-      my $temp_b = $b;
-      $temp_a =~ s/\Q$to_be_ignored\E//;
-      $temp_b =~ s/\Q$to_be_ignored\E//;
-      lc($temp_a) cmp lc($temp_b);
-    }
 
     sub escapeall {
       my $term = shift;
