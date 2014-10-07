@@ -219,7 +219,7 @@ if ($use_definitions) {
 	next if $check_only;
 
 	# Process a valsi.
-	sleep 10;
+	#sleep 10;
 	print "$valsi: " unless $quiet;
 	# Check is the valsi already in the dictionary.
 	my $currurl = "$url/dict/$valsi";
@@ -437,6 +437,12 @@ sub gethidden {
 		$$hidden{$name} = "";
 		if ($tag =~/value="([^"]*)"/s) {
 		    my $val = $1;
+		    my $str = "$val";
+			my $find = "&#39;";
+			my $replace = "'";
+			$find = quotemeta $find; # escape regex metachars if present
+			$str =~ s/$find/$replace/g;
+			$val = $str;
 		    print STDERR "\nAdd hidden field: '$name' = '$val'\n" if $verbose > 2;
 		    $$hidden{$name} = $val;
 		}
