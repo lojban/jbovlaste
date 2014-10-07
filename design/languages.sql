@@ -74,7 +74,7 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('eu', 'Basque', 'skalduna', 'Euskara');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
- VALUES ('be', 'Belarusian', 'labru''obau', 'Беларуски');
+ VALUES ('be', 'Belarusian', 'labru''obau', 'Беларуская');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('id', 'Indonesian', 'bidbau', 'Bahasa Indonesia');
 --INSERT INTO languages (tag, englishname, lojbanname, realname)
