@@ -206,7 +206,7 @@
             ON t.typeid = v.typeid
           WHERE vbg.langid=$langid");
       $valsiquery->execute;
-      my $valsirows = $valsiquery->fetchall_arrayref();
+      my $valsirows = $valsiquery->fetchall_arrayref({}); # fetch as hashrefs
 
       # database sort handles apostrophes badly
       my @sorted_valsi = sort dictcollate @$valsirows;
