@@ -17,29 +17,10 @@
 
     ####
 
-    my $lojbanToNatLang;
+    # Build the lojban -> foo section
     my @lojbanToNatLangEntries;
-
-    # Get the valsi best guesses list.
-    my $valsiquery = $dbh->prepare("
-        SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor
-        FROM valsibestguesses vbg
-        JOIN valsi v
-          ON v.valsiid = vbg.valsiid
-        JOIN convenientdefinitions c
-          ON c.definitionid = vbg.definitionid
-        JOIN valsitypes t
-          ON t.typeid = v.typeid
-        WHERE vbg.langid=$langid
-        ORDER BY v.word");
-    $valsiquery->execute;
-
-    # my $valsibestguesses 
-    # v.word, vbg.* hashed by word
-
-    # Print the lojban -> foo section
-    while(defined(my $valsirow=$valsiquery->fetchrow_hashref))
-    {
+    my $valsirows = fetch_sorted_valsi($langid);
+    foreach $valsirow (@$valsirows) {
 	my $entry .= "\n\n{\\sffamily\\bfseries ";
 
         # Alert about non-standard entries
@@ -75,6 +56,7 @@
 
 	push @lojbanToNatLangEntries, $entry;
     }
+    undef $valsirows;
 
     ####
 
@@ -120,7 +102,7 @@
         push @natLangToLojbanEntries, $entry;
     }
 
-    $lojbanToNatLang = join('', @lojbanToNatLangEntries);
+    my $lojbanToNatLang = join('', @lojbanToNatLangEntries);
 
     my $escapedlang = escapeall($langrealname);
 
@@ -208,6 +190,32 @@
     # Get the xelatex generated file's name.
     my $pdffilename=$shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
+
+    sub fetch_sorted_valsi {
+      my $langid = shift;
+
+      # Get the valsi best guesses list.
+      my $valsiquery = $dbh->prepare("
+          SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor
+          FROM valsibestguesses vbg
+          JOIN valsi v
+            ON v.valsiid = vbg.valsiid
+          JOIN convenientdefinitions c
+            ON c.definitionid = vbg.definitionid
+          JOIN valsitypes t
+            ON t.typeid = v.typeid
+          WHERE vbg.langid=$langid");
+      $valsiquery->execute;
+      my $valsirows = $valsiquery->fetchall_arrayref();
+
+      # database sort handles apostrophes badly
+      my @sorted_valsi = sort dictcollate @$valsirows;
+      return \@sorted_valsi;
+    }
+
+    sub dictcollate {
+      lc($a->{'word'}) cmp lc($b->{'word'});
+    }
 
     sub escapeall {
       my $term = shift;
