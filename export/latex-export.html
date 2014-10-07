@@ -20,7 +20,7 @@
     # Build the lojban -> foo section
     my @lojbanToNatLangEntries;
     my $valsirows = fetch_sorted_valsi($langid);
-    foreach $valsirow (@$valsirows) {
+    foreach my $valsirow (@$valsirows) {
 	my $entry .= "\n\n{\\sffamily\\bfseries ";
 
         # Alert about non-standard entries
