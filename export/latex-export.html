@@ -1,254 +1,42 @@
 <%perl>
 
-    our $unofficialwarning = '$\\triangle$ ';
+    # INPUT: $dbh, $lang
 
-    # Make a temp directory and file.
     mkdir "/tmp/jbovlaste_export/";
-    my $dir = tempdir( DIR => "/tmp/jbovlaste_export/" );
-    my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
+    my $dir = tempdir(DIR => "/tmp/jbovlaste_export/");
 
-    open(TMP, ">$filename") or die "Couldn't open a temporary file.\n";
+    my $filename = generate_latex_file($dir, $dbh, $lang);
+    generate_pdf_file($dir, $filename);
 
-    my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang);
-    my $langid = $dbh->selectrow_array("SELECT langId FROM languages WHERE tag=?", undef, $lang);
-
-    my $shortfilename=$filename;
+    my $shortfilename = $filename;
     $shortfilename =~ s{/tmp/jbovlaste_export}{/jbovlaste_export};
-
-    ####
-
-    # Build the lojban -> foo section
-    my @lojbanToNatLangEntries;
-    my $valsirows = fetch_sorted_valsi($langid);
-    foreach my $valsirow (@$valsirows) {
-	my $entry .= "\n\n{\\sffamily\\bfseries ";
-
-        # Alert about non-standard entries
-        my $valsitype = $valsirow->{'descriptor'};
-        if ($valsitype =~ /^(experimental|obsolete)/) { $entry .= $unofficialwarning};
-	
-        my $escapedword = escapeall($valsirow->{'word'});
-        $entry .= $escapedword ."}";
-
-	# \markboth is for the top-of-page markings.
-	$entry .= "\\markboth{". $escapedword . "}{" . $escapedword . "}";
-
-	# Clear out silly rafsi spaces
-	my $rafsi = escapeall( ${$valsirow}{'rafsi'} );
-        $rafsi = compact($rafsi);
-
-	if( $rafsi )
-	{
-	    $entry .= "\\enspace {\\ttfamily\\bfseries[$rafsi]} "
-	}
-	if( ${$valsirow}{'selmaho'} )
-	{
-	    $entry .= "\\enspace {\\sffamily\\bfseries[".
-		escapeall(${$valsirow}{'selmaho'})
-		."]} "
-	}
-	$entry .= " " . escapetex("${$valsirow}{'definition'}", $lang);
-	if( ${$valsirow}{'notes'} )
-	{
-	    $entry .= " – ".
-		escapeall(${$valsirow}{'notes'});
-	}
-
-	push @lojbanToNatLangEntries, $entry;
-    }
-    undef $valsirows;
-
-    ####
-
-    my @natLangToLojbanEntries;
-
-    my $nlquery = $dbh->prepare("
-      SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
-      FROM valsibestguesses vbg
-      JOIN valsi v
-        ON v.valsiid = vbg.valsiid
-      JOIN natlangwordbestguesses nlwbg
-        ON nlwbg.definitionid = vbg.definitionid
-      JOIN natlangwords nlw
-        ON nlw.wordid = nlwbg.natlangwordid
-      WHERE vbg.langid=$langid
-      ORDER BY nlw.word
-      ");
-    $nlquery->execute;
-
-    while(defined(my $nlwbgrow=$nlquery->fetchrow_hashref))
-    {
-        my $escapedword = escapeall(${$nlwbgrow}{'word'});
-
-        my $entry .= "\n\n{\\sffamily\\bfseries ". $escapedword ."} ";
-
-        # \markboth is for the top-of-page markings.
-        $entry .= "\\markboth{". $escapedword ."}{". $escapedword ."}";
-
-        if( ${$nlwbgrow}{'meaning'} )
-        {
-            $entry .= "\\textit{(".
-                escapeall(${$nlwbgrow}{'meaning'})
-                .")} ";
-        }
-
-        $entry .= " " . escapeall($nlwbgrow->{'valsi'});
-
-        if( ${$nlwbgrow}{'place'} > 0 )
-        {
-            $entry .= '$_{' . $nlwbgrow->{'place'} . '}$';
-        }
-
-        push @natLangToLojbanEntries, $entry;
-    }
-
-    my $lojbanToNatLang = join('', @lojbanToNatLangEntries);
-
-    my $escapedlang = escapeall($langrealname);
-
-    my ($vlaste_languages, $content);
-    if ($escapedlang eq "lojban") {
-      $vlaste_languages = "la .lojban.";
-      my $vlaste_from_jbo  = "lo smuni be bau la .lojban.";
-      $content =
-        qq(\\chapter{$vlaste_from_jbo}).
-        $lojbanToNatLang;
-    }
-    else {
-      $vlaste_languages = "la .lojban. jo'u la'o zoi $escapedlang zoi";
-      my $vlaste_from_jbo  = "fanva fi la'o zoi $escapedlang zoi";
-      my $vlaste_to_jbo    = "fanva fo la'o zoi $escapedlang zoi";
-      my $natLangToLojban = join('', @natLangToLojbanEntries);
-      $content =
-        qq(\\chapter{$vlaste_from_jbo}).
-        $lojbanToNatLang.
-        "\n".
-        qq(\\chapter{$vlaste_to_jbo}).
-        $natLangToLojban;
-    }
-    my $vlaste_title = "lo vlaste be fu $vlaste_languages";
-
-    my @d = localtime;
-    my $jbo_date = "de'i li " . (1900 + $d[5]) . " pi'e " . (1 + $d[4]) . " pi'e " . $d[3];
-
-    print TMP q(
-%!TEX encoding = UTF-8 Unicode
-%!TEX TS-program = xelatex
-\documentclass[notitlepage,twocolumn,a4paper,10pt]{book}
-\renewcommand\chaptername{ni'o ni'o}
-
-\usepackage{underscore}
-
-\usepackage{fancyhdr} % important, lets us actually pull this stuff off.
-\pagestyle{fancy}     % turns on the magic provided by fancyhdr
-
-% Packages from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
-\usepackage{xunicode} % for XeTeX!
-\usepackage{fontspec} % for XeTeX!
-\usepackage{xltxtra} % for XeTeX!
-
-\usepackage{fontspec}
-
-% Font definitions mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
-\defaultfontfeatures{Scale=MatchLowercase}% to adjust all used fonts to the same x-height
-\setromanfont[Mapping=tex-text]{Linux Libertine O}
-\setsansfont[Mapping=tex-text]{Linux Biolinum O}
-
-\usepackage{xeCJK}
-\setCJKmainfont[Mapping=tex-text]{Code2000}
-
-\fancyhead{}          % empty out the header
-\fancyfoot{}          % empty out the footer
-\fancyhead[LE,LO]{\rightmark} % left side, odd and even pages
-\fancyhead[RE,RO]{\leftmark}  % right side, odd and even pages
-\fancyfoot[LE,RO]{\thepage}   % left side even, right side odd
-
-\setlength{\parindent}{1 em}
-
-\title{). $vlaste_title . q(}
-\author{lo jboce'u}
-\date{). $jbo_date . q(}
-
-\begin{document}
-
-\maketitle
-
-). $content .q(
-
-\end{document}
-);
-#$joinedwords
-
-    close( TMP );
-
-    chdir $dir;
-
-    my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
-
-    print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre> -->\n";
-
-    # Get the xelatex generated file's name.
-    my $pdffilename=$shortfilename;
+    my $pdffilename = $shortfilename;
     $pdffilename =~ s/.tex$/.pdf/;
 
-    sub fetch_sorted_valsi {
-      my $langid = shift;
+    # OUTPUT: $shortfilename, $pdffilename
 
-      # Get the valsi best guesses list.
-      my $valsiquery = $dbh->prepare("
-          SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor
-          FROM valsibestguesses vbg
-          JOIN valsi v
-            ON v.valsiid = vbg.valsiid
-          JOIN convenientdefinitions c
-            ON c.definitionid = vbg.definitionid
-          JOIN valsitypes t
-            ON t.typeid = v.typeid
-          WHERE vbg.langid=$langid");
-      $valsiquery->execute;
-      my $valsirows = $valsiquery->fetchall_arrayref({}); # fetch as hashrefs
+    ####
 
-      # database sort handles apostrophes badly
-      my @sorted_valsi = sort dictcollate @$valsirows;
-      return \@sorted_valsi;
+    sub generate_latex_file {
+        my ($dir, $dbh, $lang) = @_;
+        my ($fh, $filename) = tempfile(DIR => $dir, SUFFIX => ".tex");
+        my $latex = generate_latex($dbh, $lang);
+        write_file($filename, $latex);
+        $filename;
     }
 
-    sub dictcollate {
-      lc($a->{'word'}) cmp lc($b->{'word'});
+    sub write_file {
+        my ($filename, $content) = @_;
+        open(TMP, ">$filename") or die "couldn't open a temporary file.\n";
+        print TMP $content;
+        close(TMP);
     }
 
-    sub escapeall {
-      my $term = shift;
-      $term =~ s/\\/\\textbackslash{}/g;
-      $term =~ s/(?<!\\textbackslash)([{])/\\$1/g;
-      $term =~ s/(?<!\\textbackslash{)([}])/\\$1/g;
-      $term =~ s/\~/\\textasciitilde{}/g;
-      $term =~ s/\^/\\textasciicircum{}/g;
-      $term =~ s{/}{\\slash{}}g;
-      $term =~ s/([#\%\&\$_])/\\$1/g;
-      return $term;
-    }
-
-    # allow $ _ {} ^ (used in tex definitions)
-    sub escapetex {
-      my $term = shift;
-      my $lang = shift;
-      $term =~ s/\\/\\textbackslash{}/g;
-      $term =~ s/\~/\\textasciitilde{}/g;
-      if ($lang eq 'art-guaspi') {
-        $term =~ s/\^/\\textasciicircum{}/g;
-      }
-      $term =~ s{/}{\\slash{}}g;
-      $term =~ s/([#\%\&])/\\$1/g;
-      return $term;
-    }
-
-    sub compact {
-      my $text = shift;
-      $text =~ s/\s+$//;
-      $text =~ s/^\s+//;
-      $text =~ s/\s+/ / ;
-      return $text;
+    sub generate_pdf_file {
+        my ($dir, $filename) = @_;
+        chdir $dir;
+        my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
+        print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre> -->\n";
     }
 
 </%perl>
@@ -269,6 +57,7 @@
     our($dbh);
     use File::Temp qw{ tempfile tempdir };
     use POSIX;
+    use JbovlasteLaTeX qw { generate_latex };
 </%init>
 
 <%args>
