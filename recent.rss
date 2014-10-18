@@ -138,12 +138,12 @@ SWITCH:
 	    last SWITCH;
 	}
 	if($row->{'type'} eq 'comment') {
-	    $m->out(sprintf('<title type="text">new comment "%s" on %s%s by %s</title>'."\n",
+	    $m->out(sprintf('<title>new comment "%s" on %s%s by %s</title>'."\n",
 			$m->interp->apply_escapes($row->{'word'}, 'h'),
 			(&wordlink($row,$vq,$nlwq))[2], $langreal, 
 			                  $row->{'username'}
 			));
-            $m->out(sprintf('<link>%s<link/>', $m->interp->apply_escapes(&commentlink($row), 'h')));
+            $m->out(sprintf('<link>%s</link>', $m->interp->apply_escapes(&commentlink($row), 'h')));
 	    $m->out(sprintf('<description><![CDATA[new comment <a href="%s">%s</a> by <a
 			href="personal/%s">%s</a>; see <a
 			href="%s/%s">%s</a>%s]]></description>'."\n",
