@@ -9,6 +9,7 @@ sub generate_latex {
     my ($dbh, $lang) = @_;
 
     my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang);
+    utf8::decode($langrealname);
     my $escapedlang = escapeall($langrealname);
 
     my $title = generate_title($escapedlang);
@@ -85,6 +86,10 @@ sub fetch_sorted_valsi {
       where vbg.langid=$langid");
   $valsiquery->execute;
   my $valsirows = $valsiquery->fetchall_arrayref({}); # fetch as hashrefs
+  foreach my $valsirow (@$valsirows) {
+    utf8::decode($valsirow->{'definition'});
+    utf8::decode($valsirow->{'notes'});
+  }
 
   # database collation handles apostrophes badly
   my @sorted_valsi = sort dictcollate @$valsirows;
@@ -203,6 +208,8 @@ sub generate_natural_chapter {
     my $entries = '';
     my $nlquery = execute_natural_query($dbh, $langid);
     while(defined(my $nlwbgrow = $nlquery->fetchrow_hashref())) {
+        utf8::decode($nlwbgrow->{'word'});
+        utf8::decode($nlwbgrow->{'meaning'});
         my $entry = format_natural_entry($nlwbgrow);
         $entries .= $entry;
     }
