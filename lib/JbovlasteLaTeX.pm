@@ -185,7 +185,7 @@ sub escapetex {
 
 sub format_notes {
     my $notes = shift;
-    $notes ? (" – " . escapeall($notes)) : "";
+    $notes ? (" – " . escapetex($notes)) : "";
 }
 
 sub generate_lojban_and_natural_chapters {
