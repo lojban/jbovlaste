@@ -37,6 +37,14 @@ my $verifier = &produce_verifier($valsi.$typestr);
 <p>Sorry, that isn't actually a word in Lojban.</p>
 %   return;
 % }
+% elsif ($typestr eq "valslinku'i") {
+<p>That is a "<a href="http://www.lojban.org/tiki/slinku'i">slinku'i</a>" and is not allowed.</p>
+%   return;
+% }
+% elsif ($typestr eq "valrtosmabru") {
+<p>That is a "<a href="http://www.lojban.org/tiki/tosmabru">tosmabru</a>" and is not allowed.</p>
+%   return;
+% }
 
 <p>So. You want to add a valsi to the database.</p>
 
