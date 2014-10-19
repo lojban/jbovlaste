@@ -173,10 +173,10 @@ SWITCH:
 			$row->{'username'}, $row->{'username'},
 			&wordlink($row,$vq,$nlwq), $langreal
 			));
-			      if (defined $row->{'content'}) {
-                $m->out(sprintf('<content type="text">%s</content>'."\n",
-                                $m->interp->apply_escapes($row->{'content'}, 'h')));
-            }
+      #if (defined $row->{'content'}) {
+      #    $m->out(sprintf('<content type="text">%s</content>'."\n",
+      #                    $m->interp->apply_escapes($row->{'content'}, 'h')));
+      #}
 	    last SWITCH;
 	}
 	if(1) {
