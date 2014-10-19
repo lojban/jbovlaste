@@ -1,14 +1,26 @@
-% use POSIX qw(strftime);
-% my $now = time();
-% my $back_time = $now - (60 * 60 * 24 * $days);
-% $r->content_type('application/atom+xml');
+<%perl>
+  use POSIX qw(strftime);
+
+  my $self_url;
+  if ($days) {
+    $self_url = "http://jbovlaste.lojban.org/recent.atom?days=${days}";
+  }
+  else {
+    $days = 7;
+    $self_url = "http://jbovlaste.lojban.org/recent.atom";
+  }
+
+  my $now = time();
+  my $back_time = $now - (60 * 60 * 24 * $days);
+  $r->content_type('application/atom+xml');
+</%perl>
 <?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title>jbovlaste</title>
   <id>http://jbovlaste.lojban.org/</id>
   <link href="http://jbovlaste.lojban.org/"/>
-  <link rel="self" href="http://jbovlaste.lojban.org/recent.atom?days=<% $days %>"/>
+  <link rel="self" href="<% $self_url %>"/>
   
 %# type, word, valsiid, natlangwordid, id0, id1, content, username, time, itemid
 
@@ -211,5 +223,5 @@ our($dbh);
 </%init>
 
 <%args>
-$days => 7
+$days => undef
 </%args>
