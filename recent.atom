@@ -123,7 +123,7 @@ while(defined(my $row = $query->fetchrow_hashref))
     }
 
     $m->out(sprintf("<entry><updated>%s</updated>" .
-                    "<!--<author><name>%s</name><uri>personal/%s</uri></author>-->", 
+                    "<author><name>%s</name><uri>personal/%s</uri></author>",
                     $m->interp->apply_escapes($updated, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'h'), 
                     $m->interp->apply_escapes($row->{'username'}, 'u', 'h')));
@@ -145,7 +145,8 @@ SWITCH:
 
 	if($row->{'type'} eq 'valsi' ||
 		$row->{'type'} eq 'definition' ||
-		$row->{'type'} eq 'etymology')
+		$row->{'type'} eq 'etymology', ||
+		$row->{'type'} eq 'example')
 	{
 	
             $m->out(sprintf('<link href="dict/%s"/>', $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
