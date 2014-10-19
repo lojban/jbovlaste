@@ -166,26 +166,50 @@ sub format_selmaho {
 
 sub format_definition {
     my ($definition, $lang) = @_;
-    " " . escapetex($definition, $lang);
+    my $carets_are_literal = ($lang eq 'art-guaspi');
+    " " . escapetex($definition, $carets_are_literal);
 }
 
-# allow $ _ {} ^ (used in tex definitions)
+# allow $ _ {} and sometimes ^ (used in tex definitions / notes)
 sub escapetex {
-    my $term = shift;
-    my $lang = shift;
+    my ($term, $escape_carets) = @_;
+
+    $term =~ s/>/\\textgreater{}/g;
+    $term =~ s/</\\textless{}/g;
+
+    $term =~ s/–/\\textendash{}/g;
+    $term =~ s/—/\\textemdash{}/g;
+
     $term =~ s/\\/\\textbackslash{}/g;
+
     $term =~ s/\~/\\textasciitilde{}/g;
-    if ($lang eq 'art-guaspi') {
+
+    if ($escape_carets) {
         $term =~ s/\^/\\textasciicircum{}/g;
     }
+
     $term =~ s{/}{\\slash{}}g;
+
     $term =~ s/([#\%\&])/\\$1/g;
+
     $term;
 }
 
 sub format_notes {
     my $notes = shift;
-    $notes ? (" – " . escapetex($notes)) : "";
+    my $formatted = "";
+    if ($notes && snifftex($notes)) {
+        $formatted = " \\textemdash{} " . escapetex($notes); # carets == TeX
+    }
+    elsif ($notes) {
+        $formatted = " \\textemdash{} " . escapeall($notes);
+    }
+    $formatted;
+}
+
+sub snifftex {
+  my $text = shift;
+  !! ($text =~ /\$/);
 }
 
 sub generate_lojban_and_natural_chapters {
