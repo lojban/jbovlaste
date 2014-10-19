@@ -130,7 +130,7 @@ SWITCH:
 		$row->{'type'} eq 'example')
 	{
             my $word = $row->{'word'};
-            $m->out("<guid>$row->{'type'}-${word}-${updated}</guid>");
+            $m->out("<guid isPermaLink="false">$row->{'type'}-${word}-${updated}</guid>");
 	    $m->out(sprintf('<title>%s "%s"%s originally created by %s</title>' . "\n", $row->{'type'},
 			$word, $langreal, $row->{'username'}
 			));
@@ -143,7 +143,7 @@ SWITCH:
 	if($row->{'type'} eq 'comment') {
             my $subject = $row->{'word'};
             my @word_links = wordlink($row, $vq, $nlwq);
-            $m->out("<guid>$row->{'type'}-$word_links[2]-${updated}</guid>");
+            $m->out("<guid isPermaLink="false">$row->{'type'}-$word_links[2]-${updated}</guid>");
 	    $m->out(sprintf('<title>new comment "%s" on %s%s by %s</title>'."\n",
 			$m->interp->apply_escapes($subject, 'h'),
 			($word_links[2], $langreal, $row->{'username'})));
