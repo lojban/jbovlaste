@@ -131,7 +131,7 @@ SWITCH:
 	    $m->out(sprintf('<title>%s "%s"%s originally created by %s</title>' . "\n", $row->{'type'},
 			$row->{'word'}, $langreal, $row->{'username'}
 			));
-            $m->out(sprintf('<link>dict/%s</link>', $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
+            $m->out(sprintf("<link>${url_base}/dict/%s</link>", $m->interp->apply_escapes($row->{'word'}, 'u', 'h')));
 	    $m->out(sprintf(qq{<description><![CDATA[%s update by <a href="${url_base}/personal/%s">%s</a>; see <a href="${url_base}/dict/%s">%s</a>%s]]></description>} . "\n", $row->{'type'},
 			$row->{'username'}, $row->{'username'},
 			$row->{'word'}, $row->{'word'}, $langreal
@@ -144,7 +144,7 @@ SWITCH:
 			(&wordlink($row,$vq,$nlwq))[2], $langreal, 
 			                  $row->{'username'}
 			));
-            $m->out(sprintf('<link>%s</link>', $m->interp->apply_escapes(&commentlink($row), 'h')));
+            $m->out(sprintf("<link>${url_base}/%s</link>", $m->interp->apply_escapes(&commentlink($row), 'h')));
 	    $m->out(sprintf(qq{<description><![CDATA[new comment <a href="${url_base}/%s">%s</a> by <a
 			href="${url_base}/personal/%s">%s</a>; see <a
 			href="${url_base}/%s/%s">%s</a>%s]]></description>}."\n",
