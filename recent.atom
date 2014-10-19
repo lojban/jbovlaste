@@ -145,7 +145,7 @@ SWITCH:
 
 	if($row->{'type'} eq 'valsi' ||
 		$row->{'type'} eq 'definition' ||
-		$row->{'type'} eq 'etymology', ||
+		$row->{'type'} eq 'etymology' ||
 		$row->{'type'} eq 'example')
 	{
 	
