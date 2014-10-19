@@ -4,12 +4,13 @@
 % my $back_time = $now - (60 * 60 * 24 * $days);
 % $r->content_type('application/rss+xml');
 <?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
 
     <title>jbovlaste</title>
     <link>http://jbovlaste.lojban.org</link>
     <description>jbovlaste recent activity</description>
+    <atom:link href="http://jbovlaste.lojban.org/recent.rss" rel="self" type="application/rss+xml" />
 
 %# type, word, valsiid, natlangwordid, id0, id1, content, username, time, itemid
 
