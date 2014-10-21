@@ -5,6 +5,9 @@ use utf8;
 use Exporter qw(import);
 @EXPORT_OK = qw( generate_latex );
 
+our $JAPANESE = 'ja';
+our $GUASPI   = 'art-guaspi';
+
 sub generate_latex {
     my ($dbh, $lang) = @_;
 
@@ -15,7 +18,7 @@ sub generate_latex {
     my $title = generate_title($escapedlang);
     my $chapters = generate_chapters($dbh, $lang, $escapedlang);
 
-    latex_header($title) .
+    latex_header($title, $lang) .
         "\n" .
         $chapters .
         "\n" .
@@ -166,7 +169,7 @@ sub format_selmaho {
 
 sub format_definition {
     my ($definition, $lang) = @_;
-    my $carets_are_literal = ($lang eq 'art-guaspi');
+    my $carets_are_literal = ($lang eq $GUASPI);
     " " . escapetex($definition, $carets_are_literal);
 }
 
@@ -293,10 +296,10 @@ sub format_place {
 }
 
 sub latex_header {
-  my $title = shift;
+  my ($title, $lang) = @_;
   my @d = localtime();
   my $jbo_date = "de'i li " . (1900 + $d[5]) . " pi'e " . (1 + $d[4]) . " pi'e " . $d[3];
-  latex_preamble() .
+  latex_preamble($lang) .
       q(
 \title{). $title . q(}
 \author{lo jboce'u}
@@ -309,6 +312,13 @@ sub latex_header {
 }
 
 sub latex_preamble {
+  my $lang = shift;
+  latex_preamble_intro() .
+    latex_preamble_fonts($lang) .
+    latex_preamble_outro();
+}
+
+sub latex_preamble_intro {
   q(
 %!TEX encoding = UTF-8 Unicode
 %!TEX TS-program = xelatex
@@ -327,12 +337,42 @@ sub latex_preamble {
 
 % Font definitions mostly from http://linuxlibertine.sourceforge.net/Libertine-XeTex-EN.pdf
 \defaultfontfeatures{Scale=MatchLowercase}% to adjust all used fonts to the same x-height
+)
+}
+
+sub latex_preamble_fonts {
+  my $lang = shift;
+  latex_preamble_roman_fonts() .
+    latex_preamble_cjk_fonts($lang);
+}
+
+sub latex_preamble_roman_fonts {
+  q(
 \setromanfont[Mapping=tex-text]{Linux Libertine O}
 \setsansfont[Mapping=tex-text]{Linux Biolinum O}
+)
+}
 
+sub latex_preamble_cjk_fonts {
+  my $lang = shift;
+  if ($lang eq $JAPANESE) {
+  q(
+\usepackage{xeCJK}
+\setCJKmainfont{IPAexMincho}
+\setCJKsansfont{IPAexGothic}
+\setCJKmonofont{IPAGothic}
+)
+  }
+  else {
+  q(
 \usepackage{xeCJK}
 \setCJKmainfont[Mapping=tex-text]{Code2000}
+)
+  }
+}
 
+sub latex_preamble_outro {
+  q(
 \fancyhead{}          % empty out the header
 \fancyfoot{}          % empty out the footer
 \fancyhead[LE,LO]{\rightmark} % left side, odd and even pages
