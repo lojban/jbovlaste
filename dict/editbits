@@ -236,7 +236,7 @@ if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~
 # Strip out all the simple {...} pairs; complain if there's
 # something left.
 $stripped=$notes;
-$stripped =~ s/{(\w|:|\|)+}//g;
+$stripped =~ s/{(\w|\'|:|\|)+}//g;
 
 if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ /\$/ ) ) {
 </%perl>
