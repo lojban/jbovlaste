@@ -106,6 +106,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('hu', 'Hungarian', 'banrmadiaru', 'Magyarul');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('lt', 'Lithuanian', 'bangrlietuva', 'Lietuvių');
+INSERT INTO languages (tag, englishname, lojbanname, realname)
+VALUES ('lv', 'Latvian', 'bangrlatfiacu', 'Latviešu');
 
 -- Not totally sure about the lojbanizations here.
 INSERT INTO languages (tag, englishname, lojbanname, realname)
