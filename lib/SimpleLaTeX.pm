@@ -56,7 +56,8 @@ sub interpret {
 	$InputText=$OrigInputText;
 
 	# Make a temp directory and file.
-	my $dir = tempdir( DIR => "/tmp/", CLEANUP => 1 );
+	mkdir "/tmp/jbovlaste_export/";
+	my $dir = tempdir( DIR => "/tmp/jbovlaste_export/", CLEANUP => 1 );
 	my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
 	open(TMP, ">$filename") or return "Couldn't open a temporary file; check your definition for unbalanced dollar signs or other wierd characters.\n";
@@ -83,7 +84,7 @@ sub interpret {
 	close(TMP2);
 
 	# Re-write the image links.
-	$dir =~ s!/tmp!/tmp!;
+	$dir =~ s!/tmp!!;
 	$tmpout =~ s/.*<BODY[^>]*>//s;
 	$tmpout =~ s/<BR[^>]*><HR[^>]*>.*//s;
 	$tmpout =~ s/SRC="/SRC="$dir\//gs;
