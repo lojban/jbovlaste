@@ -170,7 +170,7 @@ what happened leading up to this. Just in case.
  if(defined($cookies{'jbovlastesessionid'})) {
   $cookies{'jbovlastesessionid'} =~ s/\%(..)/chr hex $1/ge;
   my $sessionid = utils::decrypt(decode_base64($cookies{'jbovlastesessionid'}));
-  if($sessionid =~ /^(\d+):(\d+):(\w+):(\d+)$/ &&
+  if($sessionid =~ /^(\d+):(\d+):([\w-]+):(\d+)$/ &&
      ($1 == length($2)+length($3)+length($4))) {
      my @info = split(/:/,$sessionid);
      %session = ( 'userid' => $info[1],
