@@ -6,12 +6,20 @@ use Unicode::String qw(utf8);
 
 use File::Basename;
 use File::Spec;
+use File::Slurp;
+
+use Crypt::CBC;
 
 my $util_dir = dirname(__FILE__);
+my $secret_file = File::Spec->catfile($util_dir, "crypt.secret");
 my $python_dir = File::Spec->catdir($util_dir, "..", "python");
 my $vlatai_path = File::Spec->catfile($python_dir, "camxes-py", "vlatai.py");
 
 my $VLATAI = File::Spec->rel2abs($vlatai_path);
+
+my $cipher = Crypt::CBC->new( -key    => read_file($secret_file),
+                              -cipher => 'Blowfish'
+                             );
 
 sub armorutf8inhtml {
     my $utf8 = utf8(shift());
@@ -30,13 +38,28 @@ sub armorurl {
 sub encrypt {
     my $str = shift;
 
-    return $str;
+    return $cipher->encrypt($str);
 }
 
 sub decrypt {
     my $str = shift;
 
-    return $str;
+    eval {
+        $str = $cipher->decrypt($str);
+    };
+    if ($@) {
+        # Caught error: decryption failed
+        # This is presumably because $str was not actually encrypted.
+        # It doesn't matter what we return, as long as it's not the original $str.
+        # This is because the old implementation was no encryption at all,
+        # and it was used to "encrypt" cookies. These cookies must be regenerated,
+        # so the code calling decrypt() must realize that they are invalid,
+        # and if we returned the original $str then the caller would continue
+        # believing that it was encrypted and we "decrypted" it by doing nothing.
+        return "error";
+    } else {
+        return $str;
+    }
 }
 
 sub vlatai {
