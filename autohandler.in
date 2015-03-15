@@ -145,7 +145,7 @@ what happened leading up to this. Just in case.
     [ "Help", "/help/index.html" ],
     ];
 
-    if(!defined($session{'username'})) {
+    if(defined($session{'username'})) {
 	push @{ $menu }, [ "Change Password", "/changepass.html" ];
     } else {
 	push @{ $menu }, [ "Create Account", "/newaccount.html" ];
