@@ -143,15 +143,8 @@ what happened leading up to this. Just in case.
     [ "Utilities", "/util/index.html" ],
     [ "Status", "/status.html" ],
     [ "Help", "/help/index.html" ],
+    [ "Admin Request", "/moderation.html" ]
     ];
-
-    if(defined($session{'username'})) {
-	push @{ $menu }, [ "Change Password", "/changepass.html" ];
-    } else {
-	push @{ $menu }, [ "Create Account", "/newaccount.html" ];
-    }
-
-    push @{ $menu }, [ "Admin Request", "/moderation.html" ];
 
     if( $m->fetch_next->attr_if_exists('menu') )
     {

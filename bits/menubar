@@ -1,7 +1,10 @@
 <%perl>
  our %session;
  if(defined($session{'username'})) {
-  push @{$menu}, undef, [ 'Personal', "../personal/$session{'username'}" ];
+  push @{$menu}, [ "Change Password", "/changepass.html" ], undef, [ 'Personal', "../personal/$session{'username'}" ];
+ }
+ else {
+  push @{$menu}, [ "Create Account", "/newaccount.html" ];
  }
 </%perl>
 
