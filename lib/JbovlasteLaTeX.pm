@@ -1,7 +1,5 @@
 package JbovlasteLaTeX;
 
-use utf8;
-
 use Exporter qw(import);
 @EXPORT_OK = qw( generate_latex );
 
