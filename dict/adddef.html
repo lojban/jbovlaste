@@ -145,7 +145,11 @@ if( $editbitsret )
     for(my $i=0; $i<=$#glosskeywords; $i++) {
 	next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
 	my @tmp = @{ $glosskeywords[$i] };
+	utf8::decode($tmp[0]);
 	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	if ($meaning) {
+		utf8::decode($meaning);
+	}
 	$dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
 	    'VALUES (?, 0, (SELECT wordid FROM natlangwords '.
 		    'WHERE langid=?::integer AND word=?::text AND '.
@@ -157,7 +161,11 @@ if( $editbitsret )
     for(my $i=0; $i<=$#placekeywords; $i++) {
 	next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
 	my @tmp = @{ $placekeywords[$i] };
+	utf8::decode($tmp[0]);
 	my $meaning = $tmp[1] ? $tmp[1] : undef;
+	if ($meaning) {
+		utf8::decode($meaning);
+	}
 	$dbh->do('INSERT INTO keywordmapping (definitionid, place, natlangwordid) '.
 	    'VALUES (?, ?, (SELECT wordid FROM natlangwords '.
 		    'WHERE langid=?::integer AND word=?::text AND '.
