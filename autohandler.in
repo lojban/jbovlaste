@@ -22,6 +22,7 @@ what happened leading up to this. Just in case.
       $output =~ s/^\s*//s;
       print "$output";
   } else {
+      utf8::decode($output);
 </%perl>
 
 <?xml version="1.0" encoding="utf-8"?>
