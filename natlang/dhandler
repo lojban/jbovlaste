@@ -1,6 +1,7 @@
 <%perl>
  my $query = $m->dhandler_arg;
  my ($lang, $word) = split /\//, $query, 2;
+ utf8::decode($word);
  my $langs = $dbh->selectall_arrayref("SELECT tag,realname FROM languages WHERE langid>0 ORDER BY tag");
  my @langs = map { $_->[0] } @{ $langs };
  my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
