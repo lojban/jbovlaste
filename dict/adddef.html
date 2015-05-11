@@ -131,6 +131,10 @@ if( $editbitsret )
     my @seqvalueresult =
     $dbh->selectrow_array("SELECT nextval('definitions_definitionid_seq')") or die $dbh->errstr;
 
+    utf8::decode($definitiontxt);
+    utf8::decode($notes);
+    utf8::decode($jargon);
+
     $dbh->do("INSERT INTO definitions ".
 	"(definitionid, langid, valsiid, definitionNum, definition,
 	    selmaho, notes, jargon, userid, time) ".

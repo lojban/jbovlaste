@@ -147,6 +147,9 @@ if( $editbitsret )
     my $lang = $dbh->selectrow_array("SELECT langid FROM definitions
 	WHERE definitionid = ?", undef, $definition);
 
+    utf8::decode($definitiontxt);
+    utf8::decode($notes);
+    utf8::decode($jargon);
 
     $dbh->do("UPDATE definitions SET definition=?, notes=?,
 	jargon=?, time=?, selmaho=?
@@ -160,7 +163,11 @@ if( $editbitsret )
     {
 	next unless (defined $glosskeywords[$i] && $glosskeywords[$i]->[0]);
 	my @tmp = @{ $glosskeywords[$i] };
+        utf8::decode($tmp[0]);
 	my $meaning = $tmp[1] ? $tmp[1] : undef;
+        if ($meaning) {
+          utf8::decode($meaning);
+        }
 	$dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid) 
 	    VALUES (?, 0, (SELECT wordid FROM natlangwords
 		    WHERE langid=(SELECT langid FROM definitions
@@ -172,7 +179,11 @@ if( $editbitsret )
     for(my $i=0; $i<=$#placekeywords; $i++) {
 	next unless (defined $placekeywords[$i] && $placekeywords[$i]->[0]);
 	my @tmp = @{ $placekeywords[$i] };
+        utf8::decode($tmp[0]);
 	my $meaning = $tmp[1] ? $tmp[1] : undef;
+        if ($meaning) {
+          utf8::decode($meaning);
+        }
 	$dbh->do("INSERT INTO keywordmapping (definitionid, place, natlangwordid)
 	    VALUES (?, ?, (SELECT wordid FROM natlangwords
 		    WHERE langid=(SELECT langid FROM definitions

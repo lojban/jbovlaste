@@ -250,7 +250,13 @@ later.</p>
 	    $meaningNum=1
 	}
 
+        utf8::decode($word);
+        utf8::decode($notes);
+
 	if(length($meaning)) {
+
+            utf8::decode($meaning);
+
 	    $dbh->do("INSERT INTO natlangwords
 		(langid, word, meaning, notes, meaningNum, userid, time )
 		VALUES ((SELECT langid FROM languages WHERE tag=?), ?,

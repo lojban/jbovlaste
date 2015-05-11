@@ -165,7 +165,13 @@ if($ok) {
     my $oldnotes = $dbh->selectrow_array("SELECT notes FROM
 	natlangwords WHERE wordid = ?", undef, $wordid);
 
+    utf8::decode($word);
+    utf8::decode($notes);
+
     if(length($meaning)) {
+
+        utf8::decode($meaning);
+
 	$dbh->do("UPDATE natlangwords SET word=?, meaning=?, notes=? WHERE wordid=?",
 	    undef, $word, $meaning, $notes, $wordid);
     } else {
