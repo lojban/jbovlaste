@@ -547,8 +547,10 @@ sub listetymology {
      $output .=
        '<dd><table width="100%"><tr>';
 
+     my $content = $etymology->{'content'};
+
      my @parts = (['left',&userlink($etymology->{'username'})],
-                  ['left',SimpleLaTeX::interpret($etymology->{'content'})]);
+                  ['left',SimpleLaTeX::interpret($content)]);
 
      push @parts, ['right',sprintf('<a href="editetymology.html?etymology=%i"><font size="-1">[edit]</font></a>',$etymology->{'etymologyid'})];
 

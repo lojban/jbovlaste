@@ -54,6 +54,8 @@ about you go to the right page and follow the link instead of playing around?
 <hr />
 
 <%perl>
+utf8::decode($content);
+
 # Send e-mail to the valsi creator, and all definition creators for that valsi
 my @email;
 push @email, $dbh->selectrow_array("SELECT u.email FROM

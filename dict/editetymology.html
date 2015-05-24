@@ -52,6 +52,8 @@ Etymology ID: <% $etymologyrow->{'etymologyid'} %>
 <hr />
 
 <%perl>
+utf8::decode($content);
+
 my $langid = $dbh->selectrow_array("SELECT langid FROM etymology WHERE
         etymologyid = ?", undef, $etymology);
 my $valsiid = $dbh->selectrow_array("SELECT valsiid FROM etymology WHERE
