@@ -57,6 +57,10 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('fi', 'Finnish', 'suomne', 'Suomi');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('pt', 'Portuguese', 'potybau', 'Português');
+
+INSERT INTO languages (tag, englishname, lojbanname, realname)
+ VALUES ('pt-br', 'Portuguese (Brazil)', 'razypotybau', 'Português do Brasil');
+
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('sv', 'Swedish', '', 'Svenska');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
