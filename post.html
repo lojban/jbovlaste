@@ -111,7 +111,7 @@ if(!defined($threadrow)) {
 }
 
 utf8::decode($subject);
-utf8::decode($content)
+utf8::decode($content);
 $content = fmtcomment($content);
 my $commentNum = $dbh->selectrow_array("SELECT max(commentNum) + 1 FROM comments
 WHERE threadid=$threadrow->{'threadid'}\n");
@@ -235,7 +235,7 @@ Thank you.
 
 <%perl>
  utf8::decode($subject);
- utf8::decode($content)
+ utf8::decode($content);
  $content = fmtcomment($content);
 
 my $commentNum = $dbh->selectrow_array("SELECT max(commentNum) + 1 FROM
