@@ -40,17 +40,6 @@ use SimpleLaTeX;
 
 use utils;
 
-sub linkcodegenerate {
-    my($destination,$alternate,$lang) = @_;
-    $alternate = $destination unless defined $alternate;
-    $destination = utils::armorurl($destination);
-    if (defined($lang)) {
-	return sprintf("<a href=\"../wiki/%s?lang=$lang\">%s</a>",$destination,$alternate);
-    } else {
-	return sprintf("<a href=\"../wiki/%s\">%s</a>",$destination,$alternate);
-    }
-}
-
 sub get_placeword {
     my ($c, $defid) = @_;
     my $dbh = \$HTML::Mason::Commands::dbh;
@@ -281,18 +270,8 @@ sub inline {
 # [link!alt]
     s%(?<!\[)\[([^\[\]\|]*)?\!([^\[\]\|]*)?\]%<a href="$1">$2</a>%g;
 
-# allow syntax [link||langcode] to force links to certain languages
-    s%(?<!\[)\[([^\[\]\|]*)?\|\|([\w\-]*)\]%&linkcodegenerate($1,undef,$2)%ge;
-# [link|alt]
-    s%(?<!\[)\[([^\[\]\|]*)?\|([^\[\]\|]*)?\]%&linkcodegenerate($1,$2,$lang)%ge;
-# [link|alt|lang]
-    s%(?<!\[)\[([^\[\]\|]*)?\|([^\[\]\|]*)?\|([\w\-]*)\]%&linkcodegenerate($1, $2, $3)%ge;
-# [link|alt||lang]
-    s%(?<!\[)\[([^\[\]\|]*)?\|([^\[\]\|]*)?\|\|([\w\-]*)\]%&linkcodegenerate($1, $2, $3)%ge;
 # images; for admin use only
     s%(?<!\[)\[([^\[\]\|]*?\.(?:gif|png|jpe?g))\]%<img src="$1" border="0" \/>%g;
-# simple [link] links
-    s%(?<!\[)\[([^\[\]\|]*)?\]%&linkcodegenerate($1,undef,$lang)%ge;
 
 # jbovlaste {natlang!lang} links
 # {natlangword!meaning!}
