@@ -219,11 +219,11 @@ sub wordreferencegenerate {
 
     if( $valsiid != 0 )
     {
-	return sprintf( "<a href=\"../dict/%s?bg=1;langidarg=%s\">%s</a>",
+	return sprintf( "<a class=\"defined\" href=\"../dict/%s?bg=1;langidarg=%s\">%s</a>",
 		utils::armorurl($word), $langid,  $alttxt
 		);
     } else {
-	return sprintf( "<a href=\"../dict/%s?bg=1;langidarg=%s\">Word %s not found in database.</a>",
+	return sprintf( "<a class=\"undefined\" href=\"../dict/%s?bg=1;langidarg=%s\">%s</a>",
 		utils::armorurl($word), $langid,  $alttxt
 		);
     }
