@@ -127,7 +127,7 @@ if( ! defined($session{'userid'}) ) {
             JOIN natlangwords nlw
               ON nlw.wordid = km.natlangwordid
             WHERE vbg.langid=$langid
-            ORDER BY vbg.definitionid, km.place
+            ORDER BY vbg.definitionid, km.place, nlw.word, nlw.meaning
             ");
           $sth->execute();
 
@@ -170,7 +170,7 @@ if( ! defined($session{'userid'}) ) {
             JOIN natlangwords nlw
               ON nlw.wordid = nlwbg.natlangwordid
             WHERE vbg.langid=$langid
-            ORDER BY valsi, nlw.word
+            ORDER BY valsi, nlw.word, nlw.meaning, nlwbg.place
             ");
           $sth->execute();
 
