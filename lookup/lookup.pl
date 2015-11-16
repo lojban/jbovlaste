@@ -57,6 +57,7 @@
 # ---------- Configuration variables
 
 use Data::Dumper;
+use File::Temp qw/ tempfile /;
 
 use strict;
 use warnings;
@@ -221,7 +222,8 @@ sub init {
     }
     else
     {
-	open(IN,"$Dict -DS |") || die "$Pgm: can't execute /usr/bin/dict\n";
+        my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+	open(IN,"$Dict -DS 2>$tmpfname |") || die "$Pgm: can't execute /usr/bin/dict\n";
       restartopen:
 	<IN>;
       LOOP:
@@ -244,10 +246,12 @@ sub init {
 	    $St{$desc} = $name;
 	}
 	close( IN );
+        errprint( $tmpfname );
 	if (!$flag) {
 	    if (!$triedbackup && $DictAlt) {
 		++$triedbackup;
-    		open(IN,"$DictAlt -DS |") ||
+                my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+    		open(IN,"$DictAlt -DS 2>$tmpfname |") ||
 		    die "$Pgm: can't execute /usr/bin/dict\n";
 		goto restartopen;
 	    }
@@ -502,13 +506,15 @@ sub SendListing {
 
   print "$Dict $command <p>\n" if ($Debug);
 
-  if (!open(IN,"$Dict $command 2>&1 |")) {
+  my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+  if (!open(IN,"$Dict $command 2>$tmpfname |")) {
     print "<hr><p>\n";
     print "<b>Backend database engine temporarily unavailable:\n";
     print " please try again later</b>\n";
     print "<p><hr>\n";
     return;
   }
+
   if ($s eq "" && $q eq "") {
     my($tmp) = &lx($Dbr{$d});
     print "<b>From <a href=\"$ReturnUrl?Form=${Pgm}3&Database=$d\">$tmp<\/a>:</b>\n";
@@ -567,7 +573,7 @@ if(defined $fromd && $fromd =~ /jbo->/)
   !seg;
   } elsif(defined $fromd && $fromd =~ /(\S+)->jbo/) {
     my $natlang = $1;
-    s!(^\s*)?{([^}]+)}!
+    s!(^\s*){([^}]+)}!
     sprintf('%s<a href="%s?Form=%s2&Database=*&Query=%s">%s</a>%s',
         $1, $ReturnUrl, $Pgm, &xl($2), $2,
         length($1) ?
@@ -586,11 +592,15 @@ if(defined $fromd && $fromd =~ /jbo->/)
     }
     print "</pre>\n";
     close( IN );
+    errprint( $tmpfname );
+
     if (!$flag) {
         if (!$triedbackup && $DictAlt) {
 		++$triedbackup;
     		print "$DictAlt $command <p>\n" if ($Debug);
-    		if (open(IN,"$DictAlt $command |")) {
+
+                my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+                if (open(IN,"$DictAlt $command 2>$tmpfname |")) {
 			print "</pre><b>Using backup server...</b>\n";
 			print "<hr><p><pre>\n";
 			goto restart;
@@ -606,6 +616,22 @@ if(defined $fromd && $fromd =~ /jbo->/)
 sub xl { my($tmp) = $_[0]; $tmp =~ s/(\W)/sprintf('%%%02x',ord($1))/ge; $tmp; }
 sub lx { my($tmp) = $_[0]; $tmp =~ s/%([a-fA-F0-9]{2})/chr($1)/ge; $tmp; }
 
+sub errprint {
+  my( $fname ) = @_;
+
+  if( $Debug )
+  {
+    local $/ = undef;
+    open FILE, $fname or die "Couldn't open file: $!";
+    binmode FILE;
+    my $string = <FILE>;
+    close FILE;
+
+    print "<pre>Errors found running dict: $string</pre>";
+  }
+
+  unlink($fname);
+}
 sub anchor {
     my( $dbname, $line) = @_;
     my( $x, $y, $db, $new_line);
