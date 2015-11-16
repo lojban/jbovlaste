@@ -21,6 +21,7 @@ sub fmtcomment {
 	$columns = 75;
 
 	$out = "";
+        utf8::upgrade($out);
 	@lines = split(/\r?\n/, $cmt);
 	foreach my $line (@lines) {
 		$out .= wrap("", "", $line) . "\n";
