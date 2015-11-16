@@ -1,6 +1,12 @@
 
-# virtualenv .virtual
-# source .virtual/bin/activate
-# pip install parsimonious
-# git clone https://github.com/teleological/camxes-py.git
+virtualenv .virtual
+source .virtual/bin/activate
+pip install parsimonious
+git clone https://github.com/teleological/camxes-py.git
+
+# vlatai py has a custom local shebang:
+#!/srv/jbovlaste/current/python/.virtual/bin/python
+
+# changes to this file may require restoring selinux config
+restorecon -Fvv /srv/jbovlaste/current/python/camxes-py/vlatai.py
 
