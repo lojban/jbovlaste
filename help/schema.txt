@@ -3,6 +3,7 @@
 --
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -230,7 +231,7 @@ CREATE TABLE comments (
 );
 
 
-ALTER TABLE public.comments OWNER TO jbovlaste;
+ALTER TABLE comments OWNER TO jbovlaste;
 
 --
 -- Name: comments_commentid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -244,7 +245,7 @@ CREATE SEQUENCE comments_commentid_seq
     CACHE 1;
 
 
-ALTER TABLE public.comments_commentid_seq OWNER TO jbovlaste;
+ALTER TABLE comments_commentid_seq OWNER TO jbovlaste;
 
 --
 -- Name: comments_commentid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -269,7 +270,7 @@ CREATE TABLE users (
 );
 
 
-ALTER TABLE public.users OWNER TO jbovlaste;
+ALTER TABLE users OWNER TO jbovlaste;
 
 --
 -- Name: convenientcomments; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -291,7 +292,7 @@ CREATE VIEW convenientcomments AS
   WHERE (u.userid = c.userid);
 
 
-ALTER TABLE public.convenientcomments OWNER TO jbovlaste;
+ALTER TABLE convenientcomments OWNER TO jbovlaste;
 
 --
 -- Name: definitions; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -311,7 +312,7 @@ CREATE TABLE definitions (
 );
 
 
-ALTER TABLE public.definitions OWNER TO jbovlaste;
+ALTER TABLE definitions OWNER TO jbovlaste;
 
 --
 -- Name: languages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -328,7 +329,7 @@ CREATE TABLE languages (
 );
 
 
-ALTER TABLE public.languages OWNER TO jbovlaste;
+ALTER TABLE languages OWNER TO jbovlaste;
 
 --
 -- Name: valsi; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -337,14 +338,14 @@ ALTER TABLE public.languages OWNER TO jbovlaste;
 CREATE TABLE valsi (
     valsiid integer NOT NULL,
     word text NOT NULL,
-    typeid smallint,
+    typeid smallint NOT NULL,
     userid integer NOT NULL,
     "time" integer NOT NULL,
     rafsi text
 );
 
 
-ALTER TABLE public.valsi OWNER TO jbovlaste;
+ALTER TABLE valsi OWNER TO jbovlaste;
 
 --
 -- Name: convenientdefinitions; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -373,7 +374,7 @@ CREATE VIEW convenientdefinitions AS
   WHERE (((nd.langid = l.langid) AND (nd.valsiid = v.valsiid)) AND (nd.userid = u.userid));
 
 
-ALTER TABLE public.convenientdefinitions OWNER TO jbovlaste;
+ALTER TABLE convenientdefinitions OWNER TO jbovlaste;
 
 --
 -- Name: etymology; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -389,7 +390,7 @@ CREATE TABLE etymology (
 );
 
 
-ALTER TABLE public.etymology OWNER TO jbovlaste;
+ALTER TABLE etymology OWNER TO jbovlaste;
 
 --
 -- Name: convenientetymology; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -413,7 +414,7 @@ CREATE VIEW convenientetymology AS
   WHERE (((e.userid = u.userid) AND (e.langid = l.langid)) AND (e.valsiid = v.valsiid));
 
 
-ALTER TABLE public.convenientetymology OWNER TO jbovlaste;
+ALTER TABLE convenientetymology OWNER TO jbovlaste;
 
 --
 -- Name: example; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -430,7 +431,7 @@ CREATE TABLE example (
 );
 
 
-ALTER TABLE public.example OWNER TO jbovlaste;
+ALTER TABLE example OWNER TO jbovlaste;
 
 --
 -- Name: convenientexamples; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -452,7 +453,7 @@ CREATE VIEW convenientexamples AS
   WHERE ((v.valsiid = e.valsiid) AND (u.userid = e.userid));
 
 
-ALTER TABLE public.convenientexamples OWNER TO jbovlaste;
+ALTER TABLE convenientexamples OWNER TO jbovlaste;
 
 --
 -- Name: natlangwords; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -471,7 +472,7 @@ CREATE TABLE natlangwords (
 );
 
 
-ALTER TABLE public.natlangwords OWNER TO jbovlaste;
+ALTER TABLE natlangwords OWNER TO jbovlaste;
 
 --
 -- Name: threads; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -485,7 +486,7 @@ CREATE TABLE threads (
 );
 
 
-ALTER TABLE public.threads OWNER TO jbovlaste;
+ALTER TABLE threads OWNER TO jbovlaste;
 
 --
 -- Name: convenientthreads; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -506,7 +507,7 @@ CREATE VIEW convenientthreads AS
   WHERE (((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid)) AND (nlw.langid = l.langid));
 
 
-ALTER TABLE public.convenientthreads OWNER TO jbovlaste;
+ALTER TABLE convenientthreads OWNER TO jbovlaste;
 
 --
 -- Name: valsitypes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -518,7 +519,7 @@ CREATE TABLE valsitypes (
 );
 
 
-ALTER TABLE public.valsitypes OWNER TO jbovlaste;
+ALTER TABLE valsitypes OWNER TO jbovlaste;
 
 --
 -- Name: convenientvalsi; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -539,7 +540,7 @@ CREATE VIEW convenientvalsi AS
   WHERE ((v.typeid = t.typeid) AND (v.userid = u.userid));
 
 
-ALTER TABLE public.convenientvalsi OWNER TO jbovlaste;
+ALTER TABLE convenientvalsi OWNER TO jbovlaste;
 
 --
 -- Name: definitions_definitionid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -553,7 +554,7 @@ CREATE SEQUENCE definitions_definitionid_seq
     CACHE 1;
 
 
-ALTER TABLE public.definitions_definitionid_seq OWNER TO jbovlaste;
+ALTER TABLE definitions_definitionid_seq OWNER TO jbovlaste;
 
 --
 -- Name: definitions_definitionid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -576,7 +577,7 @@ CREATE TABLE definitionvotes (
 );
 
 
-ALTER TABLE public.definitionvotes OWNER TO jbovlaste;
+ALTER TABLE definitionvotes OWNER TO jbovlaste;
 
 --
 -- Name: etymology_etymologyid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -590,7 +591,7 @@ CREATE SEQUENCE etymology_etymologyid_seq
     CACHE 1;
 
 
-ALTER TABLE public.etymology_etymologyid_seq OWNER TO jbovlaste;
+ALTER TABLE etymology_etymologyid_seq OWNER TO jbovlaste;
 
 --
 -- Name: etymology_etymologyid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -611,7 +612,7 @@ CREATE SEQUENCE example_exampleid_seq
     CACHE 1;
 
 
-ALTER TABLE public.example_exampleid_seq OWNER TO jbovlaste;
+ALTER TABLE example_exampleid_seq OWNER TO jbovlaste;
 
 --
 -- Name: example_exampleid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -631,7 +632,7 @@ CREATE TABLE keywordmapping (
 );
 
 
-ALTER TABLE public.keywordmapping OWNER TO jbovlaste;
+ALTER TABLE keywordmapping OWNER TO jbovlaste;
 
 --
 -- Name: languages_langid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -645,7 +646,7 @@ CREATE SEQUENCE languages_langid_seq
     CACHE 1;
 
 
-ALTER TABLE public.languages_langid_seq OWNER TO jbovlaste;
+ALTER TABLE languages_langid_seq OWNER TO jbovlaste;
 
 --
 -- Name: languages_langid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -668,7 +669,7 @@ CREATE TABLE natlangword_corrections (
 );
 
 
-ALTER TABLE public.natlangword_corrections OWNER TO jbovlaste;
+ALTER TABLE natlangword_corrections OWNER TO jbovlaste;
 
 --
 -- Name: natlangwordbestplaces; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -682,7 +683,7 @@ CREATE TABLE natlangwordbestplaces (
 );
 
 
-ALTER TABLE public.natlangwordbestplaces OWNER TO jbovlaste;
+ALTER TABLE natlangwordbestplaces OWNER TO jbovlaste;
 
 --
 -- Name: natlangwordbestguesses; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -692,10 +693,11 @@ CREATE VIEW natlangwordbestguesses AS
  SELECT natlangwordbestplaces.wordid AS natlangwordid,
     natlangwordbestplaces.definitionid,
     natlangwordbestplaces.place
-   FROM natlangwordbestplaces;
+   FROM natlangwordbestplaces
+  WHERE (natlangwordbestplaces.score > 0);
 
 
-ALTER TABLE public.natlangwordbestguesses OWNER TO jbovlaste;
+ALTER TABLE natlangwordbestguesses OWNER TO jbovlaste;
 
 --
 -- Name: natlangwords_wordid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -709,7 +711,7 @@ CREATE SEQUENCE natlangwords_wordid_seq
     CACHE 1;
 
 
-ALTER TABLE public.natlangwords_wordid_seq OWNER TO jbovlaste;
+ALTER TABLE natlangwords_wordid_seq OWNER TO jbovlaste;
 
 --
 -- Name: natlangwords_wordid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -732,7 +734,7 @@ CREATE TABLE natlangwordvotes (
 );
 
 
-ALTER TABLE public.natlangwordvotes OWNER TO jbovlaste;
+ALTER TABLE natlangwordvotes OWNER TO jbovlaste;
 
 --
 -- Name: pages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -750,7 +752,7 @@ CREATE TABLE pages (
 );
 
 
-ALTER TABLE public.pages OWNER TO jbovlaste;
+ALTER TABLE pages OWNER TO jbovlaste;
 
 --
 -- Name: threads_threadid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -764,7 +766,7 @@ CREATE SEQUENCE threads_threadid_seq
     CACHE 1;
 
 
-ALTER TABLE public.threads_threadid_seq OWNER TO jbovlaste;
+ALTER TABLE threads_threadid_seq OWNER TO jbovlaste;
 
 --
 -- Name: threads_threadid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -785,7 +787,7 @@ CREATE SEQUENCE users_userid_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_userid_seq OWNER TO jbovlaste;
+ALTER TABLE users_userid_seq OWNER TO jbovlaste;
 
 --
 -- Name: users_userid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -793,6 +795,19 @@ ALTER TABLE public.users_userid_seq OWNER TO jbovlaste;
 
 ALTER SEQUENCE users_userid_seq OWNED BY users.userid;
 
+
+--
+-- Name: users_view; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE TABLE users_view (
+    userid integer,
+    username character varying(64),
+    votesize real
+);
+
+
+ALTER TABLE users_view OWNER TO jbovlaste;
 
 --
 -- Name: valsi_valsiid_seq; Type: SEQUENCE; Schema: public; Owner: jbovlaste
@@ -806,7 +821,7 @@ CREATE SEQUENCE valsi_valsiid_seq
     CACHE 1;
 
 
-ALTER TABLE public.valsi_valsiid_seq OWNER TO jbovlaste;
+ALTER TABLE valsi_valsiid_seq OWNER TO jbovlaste;
 
 --
 -- Name: valsi_valsiid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jbovlaste
@@ -827,7 +842,7 @@ CREATE TABLE valsibestdefinitions (
 );
 
 
-ALTER TABLE public.valsibestdefinitions OWNER TO jbovlaste;
+ALTER TABLE valsibestdefinitions OWNER TO jbovlaste;
 
 --
 -- Name: valsibestguesses; Type: VIEW; Schema: public; Owner: jbovlaste
@@ -837,10 +852,11 @@ CREATE VIEW valsibestguesses AS
  SELECT valsibestdefinitions.valsiid,
     valsibestdefinitions.langid,
     valsibestdefinitions.definitionid
-   FROM valsibestdefinitions;
+   FROM valsibestdefinitions
+  WHERE (valsibestdefinitions.score > 0);
 
 
-ALTER TABLE public.valsibestguesses OWNER TO jbovlaste;
+ALTER TABLE valsibestguesses OWNER TO jbovlaste;
 
 --
 -- Name: xrefs; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
@@ -854,7 +870,7 @@ CREATE TABLE xrefs (
 );
 
 
-ALTER TABLE public.xrefs OWNER TO jbovlaste;
+ALTER TABLE xrefs OWNER TO jbovlaste;
 
 --
 -- Name: commentid; Type: DEFAULT; Schema: public; Owner: jbovlaste
@@ -1113,6 +1129,13 @@ CREATE UNIQUE INDEX natlangwords_unique_langid_word_null ON natlangwords USING b
 --
 
 CREATE INDEX valsi_lower_word ON valsi USING btree (lower(word));
+
+
+--
+-- Name: valsi_unique_word_nospaces; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+--
+
+CREATE UNIQUE INDEX valsi_unique_word_nospaces ON valsi USING btree (replace(word, ' '::text, ''::text));
 
 
 --
@@ -1466,6 +1489,216 @@ ALTER TABLE ONLY valsibestdefinitions
 
 ALTER TABLE ONLY valsibestdefinitions
     ADD CONSTRAINT valsibestdefinitions_valsiid FOREIGN KEY (valsiid) REFERENCES valsi(valsiid);
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: comments; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE comments FROM PUBLIC;
+REVOKE ALL ON TABLE comments FROM jbovlaste;
+GRANT ALL ON TABLE comments TO jbovlaste;
+GRANT SELECT ON TABLE comments TO PUBLIC;
+
+
+--
+-- Name: users; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE users FROM PUBLIC;
+REVOKE ALL ON TABLE users FROM jbovlaste;
+GRANT ALL ON TABLE users TO jbovlaste;
+GRANT SELECT ON TABLE users TO PUBLIC;
+
+
+--
+-- Name: convenientcomments; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientcomments FROM PUBLIC;
+REVOKE ALL ON TABLE convenientcomments FROM jbovlaste;
+GRANT ALL ON TABLE convenientcomments TO jbovlaste;
+GRANT SELECT ON TABLE convenientcomments TO PUBLIC;
+
+
+--
+-- Name: definitions; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE definitions FROM PUBLIC;
+REVOKE ALL ON TABLE definitions FROM jbovlaste;
+GRANT ALL ON TABLE definitions TO jbovlaste;
+GRANT SELECT ON TABLE definitions TO PUBLIC;
+
+
+--
+-- Name: languages; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE languages FROM PUBLIC;
+REVOKE ALL ON TABLE languages FROM jbovlaste;
+GRANT ALL ON TABLE languages TO jbovlaste;
+GRANT SELECT ON TABLE languages TO PUBLIC;
+
+
+--
+-- Name: valsi; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE valsi FROM PUBLIC;
+REVOKE ALL ON TABLE valsi FROM jbovlaste;
+GRANT ALL ON TABLE valsi TO jbovlaste;
+GRANT SELECT ON TABLE valsi TO PUBLIC;
+
+
+--
+-- Name: etymology; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE etymology FROM PUBLIC;
+REVOKE ALL ON TABLE etymology FROM jbovlaste;
+GRANT ALL ON TABLE etymology TO jbovlaste;
+GRANT SELECT ON TABLE etymology TO PUBLIC;
+
+
+--
+-- Name: convenientetymology; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientetymology FROM PUBLIC;
+REVOKE ALL ON TABLE convenientetymology FROM jbovlaste;
+GRANT ALL ON TABLE convenientetymology TO jbovlaste;
+GRANT SELECT ON TABLE convenientetymology TO PUBLIC;
+
+
+--
+-- Name: example; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE example FROM PUBLIC;
+REVOKE ALL ON TABLE example FROM jbovlaste;
+GRANT ALL ON TABLE example TO jbovlaste;
+GRANT SELECT ON TABLE example TO PUBLIC;
+
+
+--
+-- Name: convenientexamples; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientexamples FROM PUBLIC;
+REVOKE ALL ON TABLE convenientexamples FROM jbovlaste;
+GRANT ALL ON TABLE convenientexamples TO jbovlaste;
+GRANT SELECT ON TABLE convenientexamples TO PUBLIC;
+
+
+--
+-- Name: natlangwords; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE natlangwords FROM PUBLIC;
+REVOKE ALL ON TABLE natlangwords FROM jbovlaste;
+GRANT ALL ON TABLE natlangwords TO jbovlaste;
+GRANT SELECT ON TABLE natlangwords TO PUBLIC;
+
+
+--
+-- Name: threads; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE threads FROM PUBLIC;
+REVOKE ALL ON TABLE threads FROM jbovlaste;
+GRANT ALL ON TABLE threads TO jbovlaste;
+GRANT SELECT ON TABLE threads TO PUBLIC;
+
+
+--
+-- Name: convenientthreads; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientthreads FROM PUBLIC;
+REVOKE ALL ON TABLE convenientthreads FROM jbovlaste;
+GRANT ALL ON TABLE convenientthreads TO jbovlaste;
+GRANT SELECT ON TABLE convenientthreads TO PUBLIC;
+
+
+--
+-- Name: valsitypes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE valsitypes FROM PUBLIC;
+REVOKE ALL ON TABLE valsitypes FROM jbovlaste;
+GRANT ALL ON TABLE valsitypes TO jbovlaste;
+GRANT SELECT ON TABLE valsitypes TO PUBLIC;
+
+
+--
+-- Name: convenientvalsi; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE convenientvalsi FROM PUBLIC;
+REVOKE ALL ON TABLE convenientvalsi FROM jbovlaste;
+GRANT ALL ON TABLE convenientvalsi TO jbovlaste;
+GRANT SELECT ON TABLE convenientvalsi TO PUBLIC;
+
+
+--
+-- Name: definitionvotes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE definitionvotes FROM PUBLIC;
+REVOKE ALL ON TABLE definitionvotes FROM jbovlaste;
+GRANT ALL ON TABLE definitionvotes TO jbovlaste;
+GRANT SELECT ON TABLE definitionvotes TO PUBLIC;
+
+
+--
+-- Name: keywordmapping; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE keywordmapping FROM PUBLIC;
+REVOKE ALL ON TABLE keywordmapping FROM jbovlaste;
+GRANT ALL ON TABLE keywordmapping TO jbovlaste;
+GRANT SELECT ON TABLE keywordmapping TO PUBLIC;
+
+
+--
+-- Name: natlangwordvotes; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE natlangwordvotes FROM PUBLIC;
+REVOKE ALL ON TABLE natlangwordvotes FROM jbovlaste;
+GRANT ALL ON TABLE natlangwordvotes TO jbovlaste;
+GRANT SELECT ON TABLE natlangwordvotes TO PUBLIC;
+
+
+--
+-- Name: pages; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE pages FROM PUBLIC;
+REVOKE ALL ON TABLE pages FROM jbovlaste;
+GRANT ALL ON TABLE pages TO jbovlaste;
+GRANT SELECT ON TABLE pages TO PUBLIC;
+
+
+--
+-- Name: xrefs; Type: ACL; Schema: public; Owner: jbovlaste
+--
+
+REVOKE ALL ON TABLE xrefs FROM PUBLIC;
+REVOKE ALL ON TABLE xrefs FROM jbovlaste;
+GRANT ALL ON TABLE xrefs TO jbovlaste;
+GRANT SELECT ON TABLE xrefs TO PUBLIC;
 
 
 --
