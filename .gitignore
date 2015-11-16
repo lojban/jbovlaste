@@ -1,3 +1,5 @@
 autohandler
 needed/
 python/
+lookup/dict.cache.pl
+lib/crypt.secret
