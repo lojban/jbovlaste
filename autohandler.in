@@ -121,6 +121,7 @@ what happened leading up to this. Just in case.
 % }
 
 <%once>
+ use utf8;
  use MIME::Base64;
  use Data::Dumper;
  use DBI;
