@@ -1,7 +1,7 @@
 # la.jbovlaste.
 **_la.jbovlaste._** is the dictionary editing system for the [constructed language Lojban](http://lojban.org/). It is available online at http://jbovlaste.lojban.org/
 
-In Lojban, [_jbovlaste_](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=jbovlaste) means "Lojbanic dictionary" and is derived from the Lojban words [_lo**jbo**_ "Lojbanic"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=lojbo), [_**val**si_ "word"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=valsi) and [_li**ste**_ "list"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=liste) using their _rafsi_ short forms _jbo_ + _vla_ + _ste_.
+In Lojban, [_jbovlaste_](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=jbovlaste) means "Lojbanic dictionary" and is derived from the Lojban words [_lo**jbo**_ "Lojbanic"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=lojbo), [_**val**si_ "word"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=valsi) and [_li**ste**_ "list"](http://jbovlaste.lojban.org/lookup.pl?Form=lookup.pl2&Database=*&Query=liste) using their [_rafsi_](https://mw.lojban.org/papri/rafsi) short forms _jbo_ + _vla_ + _ste_.
 
 The Lojban dictionary is multilingual: the Lojban words have definitions translated into many languages.
 
