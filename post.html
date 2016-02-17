@@ -144,11 +144,17 @@ $m->out("<p>Click <a href=\"comments.html?valsi=$valsi;".
 
 # Here we send e-mail to the person who entered the word, if this is
 # a per-definition comment.
+my $email='';
 if( $definition )
 {
-    my $email = $dbh->selectrow_array("SELECT u.email FROM
+    $email = $dbh->selectrow_array("SELECT u.email FROM
 	definitions d, users u WHERE d.userid = u.userid AND d.definitionid=$definition");
+} elsif( $natlangword ) {
+    $email = $dbh->selectrow_array("SELECT u.email FROM
+	natlangwords n, users u WHERE n.userid = u.userid AND n.wordid=$natlangword");
+}
 
+if ( $email ) {
     my $valsiwordword = $dbh->selectrow_array("SELECT word FROM valsi WHERE valsiid=$valsi");
     my $natlangwordword = $dbh->selectrow_array("SELECT word FROM natlangwords WHERE wordid=$natlangword");
     my $word = $valsiwordword ? $valsiwordword : $natlangwordword;
@@ -167,6 +173,9 @@ Thank you.
 
 -The jbovlaste Admin Team
 ", $session{'username'} );
+  $m->out("<p>Sent email.\n</p>");
+} else {
+  $m->out("<p>No email sent.\n</p>");
 }
 
 </%perl>
@@ -300,6 +309,7 @@ Thank you.
 
 -The jbovlaste Admin Team
 ", $session{'username'} );
+  $m->out("<p>Sent email.\n</p>");
 }
 </%perl>
 

@@ -153,40 +153,35 @@ sub sendemail {
     $subject = "[jvsw] $subject -- By $username";
   }
 
+# print "<pre>subj: $subject</pre>\n";
+
   use Email::MIME;
-  use Email::MIME::RFC2047::Encoder;
-
-  my $encoder = Email::MIME::RFC2047::Encoder->new(
-    encoding => 'utf-8',
-    method   => 'Q',
-  );
-
-  my $encsubj = $encoder->encode_text($non_ascii_subject)
+  use Email::Sender::Simple qw(sendmail);
+  use Email::Simple;
+  use Email::Simple::Creator;
 
   my $email = Email::MIME->create(
     attributes => {
-      content_type => "text/plain",
       charset      => 'UTF-8',
     },
     header_str => [ 
-      To            => $addresslist,
-      Bcc           => 'jbovlaste-admin@lojban.org',
+      To            => @$addresslist,
+      'Reply-To'    => 'webmaster@lojban.org',
       From          => 'webmaster@lojban.org',
-    ],
-    header_raw => [ 
-      Subject       => $encsubj,
+      Subject       => $subject,
     ],
 
     body => $contents,
   );
 
-  open( SENDMAIL, qq{| /bin/mailx -v -t -r webmaster\@lojban.org } );
+  # send to explicit Bcc address
+  sendmail($email, { to => 'jbovlaste-admin@lojban.org', from => 'webmaster@lojban.org' });
+  # and then send as normal
+  sendmail($email);
 
-  print SENDMAIL $email->as_string;
-
-# print "<pre>$fullmail</pre>\n";
-
-  close( SENDMAIL );
+  use Data::Dumper;
+  my $text=$email->as_string;
+# print "<pre>".Dumper($text)."</pre>\n";
 }
 
 sub mydiff {
