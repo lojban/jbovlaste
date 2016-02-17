@@ -114,7 +114,7 @@ $triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $line,
 # the page. Return a decent looking page. Otherwise, you have work to do.
 #
 
-if ($in{"Form"} eq "") {
+if (defined($in{"Form"}) && $in{"Form"} eq "") {
     $in{"Database"} = "en<->jbo";
     $in{"Strategy"} = "*";
     print &PrintHeader();
@@ -338,7 +338,7 @@ sub SendForm1 {
 
 # ----- send the header
 #
-    my($q) = $in{"Query"};
+    my($q) = $in{"Query"} || '';
 
 #<!-- hidden counter -->
 #$Counter1
@@ -376,7 +376,7 @@ EOF2
       (split(/\t/, $Choices{"Database"}));
     foreach my $x (@sorted_dbs) {
 	print "        <option value=\"$Db{$x}\"";
-	if ($in{"Database"} eq $Db{$x}) {
+	if (defined($in{"Database"}) && $in{"Database"} eq $Db{$x}) {
 	    print " selected";
 	}
 	print ">$x\n";
@@ -430,7 +430,7 @@ sub SendListing {
   if ($in{'Query'} =~ /^(['\w .]+|)$/) {
     $q = "$1";
   } else {
-    warn ("TAINTED DATA for query SENT BY $ENV{'REMOTE_ADDR'}: $q: $!");
+    warn ("TAINTED DATA for query SENT BY $ENV{'REMOTE_ADDR'}: ". $in{'Query'} .": $!");
     $q = ""; # successful match did not occur
   }
 
@@ -764,7 +764,7 @@ sub ReadParse {
     $in[$i] =~ s/\+/ /g;
 
     # Convert %XX from hex numbers to alphanumeric
-    $in[$i] =~ s/%(..)/pack("c",hex($1))/ge;
+    $in[$i] =~ s/%(..)/pack("U",hex($1))/ge;
 
     # Split into key and value.
     my $loc = index($in[$i],"=");
