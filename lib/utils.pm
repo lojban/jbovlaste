@@ -165,7 +165,7 @@ sub sendemail {
       charset      => 'UTF-8',
     },
     header_str => [ 
-      To            => @$addresslist,
+      To            => join(', ', @$addresslist ),
       'Reply-To'    => 'webmaster@lojban.org',
       From          => 'webmaster@lojban.org',
       Subject       => $subject,
