@@ -143,40 +143,50 @@ sub generatemissingwordlink {
 }
 
 sub sendemail {
-    use Encode qw/encode decode/;
+  my ($addresslist, $subject, $contents, $username ) = @_;
+  $subject =~ s/"/'/g;
 
-    my ($addresslist, $subject, $contents, $username ) = @_;
-    $subject =~ s/"/'/g;
+  # Add a sort of header to the subject
+  if( defined($username) ) {
+    $subject = "[jvsw] $subject -- By $username";
+  } else {
+    $subject = "[jvsw] $subject -- By $username";
+  }
 
-    # Add a sort of header to the subject
-    if( defined($username) ) {
-	$subject = "[jvsw] $subject -- By $username";
-    } else {
-	$subject = "[jvsw] $subject -- By $username";
-    }
+  use Email::MIME;
+  use Email::MIME::RFC2047::Encoder;
 
-    # Be a nice mail person
-    my $encsubj = encode("MIME-Header", $subject);
+  my $encoder = Email::MIME::RFC2047::Encoder->new(
+    encoding => 'utf-8',
+    method   => 'Q',
+  );
 
-    open( SENDMAIL, qq{| /bin/mailx -v -t -r webmaster\@lojban.org } );
+  my $encsubj = $encoder->encode_text($non_ascii_subject)
 
-    my $addresses=join(', ', @$addresslist);
-    my $fullmail=qq{To: $addresses
-From: webmaster\@lojban.org
-To: webmaster\@lojban.org
-Bcc: jbovlaste-admin\@lojban.org
-Content-type: text/plain;charset=UTF-8
-Subject: $encsubj
+  my $email = Email::MIME->create(
+    attributes => {
+      content_type => "text/plain",
+      charset      => 'UTF-8',
+    },
+    header_str => [ 
+      To            => $addresslist,
+      Bcc           => 'jbovlaste-admin@lojban.org',
+      From          => 'webmaster@lojban.org',
+    ],
+    header_raw => [ 
+      Subject       => $encsubj,
+    ],
 
+    body => $contents,
+  );
 
-$contents
-};
+  open( SENDMAIL, qq{| /bin/mailx -v -t -r webmaster\@lojban.org } );
 
-    print SENDMAIL $fullmail;
+  print SENDMAIL $email->as_string;
 
 # print "<pre>$fullmail</pre>\n";
 
-    close( SENDMAIL );
+  close( SENDMAIL );
 }
 
 sub mydiff {
