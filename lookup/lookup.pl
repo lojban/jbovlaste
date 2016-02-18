@@ -93,7 +93,7 @@ my $Counter2= "<img src=\"$Count?sh=0|df=total.dat\" alt=\"\">";
 my $WebMaster="<a href=\"mailto:webmaster\@lojban.org\">webmaster\@lojban.org</a>";
 
 my (%in, $Error, %Choices, %Db, %Dbr, %St, $in, $flag,
-$triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $line,
+$triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $matchdb, $line,
 );
 
 # --- display stuff
@@ -114,7 +114,7 @@ $triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $line,
 # the page. Return a decent looking page. Otherwise, you have work to do.
 #
 
-if (defined($in{"Form"}) && $in{"Form"} eq "") {
+if (! defined($in{"Form"}) || $in{"Form"} eq "") {
     $in{"Database"} = "en<->jbo";
     $in{"Strategy"} = "*";
     print &PrintHeader();
@@ -122,7 +122,7 @@ if (defined($in{"Form"}) && $in{"Form"} eq "") {
     &SendForm1;
     &SendEnding;
 }
-elsif ($in{"Form"} eq ($Pgm . '1')) {
+elsif (defined($in{"Form"}) && $in{"Form"} eq ($Pgm . '1')) {
     print &PrintHeader();
     &SendBeginning;
     &StripFields;		# clean up user entered data.
@@ -133,7 +133,7 @@ elsif ($in{"Form"} eq ($Pgm . '1')) {
     }
     &SendEnding;
 }
-elsif ($in{"Form"} eq ($Pgm . '2')) {
+elsif (defined($in{"Form"}) && $in{"Form"} eq ($Pgm . '2')) {
     $in{"Strategy"} = "*";
     print &PrintHeader();
     &SendBeginning;
@@ -145,7 +145,7 @@ elsif ($in{"Form"} eq ($Pgm . '2')) {
     }
     &SendEnding;
 }
-elsif ($in{"Form"} eq ($Pgm . '3')) {
+elsif (defined($in{"Form"}) && $in{"Form"} eq ($Pgm . '3')) {
     $in{"Strategy"} = "";
     $in{"Query"} = "";
     print &PrintHeader();
@@ -158,7 +158,7 @@ elsif ($in{"Form"} eq ($Pgm . '3')) {
     }
     &SendEnding;
 }
-elsif ($in{"Form"} eq ($Pgm . '4')) {
+elsif (defined($in{"Form"}) && $in{"Form"} eq ($Pgm . '4')) {
     $in{"Strategy"} = "";
     $in{"Query"} = "";
     print &PrintHeader();
@@ -523,6 +523,9 @@ sub SendListing {
 restart: 
   my $fromd = undef;
   while(<IN>) {
+    if( $Debug ) {
+      print "IN: $_</pre><pre>";
+    }
     ++$flag;
     if (/^From/) {
       if (/\[.*\]/) {
@@ -540,15 +543,15 @@ restart:
     elsif (/^No matches/) {
       print "</pre><b>$_</b><pre>\n";
     }
+    # "Match substrings" and the like hit this branch and the next one
     elsif (/^(\S+) /) {
-      my $x = $1;
-      ($x, $line) = split(/:/, $_, 2);
-      $line = &anchor( $x, $line);
-      print "<b>$x:</b>$line";
+      ($matchdb, $line) = split(/:/, $_, 2);
+      $line = &anchor( $matchdb, $line);
+      print "<b>$matchdb:</b>$line";
       $wordlist = 1;
     }
     elsif ($wordlist && (/^  (\S+) /)) {
-      $line = &anchor( $x, $_);
+      $line = &anchor( $matchdb, $_);
       print $line;
     }
     else {
@@ -592,9 +595,9 @@ if(defined $fromd && $fromd =~ /jbo->/)
     }
     print "</pre>\n";
     close( IN );
-    errprint( $tmpfname );
+    my $iserr = errprint( $tmpfname );
 
-    if (!$flag) {
+    if (!$flag && $iserr ) {
         if (!$triedbackup && $DictAlt) {
 		++$triedbackup;
     		print "$DictAlt $command <p>\n" if ($Debug);
@@ -619,35 +622,42 @@ sub lx { my($tmp) = $_[0]; $tmp =~ s/%([a-fA-F0-9]{2})/chr($1)/ge; $tmp; }
 sub errprint {
   my( $fname ) = @_;
 
-  if( $Debug )
-  {
-    local $/ = undef;
-    open FILE, $fname or die "Couldn't open file: $!";
-    binmode FILE;
-    my $string = <FILE>;
-    close FILE;
-
-    print "<pre>Errors found running dict: $string</pre>";
-  }
+  local $/ = undef;
+  open FILE, $fname or die "Couldn't open file: $!";
+  binmode FILE;
+  $_ = <FILE>;
+  close FILE;
 
   unlink($fname);
+
+  if (/^No definitions/) {
+    print "</pre><b>$_</b><pre>\n";
+    return 0;
+  }
+  elsif (/^No matches/) {
+    print "</pre><b>$_</b><pre>\n";
+    return 0;
+  }
+  elsif( $Debug )
+  {
+    print "<pre>Errors found running dict: $_</pre>";
+    return 1;
+  }
 }
 sub anchor {
     my( $dbname, $line) = @_;
     my( $x, $y, $db, $new_line);
 
     my $odd = 1;
-    $db = $Dbr{$dbname};
-    $db = $dbname;
     foreach $x  (split("\"", $line)) {
 	if ($odd) {
-	    $x =~ s/ (\S+)/ <a href="$ReturnUrl?Form=${Pgm}2&Database=$db&Query=$1">$1<\/a>/g;
+	    $x =~ s/ (\S+)/ <a href="$ReturnUrl?Form=${Pgm}2&Database=$dbname&Query=$1">$1<\/a>/g;
 	    $new_line .= $x;
 	    $odd = 0;
 	}
 	else {
 	    ($y = $x) =~ tr/ /+/;
-	    $new_line .= "<a href=\"$ReturnUrl?Form=${Pgm}2&Database=$db&Query=$y\">\"$x\"<\/a>";
+	    $new_line .= "<a href=\"$ReturnUrl?Form=${Pgm}2&Database=$dbname&Query=$y\">\"$x\"<\/a>";
 	    $odd = 1;
 	}
     }
