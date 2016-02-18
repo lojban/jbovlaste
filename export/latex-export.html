@@ -2,6 +2,9 @@
 
     # INPUT: $dbh, $lang
 
+    binmode STDOUT, ':utf8';
+    binmode STDERR, ':utf8';
+
     mkdir "/tmp/jbovlaste_export/";
     my $dir = tempdir(DIR => "/tmp/jbovlaste_export/");
 
@@ -27,7 +30,7 @@
 
     sub write_file {
         my ($filename, $content) = @_;
-        open(TMP, ">$filename") or die "couldn't open a temporary file.\n";
+        open(TMP, '>:utf8', $filename) or die "couldn't open a temporary file.\n";
         print TMP $content;
         close(TMP);
     }

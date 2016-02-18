@@ -62,6 +62,9 @@ use File::Temp qw/ tempfile /;
 use strict;
 use warnings;
 
+binmode STDOUT, ':utf8';
+binmode STDERR, ':utf8';
+
 $ENV{'PATH'} = "/usr/bin:/bin";
 
 my $Debug        = 0;
@@ -94,6 +97,8 @@ my $WebMaster="<a href=\"mailto:webmaster\@lojban.org\">webmaster\@lojban.org</a
 
 my (%in, $Error, %Choices, %Db, %Dbr, %St, $in, $flag,
 $triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $matchdb, $line,
+$Error="";
+
 );
 
 # --- display stuff

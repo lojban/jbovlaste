@@ -60,7 +60,7 @@ sub interpret {
 	my $dir = tempdir( DIR => "/tmp/jbovlaste_export/", CLEANUP => 1 );
 	my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
-	open(TMP, ">$filename") or return "Couldn't open a temporary file; check your definition for unbalanced dollar signs or other wierd characters.\n";
+	open(TMP, ">:utf8", $filename) or return "Couldn't open a temporary file; check your definition for unbalanced dollar signs or other wierd characters.\n";
 	
 	print TMP "\\documentclass{letter}\n\\begin{document}\n";
 	# Write the input text out.

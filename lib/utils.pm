@@ -2,6 +2,9 @@ package utils;
 
 use strict;
 use utf8;
+binmode STDOUT, ':utf8';
+binmode STDERR, ':utf8';
+
 use Unicode::String qw(utf8);
 
 use File::Basename;
