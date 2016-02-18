@@ -97,9 +97,8 @@ my $WebMaster="<a href=\"mailto:webmaster\@lojban.org\">webmaster\@lojban.org</a
 
 my (%in, $Error, %Choices, %Db, %Dbr, %St, $in, $flag,
 $triedbackup, $DictAlt, @Fields, @ReqFields, $wordlist, $matchdb, $line,
-$Error="";
-
 );
+$Error="";
 
 # --- display stuff
 
