@@ -229,7 +229,7 @@ if( ! defined($session{'userid'}) ) {
           }
 
           if( exists $keywords->{$definitionid} ) {
-              foreach my $keyword (@{$keywords->{$definitionid}}) {
+              foreach my $keyword (sort {$a->{'place'} <=> $b->{'place'}} @{$keywords->{$definitionid}}) {
                   if ($keyword->{'place'} == 0) {
                       my $gwtag = glosswordtag($keyword);
                       $tag .= "\n  $gwtag";
