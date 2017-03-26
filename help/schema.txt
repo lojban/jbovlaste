@@ -2,12 +2,16 @@
 -- PostgreSQL database dump
 --
 
+-- Dumped from database version 9.5.4
+-- Dumped by pg_dump version 9.5.4
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
@@ -216,7 +220,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: comments; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: comments; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE comments (
@@ -255,7 +259,7 @@ ALTER SEQUENCE comments_commentid_seq OWNED BY comments.commentid;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: users; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE users (
@@ -295,7 +299,7 @@ CREATE VIEW convenientcomments AS
 ALTER TABLE convenientcomments OWNER TO jbovlaste;
 
 --
--- Name: definitions; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: definitions; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE definitions (
@@ -315,7 +319,7 @@ CREATE TABLE definitions (
 ALTER TABLE definitions OWNER TO jbovlaste;
 
 --
--- Name: languages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: languages; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE languages (
@@ -332,7 +336,7 @@ CREATE TABLE languages (
 ALTER TABLE languages OWNER TO jbovlaste;
 
 --
--- Name: valsi; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsi; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE valsi (
@@ -371,13 +375,13 @@ CREATE VIEW convenientdefinitions AS
     languages l,
     valsi v,
     users u
-  WHERE (((nd.langid = l.langid) AND (nd.valsiid = v.valsiid)) AND (nd.userid = u.userid));
+  WHERE ((nd.langid = l.langid) AND (nd.valsiid = v.valsiid) AND (nd.userid = u.userid));
 
 
 ALTER TABLE convenientdefinitions OWNER TO jbovlaste;
 
 --
--- Name: etymology; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: etymology; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE etymology (
@@ -411,13 +415,13 @@ CREATE VIEW convenientetymology AS
     valsi v,
     languages l,
     users u
-  WHERE (((e.userid = u.userid) AND (e.langid = l.langid)) AND (e.valsiid = v.valsiid));
+  WHERE ((e.userid = u.userid) AND (e.langid = l.langid) AND (e.valsiid = v.valsiid));
 
 
 ALTER TABLE convenientetymology OWNER TO jbovlaste;
 
 --
--- Name: example; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: example; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE example (
@@ -456,7 +460,7 @@ CREATE VIEW convenientexamples AS
 ALTER TABLE convenientexamples OWNER TO jbovlaste;
 
 --
--- Name: natlangwords; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwords; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE natlangwords (
@@ -475,7 +479,7 @@ CREATE TABLE natlangwords (
 ALTER TABLE natlangwords OWNER TO jbovlaste;
 
 --
--- Name: threads; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: threads; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE threads (
@@ -504,13 +508,13 @@ CREATE VIEW convenientthreads AS
     valsi v,
     natlangwords nlw,
     languages l
-  WHERE (((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid)) AND (nlw.langid = l.langid));
+  WHERE ((t.valsiid = v.valsiid) AND (t.natlangwordid = nlw.wordid) AND (nlw.langid = l.langid));
 
 
 ALTER TABLE convenientthreads OWNER TO jbovlaste;
 
 --
--- Name: valsitypes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsitypes; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE valsitypes (
@@ -564,7 +568,7 @@ ALTER SEQUENCE definitions_definitionid_seq OWNED BY definitions.definitionid;
 
 
 --
--- Name: definitionvotes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: definitionvotes; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE definitionvotes (
@@ -622,7 +626,7 @@ ALTER SEQUENCE example_exampleid_seq OWNED BY example.exampleid;
 
 
 --
--- Name: keywordmapping; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: keywordmapping; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE keywordmapping (
@@ -656,7 +660,7 @@ ALTER SEQUENCE languages_langid_seq OWNED BY languages.langid;
 
 
 --
--- Name: natlangword_corrections; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangword_corrections; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE natlangword_corrections (
@@ -672,7 +676,7 @@ CREATE TABLE natlangword_corrections (
 ALTER TABLE natlangword_corrections OWNER TO jbovlaste;
 
 --
--- Name: natlangwordbestplaces; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordbestplaces; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE natlangwordbestplaces (
@@ -721,7 +725,7 @@ ALTER SEQUENCE natlangwords_wordid_seq OWNED BY natlangwords.wordid;
 
 
 --
--- Name: natlangwordvotes; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordvotes; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE natlangwordvotes (
@@ -737,7 +741,7 @@ CREATE TABLE natlangwordvotes (
 ALTER TABLE natlangwordvotes OWNER TO jbovlaste;
 
 --
--- Name: pages; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: pages; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE pages (
@@ -797,7 +801,7 @@ ALTER SEQUENCE users_userid_seq OWNED BY users.userid;
 
 
 --
--- Name: users_view; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: users_view; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE users_view (
@@ -831,7 +835,7 @@ ALTER SEQUENCE valsi_valsiid_seq OWNED BY valsi.valsiid;
 
 
 --
--- Name: valsibestdefinitions; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsibestdefinitions; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE valsibestdefinitions (
@@ -859,7 +863,7 @@ CREATE VIEW valsibestguesses AS
 ALTER TABLE valsibestguesses OWNER TO jbovlaste;
 
 --
--- Name: xrefs; Type: TABLE; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: xrefs; Type: TABLE; Schema: public; Owner: jbovlaste
 --
 
 CREATE TABLE xrefs (
@@ -936,7 +940,7 @@ ALTER TABLE ONLY valsi ALTER COLUMN valsiid SET DEFAULT nextval('valsi_valsiid_s
 
 
 --
--- Name: comments_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: comments_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY comments
@@ -944,7 +948,7 @@ ALTER TABLE ONLY comments
 
 
 --
--- Name: definitions_langid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: definitions_langid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY definitions
@@ -952,7 +956,7 @@ ALTER TABLE ONLY definitions
 
 
 --
--- Name: definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY definitions
@@ -960,7 +964,7 @@ ALTER TABLE ONLY definitions
 
 
 --
--- Name: definitionvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: definitionvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY definitionvotes
@@ -968,7 +972,7 @@ ALTER TABLE ONLY definitionvotes
 
 
 --
--- Name: etymology_etymologyid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: etymology_etymologyid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY etymology
@@ -976,7 +980,7 @@ ALTER TABLE ONLY etymology
 
 
 --
--- Name: example_exampleid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: example_exampleid_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY example
@@ -984,7 +988,7 @@ ALTER TABLE ONLY example
 
 
 --
--- Name: keywordmapping_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: keywordmapping_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY keywordmapping
@@ -992,7 +996,7 @@ ALTER TABLE ONLY keywordmapping
 
 
 --
--- Name: languages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: languages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY languages
@@ -1000,7 +1004,7 @@ ALTER TABLE ONLY languages
 
 
 --
--- Name: natlangwordbestplaces_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordbestplaces_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY natlangwordbestplaces
@@ -1008,7 +1012,7 @@ ALTER TABLE ONLY natlangwordbestplaces
 
 
 --
--- Name: natlangwords_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwords_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY natlangwords
@@ -1016,7 +1020,7 @@ ALTER TABLE ONLY natlangwords
 
 
 --
--- Name: natlangwords_unique_langid_word_meaning; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwords_unique_langid_word_meaning; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY natlangwords
@@ -1024,7 +1028,7 @@ ALTER TABLE ONLY natlangwords
 
 
 --
--- Name: natlangwordvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordvotes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY natlangwordvotes
@@ -1032,7 +1036,7 @@ ALTER TABLE ONLY natlangwordvotes
 
 
 --
--- Name: pages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: pages_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY pages
@@ -1040,7 +1044,7 @@ ALTER TABLE ONLY pages
 
 
 --
--- Name: threads_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: threads_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY threads
@@ -1048,7 +1052,7 @@ ALTER TABLE ONLY threads
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY users
@@ -1056,7 +1060,7 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: users_username_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: users_username_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY users
@@ -1064,7 +1068,7 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: valsi_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsi_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsi
@@ -1072,7 +1076,7 @@ ALTER TABLE ONLY valsi
 
 
 --
--- Name: valsi_word_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsi_word_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsi
@@ -1080,7 +1084,7 @@ ALTER TABLE ONLY valsi
 
 
 --
--- Name: valsibestdefinitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsibestdefinitions_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsibestdefinitions
@@ -1088,7 +1092,7 @@ ALTER TABLE ONLY valsibestdefinitions
 
 
 --
--- Name: valsitypes_descriptor_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsitypes_descriptor_key; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsitypes
@@ -1096,7 +1100,7 @@ ALTER TABLE ONLY valsitypes
 
 
 --
--- Name: valsitypes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsitypes_pkey; Type: CONSTRAINT; Schema: public; Owner: jbovlaste
 --
 
 ALTER TABLE ONLY valsitypes
@@ -1104,42 +1108,42 @@ ALTER TABLE ONLY valsitypes
 
 
 --
--- Name: natlangwordbestplaces_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwordbestplaces_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE INDEX natlangwordbestplaces_definitionid_key ON natlangwordbestplaces USING btree (definitionid);
 
 
 --
--- Name: natlangwords_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwords_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE INDEX natlangwords_lower_word ON natlangwords USING btree (lower(word));
 
 
 --
--- Name: natlangwords_unique_langid_word_null; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: natlangwords_unique_langid_word_null; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE UNIQUE INDEX natlangwords_unique_langid_word_null ON natlangwords USING btree (langid, word) WHERE (meaning IS NULL);
 
 
 --
--- Name: valsi_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsi_lower_word; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE INDEX valsi_lower_word ON valsi USING btree (lower(word));
 
 
 --
--- Name: valsi_unique_word_nospaces; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsi_unique_word_nospaces; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE UNIQUE INDEX valsi_unique_word_nospaces ON valsi USING btree (replace(word, ' '::text, ''::text));
 
 
 --
--- Name: valsibestdefinitions_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste; Tablespace: 
+-- Name: valsibestdefinitions_definitionid_key; Type: INDEX; Schema: public; Owner: jbovlaste
 --
 
 CREATE INDEX valsibestdefinitions_definitionid_key ON valsibestdefinitions USING btree (definitionid);
