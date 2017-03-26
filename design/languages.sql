@@ -160,6 +160,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('en-simple', 'Simple English', 'sampu glibau', 'Simple English');
 INSERT INTO languages (tag, englishname, lojbanname, realname)
  VALUES ('fr-facile', 'Easy French', 'frili fasybau', 'Français facile');
+INSERT INTO languages (tag, englishname, lojbanname, realname, url)
+ VALUES ('en-bpfk', 'BPFK English', 'glico bangu be bypyfyky.', 'BPFK English', 'https://groups.google.com/forum/#!forum/bpfk-list');
 
 -- ROLLBACK; if there are errors
 
