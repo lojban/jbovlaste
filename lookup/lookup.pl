@@ -77,9 +77,9 @@ my $bin          = "/srv/jbovlaste/lookup";
 #    "1&Query=00-database-info&Strategy=*&Database=*";
 #my $SInfo   = "$ReturnUrl?Form=$Pgm". "4";
 
-my $CRInfo	= "http://www.lojban.org/files/genlic.html";
+my $CRInfo	= "https://mw.lojban.org/papri/LLG_Web_Copyright_License";
 
-my $SInfo	= "http://www.lojban.org/whats_new.html";
+my $SInfo	= "https://mw.lojban.org/papri/nuzba/en";
 
 my $Dict    = "/usr/bin/dict -h dict.lojban.org";
 #my $DictAlt = "/usr/local/bin/dict -h dega.cs.unc.edu";
@@ -350,6 +350,9 @@ sub SendForm1 {
 #$Counter2
 
     print <<EOF;
+<p>There are specific tools that make searching this database easier:</p>
+<p><a href="la-lojban.github.io/sutysisku/en/">la sutysisku dictionary</a>, an offline enabled web app</p>
+<p><a href="http://vlasisku.lojban.org/">la vlasisku</a> search engine for the Lojban dictionary</p>
 <form method="GET" action="$ReturnUrl">
     <input type="hidden" name="Form" value="${Pgm}1">
     <center>
@@ -708,7 +711,7 @@ sub SendEnding {
 	Questions or comments about this site?
 	Contact $WebMaster
         <br />
-        Submit corrections or error reports via <a href="/">jbovlaste</a>.
+        <!--Submit corrections or error reports via <a href="/">jbovlaste</a>.-->
     </font>
 </center>
 </body>
