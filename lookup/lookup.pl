@@ -351,7 +351,7 @@ sub SendForm1 {
 
     print <<EOF;
 <p>There are specific tools that make searching this database easier:</p>
-<p><a href="la-lojban.github.io/sutysisku/en/">la sutysisku dictionary</a>, an offline enabled web app</p>
+<p><a href="https://la-lojban.github.io/sutysisku/en/">la sutysisku dictionary</a>, an offline enabled web app</p>
 <p><a href="http://vlasisku.lojban.org/">la vlasisku</a> search engine for the Lojban dictionary</p>
 <form method="GET" action="$ReturnUrl">
     <input type="hidden" name="Form" value="${Pgm}1">
