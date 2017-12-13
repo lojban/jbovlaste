@@ -60,7 +60,7 @@ sub interpret {
 	my $dir = tempdir( DIR => "/tmp/jbovlaste_export/", CLEANUP => 1 );
 	my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
-	open(TMP, ">:utf8", $filename) or return "Couldn't open a temporary file; check your definition for unbalanced dollar signs or other wierd characters.\n";
+	open(TMP, ">:utf8", $filename) or return "Couldn't open temporary file $filename for writing.\n";
 	
 	print TMP "\\documentclass{letter}\n\\begin{document}\n";
 	# Write the input text out.
@@ -76,7 +76,7 @@ sub interpret {
 	$htmlfilename=$filename;
 	$htmlfilename =~ s/.tex$/.html/;
 
-	open(TMP2, "<$htmlfilename") or return "Couldn't open temporary html file; check your definition for unbalanced dollar signs or other wierd characters.\n";
+	open(TMP2, "<$htmlfilename") or return "Couldn't open temporary html file $htmlfilename; this is supposed to hold output from latex2html, so probably that failed; check your definition for unbalanced dollar signs or other wierd characters.\n";
 
 	# Snarf the data.
 	my $tmpout=join( "", <TMP2>);
