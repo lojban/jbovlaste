@@ -231,6 +231,7 @@ sub init {
       restartopen:
 	<IN>;
       LOOP:
+        binmode(IN,":utf8");
 	while (<IN>) {
 	    ++$flag;
 	    chomp;
@@ -529,6 +530,7 @@ sub SendListing {
   print "<pre>";
 restart: 
   my $fromd = undef;
+  binmode(IN,":utf8");
   while(<IN>) {
     if( $Debug ) {
       print "IN: $_</pre><pre>";
