@@ -228,10 +228,10 @@ sub init {
     {
         my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
 	open(IN,"$Dict -DS 2>$tmpfname |") || die "$Pgm: can't execute /usr/bin/dict\n";
+        binmode(IN,":utf8");
       restartopen:
 	<IN>;
       LOOP:
-        binmode(IN,":utf8");
 	while (<IN>) {
 	    ++$flag;
 	    chomp;
@@ -522,6 +522,7 @@ sub SendListing {
     print "<p><hr>\n";
     return;
   }
+  binmode(IN,":utf8");
 
   if ($s eq "" && $q eq "") {
     my($tmp) = &lx($Dbr{$d});
@@ -530,7 +531,6 @@ sub SendListing {
   print "<pre>";
 restart: 
   my $fromd = undef;
-  binmode(IN,":utf8");
   while(<IN>) {
     if( $Debug ) {
       print "IN: $_</pre><pre>";
