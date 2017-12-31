@@ -29,7 +29,7 @@ sub escapeall {
     my $term = shift;
     $term =~ s/\\/\\textbackslash{}/g;
     $term =~ s/(?<!\\textbackslash)([{])/\\$1/g;
-    $term =~ s/(?<!\\textbackslash{)([}])/\\$1/g;
+    $term =~ s/(?<!\\textbackslash\{)([}])/\\$1/g;
     $term =~ s/\~/\\textasciitilde{}/g;
     $term =~ s/\^/\\textasciicircum{}/g;
     $term =~ s{/}{\\slash{}}g;
