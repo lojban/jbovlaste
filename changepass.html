@@ -33,7 +33,7 @@ if( ! defined($session{'userid'}) ) {
 	<%perl>
 	# reCaptcha Output form
 	# Public key
-	print $c->get_html( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
+	print $c->get_html_v2( '6Lf1RwAAAAAAANZIsJS0Ra-ycdARlCNMTzOkkC-v' );
 	</%perl>
 	<table>
 	    <tr>
@@ -58,7 +58,7 @@ if( ! defined($session{'userid'}) ) {
 	# Check the form results (both of them)
     } else {
 	# Verify ReCaptcha submission
-	my $result = $c->check_answer(
+	my $result = $c->check_answer_v2(
 	    # Private key
 	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
 	    $recaptcha_challenge_field, $recaptcha_response_field
