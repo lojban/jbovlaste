@@ -8,8 +8,6 @@ Lojban XML Dictionary Generation
 
 <%args>
 $lang => undef
-$recaptcha_challenge_field => undef
-$recaptcha_response_field => undef
 $bot_key => undef
 </%args>
 
@@ -20,9 +18,10 @@ use POSIX;
 use Captcha::reCAPTCHA;
 
 my $c = Captcha::reCAPTCHA->new;
+my $recaptcha_response = $ARGS{'g-recaptcha-response'};
 </%init>
 
-% if( ! defined($session{'userid'}) && ! defined($recaptcha_response_field) && $bot_key ne 'z2BsnKYJhAB0VNsl' ) {
+% if( ! defined($session{'userid'}) && ! defined($recaptcha_response) && $bot_key ne 'z2BsnKYJhAB0VNsl' ) {
 <html><head></head>
 <body>
 <h1>Login To Skip This Step</h1>
@@ -50,8 +49,7 @@ if( ! defined($session{'userid'}) ) {
     if( ! defined($session{'userid'}) && $bot_key ne 'z2BsnKYJhAB0VNsl' ) {
 	$result = $c->check_answer_v2(
 	    # Private key
-	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
-	    $recaptcha_challenge_field, $recaptcha_response_field
+	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $recaptcha_response, $ENV{'REMOTE_ADDR'}
 	);
     }
 
@@ -331,7 +329,7 @@ if( ! defined($session{'userid'}) ) {
     } else {
 	</%perl>
 	<font size="+3">
-	Captcha failed.
+	Captcha failed.  <pre><% Dumper($result) %>, <% $recaptcha_response %></pre>
 	</font>
 	<%perl>
 

@@ -1,8 +1,6 @@
 <%args>
 $request_type => undef
 $details => undef
-$recaptcha_challenge_field => undef
-$recaptcha_response_field => undef
 </%args>
 
 <%method title>
@@ -19,6 +17,7 @@ Sending A Moderation Request
   use Captcha::reCAPTCHA;
 
   my $c = Captcha::reCAPTCHA->new;
+  my $recaptcha_response = $ARGS{'g-recaptcha-response'};
 </%init>
 
 % unless(defined($request_type)) {
@@ -78,8 +77,7 @@ if( ! defined($session{'userid'}) ) {
     if( ! defined($session{'userid'}) ) {
 	$result = $c->check_answer_v2(
 	    # Private key
-	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
-	    $recaptcha_challenge_field, $recaptcha_response_field
+	    '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $recaptcha_response, $ENV{'REMOTE_ADDR'}
 	);
     }
 
@@ -109,9 +107,7 @@ Details: $details
     } else {
 	</%perl>
 	<font size="+3">
-	Captcha failed.
-	<% $recaptcha_challenge_field %>,
-	<% $recaptcha_response_field %>
+	Captcha failed.  <pre><% Dumper($result) %>, <% $recaptcha_response %></pre>
 	</font>
 	<%perl>
 

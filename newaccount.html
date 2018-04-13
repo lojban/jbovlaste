@@ -1,6 +1,4 @@
 <%args>
-$recaptcha_challenge_field => undef
-$recaptcha_response_field => undef
 $username => undef
 $realname => undef
 $email => undef
@@ -70,8 +68,7 @@ After your account is created, you will be added to the Jbovlaste mailing list a
     # Verify ReCaptcha submission
     my $result = $c->check_answer_v2(
 	# Private key
-        '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $ENV{'REMOTE_ADDR'},
-        $recaptcha_challenge_field, $recaptcha_response_field
+        '6Lf1RwAAAAAAAP6IcWCSHjdtZ5yh1y2muHE7f1Zy', $recaptcha_response, $ENV{'REMOTE_ADDR'},
     );
 
     # Munge the input
@@ -138,13 +135,13 @@ If this means nothing to you, please discard this e-mail.
 	{
 	    </%perl>
 	    <font size="+3">
-	    ReCaptcha correct, but input invalid, sorry.  Try again.
+	    ReCaptcha correct, but input invalid, sorry.  Try again.  <pre><% Dumper($result) %>, <% $recaptcha_response %></pre>
 	    </font>
 	    <%perl>
 	} else {
 	    </%perl>
 	    <font size="+3">
-	    ReCaptcha failed, sorry.  Try again.
+	    ReCaptcha failed, sorry.  Try again.  <pre><% Dumper($result) %>, <% $recaptcha_response %></pre>
 	    </font>
 	    <%perl>
 	}
@@ -167,4 +164,5 @@ $r->content_type("text/html; charset=utf-8");
 use Captcha::reCAPTCHA;
 
 my $c = Captcha::reCAPTCHA->new;
+my $recaptcha_response = $ARGS{'g-recaptcha-response'};
 </%init>
