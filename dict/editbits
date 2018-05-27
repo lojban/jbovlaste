@@ -173,7 +173,7 @@ necessary.
 if( defined( $check ) && scalar( $definitiontxt =~ tr/$/$/ ) < 2 &&
     !( $type eq "cmavo" || $type eq "cmavo-compound" ||
 	$type eq "experimental cmavo" || $type eq "cmevla" ||
-	$type eq "obsolete cmevla" || $type eq "bu-letteral" ) ) {
+	$type eq "obsolete cmevla" || $type eq "bu-letteral" || $type eq "phrase" ) ) {
     $notready = 1;
 </%perl>
 
