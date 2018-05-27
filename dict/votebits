@@ -7,11 +7,21 @@ $definition => undef
 </%args>
 
 <%init>
+use utf8;
+use Encode;
 our($dbh,%session);
 use utils;
 </%init>
 
 <%perl>
+
+# Convert incoming arguments into utf-8 strings
+foreach my $key (keys %ARGS)
+{
+    if( ! utf8::is_utf8($ARGS{$key}) ) {
+        $ARGS{$key} = decode_utf8($ARGS{$key}, 1);
+    }
+}
 
 my @glosskeywords;
 for(my $i=1; $i<=$glossmax; $i++) #>
