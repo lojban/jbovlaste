@@ -2,7 +2,7 @@
 virtualenv .virtual
 source .virtual/bin/activate
 pip install parsimonious
-git clone https://github.com/teleological/camxes-py.git
+git clone https://github.com/lojban/camxes-py.git
 
 # vlatai py has a custom local shebang:
 #!/srv/jbovlaste/current/python/.virtual/bin/python
