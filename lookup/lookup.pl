@@ -576,7 +576,7 @@ restart:
 
 if(defined $fromd && $fromd =~ /jbo->/)
 {
-  s!(^\s+Word: |){([^}]+)}!
+  s!(^\s+Word: |)\{([^}]+)\}!
   sprintf('%s<a href="%s?Form=%s2&Database=*&Query=%s">%s</a>%s',
       $1, $ReturnUrl, $Pgm, &xl($2), $2,
       length($1) ?
@@ -585,7 +585,7 @@ if(defined $fromd && $fromd =~ /jbo->/)
   !seg;
   } elsif(defined $fromd && $fromd =~ /(\S+)->jbo/) {
     my $natlang = $1;
-    s!(^\s*){([^}]+)}!
+    s!(^\s*)\{([^}]+)\}!
     sprintf('%s<a href="%s?Form=%s2&Database=*&Query=%s">%s</a>%s',
         $1, $ReturnUrl, $Pgm, &xl($2), $2,
         length($1) ?
