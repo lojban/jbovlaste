@@ -147,7 +147,8 @@ new words from here.</p>
    push @args, $type;
  }
  if(defined($initial)) {
-   push @conditions, "word LIKE '$initial%'";
+   push @conditions, "word LIKE ?";
+   push @args, ($initial . "%");
  }
 
  my $sql;
