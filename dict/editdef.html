@@ -229,7 +229,7 @@ if( $editbitsret )
 	definitionid => $definition);
 
     # Send e-mail to various people
-    $m->comp( 'mailbits',
+    $errstr = $m->comp( 'mailbits',
 	oldcontent => \%oldcontent,
 	newcontent => \%newcontent,
 	type => "edited", typeUpper => "Edited",

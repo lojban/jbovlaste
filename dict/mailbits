@@ -15,6 +15,8 @@ use utils;
 
 <%perl>
 
+my $errstr;
+
 sub defdump
 {
     my $contentref = shift;
@@ -57,23 +59,52 @@ sub defdump
     }
 }
 
-my @email;
-push @email, $dbh->selectrow_array("SELECT u.email FROM
+my @emailbits;
+push @emailbits, [$dbh->selectrow_array("SELECT u.email, u.username FROM
     valsi v, users u WHERE v.userid = u.userid AND
-    v.valsiid=$valsiid");
+    v.valsiid=$valsiid")];
 
-my $emailquery = $dbh->prepare( "SELECT u.email FROM definitions d, users u
+my $emailquery = $dbh->prepare( "SELECT u.email, u.username FROM definitions d, users u
     WHERE d.userid = u.userid AND d.valsiid=? AND d.langid=?" );
 
 my $lang = $dbh->selectrow_array("SELECT realname FROM languages
     WHERE langid = ?", undef, $langid);
 
 $emailquery->execute($valsiid, $langid);
-while( defined(my $emailrow=$emailquery->fetchrow_hashref) )
+while( defined(my $emailrow=$emailquery->fetchrow_arrayref) )
 {
-    push @email, $emailrow->{'email'};
+    push @emailbits, $emailrow;
 }
 
+# @emailbits currently looks like an array of:
+#
+# [
+#   [
+#     'foo@bar.com',
+#     'username'
+#   ],
+#   [
+#     'baz@qux.com',
+#     'wibble'
+#   ]
+# ];
+
+my @email;
+use Email::Valid;
+foreach my $epair (@emailbits) {
+    if( Email::Valid->address(@{$epair}[0]) ) {
+        push @email, @{$epair}[1];
+    } else {
+        $errstr .= "Address \"" . @{$epair}[0] . "\" for user \"" . @{$epair}[1] . "\" is not valid.\n"
+    }
+}
+
+if( $#email < 1 ) {
+    $errstr .= "No email addresses found!\n";
+    return $errstr;
+}
+
+# uniqify the addresses
 @email = keys %{{ map { $_ => 1 } @email }};
 
 my $emailtext = "
@@ -106,8 +137,10 @@ $emailtext .= "New Data:\n\n".defdump(\%newcontent)."
 You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
 ";
 
-utils::sendemail( \@email, 
+utils::sendemail( ['rlpowell@digitalkingdom.org'],
     "Definition $typeUpper At Word $valsiword",
     $emailtext, $session{'username'} );
+
+return $errstr;
 
 </%perl>
