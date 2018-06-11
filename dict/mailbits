@@ -137,7 +137,7 @@ $emailtext .= "New Data:\n\n".defdump(\%newcontent)."
 You can go to <http://jbovlaste.lojban.org/dict/$valsiword> to see it.
 ";
 
-utils::sendemail( ['rlpowell@digitalkingdom.org'],
+utils::sendemail( \@email,
     "Definition $typeUpper At Word $valsiword",
     $emailtext, $session{'username'} );
 
