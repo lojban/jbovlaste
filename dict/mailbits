@@ -93,7 +93,7 @@ my @email;
 use Email::Valid;
 foreach my $epair (@emailbits) {
     if( Email::Valid->address(@{$epair}[0]) ) {
-        push @email, @{$epair}[1];
+        push @email, @{$epair}[0];
     } else {
         $errstr .= "Address \"" . @{$epair}[0] . "\" for user \"" . @{$epair}[1] . "\" is not valid.\n"
     }

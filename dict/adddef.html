@@ -196,7 +196,7 @@ if( $editbitsret )
     my %newcontent = $m->comp( 'getdef', definitionid => $seqvalueresult[0]);
 
     # Send e-mail to various people
-    $errstr = $m->comp( 'mailbits',
+    my $errstr = $m->comp( 'mailbits',
 	newcontent => \%newcontent,
 	type => "added", typeUpper => "Added",
 	valsiid => $valsiid,
