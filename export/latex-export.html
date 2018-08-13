@@ -8,8 +8,8 @@
     mkdir "/tmp/jbovlaste_export/";
     my $dir = tempdir(DIR => "/tmp/jbovlaste_export/");
 
-    my $filename = generate_latex_file($dir, $dbh, $lang);
-    generate_pdf_file($dir, $filename);
+    my ($filename, $latex_output) = generate_latex_file($dir, $dbh, $lang);
+    my $pdf_output = generate_pdf_file($dir, $filename);
 
     my $shortfilename = $filename;
     $shortfilename =~ s{/tmp/jbovlaste_export}{/jbovlaste_export};
@@ -25,7 +25,7 @@
         my ($fh, $filename) = tempfile(DIR => $dir, SUFFIX => ".tex");
         my $latex = generate_latex($dbh, $lang);
         write_file($filename, $latex);
-        $filename;
+        return ($filename, $latex);
     }
 
     sub write_file {
@@ -39,7 +39,7 @@
         my ($dir, $filename) = @_;
         chdir $dir;
         my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
-        print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $output\n\n****</pre> -->\n";
+	return $output;
     }
 
 </%perl>
@@ -47,6 +47,31 @@
 <a href="<% $shortfilename %>">Here's your dictionary in LaTeX.</a>
 
 <a href="<% $pdffilename %>">Here's your dictionary in PDF.</a>
+
+<%perl>
+	my @output_lines = split(/\n/, $pdf_output);
+	use List::MoreUtils qw(uniq);
+	my @bad_lines = uniq(grep(/^l\./, @output_lines));
+	if( @bad_lines ) {
+		print "<p>PDF GENERATION PROBABLY FAILED.</p>\n";
+		my $short_output = join("\n", @output_lines[-40..-1]);
+		print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $pdf_output\n\n****</pre> -->\n";
+		print "<p>Here's several lines of context for each line that appears to have an error:<p>\n";
+		foreach my $bad_line (@bad_lines) {
+			my $bad_line_number = $bad_line;
+			$bad_line_number =~ s/^l\.//;
+			my @latex_lines = split(/\n/, $latex_output);
+			print "<p>Line $bad_line_number: $latex_lines[$bad_line_number]</p>";
+			print "<p>Note that the real issue is often at the end of the last line of real data *before* the line number I just reported; you should check there first.</p>\n";
+			print "<p>Line $bad_line_number, +/- 5:</p>\n";
+			print "<hr/>\n";
+			my $latex_badness = join("\n", @latex_lines[($bad_line_number-5)..($bad_line_number+5)]);
+			print "<pre>$latex_badness</pre>\n";
+			print "<hr/>\n";
+		}
+		print "<p>Here's the end of the output from the PDF generation; this can be helpful in spotting errors.  You can see the complete output by viewing the source of this page and searching for \"with output:\".</p>\n<pre>$short_output</pre>";
+	}
+</%perl>
 
 <%shared>
     our $titlestr;
