@@ -1,5 +1,9 @@
-% use Text::WrapI18N qw($columns wrap);
-% use Data::Dumper;
+<%init>
+use utf8;
+use Encode;
+use Text::Wrap;
+use Data::Dumper;
+</%init>
 
 % unless( ($new && ($valsi || $natlangword)) || ($respond && $comment) ) {
 <font size="+3">Couldn't locate what you wanted to post in regards to</font>
@@ -18,7 +22,7 @@ sub fmtcomment {
 	my $cmt = shift;
 	my ($out, @lines);
 
-	$columns = 75;
+	$Text::Wrap::columns = 75;
 
 	$out = "";
         utf8::upgrade($out);
@@ -246,6 +250,7 @@ Thank you.
 <%perl>
  utf8::decode($subject);
  utf8::decode($content);
+
  $content = fmtcomment($content);
 
 my $commentNum = $dbh->selectrow_array("SELECT max(commentNum) + 1 FROM
