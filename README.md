@@ -12,3 +12,7 @@ The Lojban dictionary is editable by its users if they have [made an account on 
 Many other dictionaries and tools are based on _la.jbovlaste._; refer to the [Lojban website](http://lojban.org/) for more information.
 
 The Lojban wiki page devoted to jbovlaste is https://mw.lojban.org/papri/la_jbovlaste
+
+# Site Problems
+
+If the site throws an error about a tmp directory, someone needs to ssh to jukni.lojban.org and run "sudo service httpd restart"
