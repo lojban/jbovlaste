@@ -16,8 +16,8 @@
 
 <%perl>
   $dbh->do("UPDATE users SET url=?,
-  email=?, personal=?
-  WHERE userid=?", undef, $url, $email, $personal, $session{'userid'});
+  email=?, realname=?, personal=?
+  WHERE userid=?", undef, $url, $email, $realname, $personal, $session{'userid'});
 </%perl>
 
 <p>You can go back to <a href="<% $session{'username'} %>">your page</a></p>
@@ -35,6 +35,8 @@
 <form method="post" action="edit.html">
   Email Address:
   <input type="text" name="email" value="<% $result->{'email'} %>"><br />
+  Real name:
+  <input type="text" name="realname" value="<% $result->{'realname'} %>"><br />
   Url:
   <input type="text" name="url" value="<% $result->{'url'} %>"><br />
   Personal:<br />
@@ -56,5 +58,6 @@ Edit User Data
 <%args>
 $url => undef
 $email => undef
+$realname => undef
 $personal => undef
 </%args>
