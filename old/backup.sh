@@ -4,13 +4,14 @@
 chmod -R u+w /home/jbovlaste/current >/dev/null 2>&1
 chmod go-rwx bin backups
 
-export PGPASSWORD=makfa
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+. $DIR/db.sh
 
 # Bacup every few hours, but only name it based on today's date, so we only
 # keep one per day
 fname=/home/jbovlaste/backups/dump.`date +%Y%b%d`
 
-pg_dump -C -U jbovlaste -f $fname
+pg_dump -C -U jbovlaste -h $PGHOST -p $PGPORT -f $fname
 rm -f $fname.gz
 gzip -9 $fname
 
