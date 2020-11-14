@@ -59,6 +59,8 @@
 use Data::Dumper;
 use File::Temp qw/ tempfile /;
 
+mkdir "/tmp/lookup", 0755;
+
 use strict;
 use warnings;
 
@@ -71,7 +73,6 @@ my $Debug        = 0;
 
 my $Pgm          = "lookup.pl";
 my $ReturnUrl    = "/$Pgm";
-my $bin          = "/srv/jbovlaste/lookup";
 
 #my $CRInfo   = "$ReturnUrl?Form=$Pgm".
 #    "1&Query=00-database-info&Strategy=*&Database=*";
@@ -214,7 +215,7 @@ sub init {
 
     # ----- suck in the database/strategy names from the server
 
-    my $cachefile = "/srv/jbovlaste/current/lookup/dict.cache.pl";
+    my $cachefile = "/tmp/dict.cache.pl";
     my @results = stat($cachefile);
     if(-T _ && -r _ && ($results[9]+3600)>time())
     {
@@ -226,7 +227,7 @@ sub init {
     }
     else
     {
-        my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+        my ($tmpfh, $tmpfname) = tempfile( DIR => '/tmp/lookup' );
 	open(IN,"$Dict -DS 2>$tmpfname |") || die "$Pgm: can't execute /usr/bin/dict\n";
         binmode(IN,":utf8");
       restartopen:
@@ -255,7 +256,7 @@ sub init {
 	if (!$flag) {
 	    if (!$triedbackup && $DictAlt) {
 		++$triedbackup;
-                my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+                my ($tmpfh, $tmpfname) = tempfile( DIR => '/tmp/lookup' );
     		open(IN,"$DictAlt -DS 2>$tmpfname |") ||
 		    die "$Pgm: can't execute /usr/bin/dict\n";
 		goto restartopen;
@@ -514,7 +515,7 @@ sub SendListing {
 
   print "$Dict $command <p>\n" if ($Debug);
 
-  my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+  my ($tmpfh, $tmpfname) = tempfile( DIR => '/tmp/lookup' );
   if (!open(IN,"$Dict $command 2>$tmpfname |")) {
     print "<hr><p>\n";
     print "<b>Backend database engine temporarily unavailable:\n";
@@ -611,7 +612,7 @@ if(defined $fromd && $fromd =~ /jbo->/)
 		++$triedbackup;
     		print "$DictAlt $command <p>\n" if ($Debug);
 
-                my ($tmpfh, $tmpfname) = tempfile( DIR => '/srv/jbovlaste/current/lookup' );
+                my ($tmpfh, $tmpfname) = tempfile( DIR => '/tmp/lookup' );
                 if (open(IN,"$DictAlt $command 2>$tmpfname |")) {
 			print "</pre><b>Using backup server...</b>\n";
 			print "<hr><p><pre>\n";
