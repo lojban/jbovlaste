@@ -1,0 +1,10 @@
+package db;
+
+use strict;
+use DBI;
+
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw($dbh);
+
+our $dbh = DBI->connect('dbi:Pg:dbname=jbovlaste;host=localhost;port=5432', 'postgres', '<%= postgres_password %>');

@@ -13,6 +13,6 @@ Many other dictionaries and tools are based on _la.jbovlaste._; refer to the [Lo
 
 The Lojban wiki page devoted to jbovlaste is https://mw.lojban.org/papri/la_jbovlaste
 
-# Site Problems
+# Service Management
 
-If the site throws an error about a tmp directory, someone needs to ssh to jukni.lojban.org and run "sudo service httpd restart"
+jbovlaste is the name of both the software and of the service that runs it.  The service lives at https://jbovlaste.lojban.org/ .  Management of that service uses LBCS ( https://github.com/lojban/lbcs/ ), and the service management details and configuration are at https://github.com/lojban/jbovlaste-containers

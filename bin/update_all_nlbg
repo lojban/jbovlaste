@@ -26,7 +26,9 @@ if( $#ARGV != 0 )
 use DBI;
 use File::Path qw(mkpath);
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use db;
 
 my $time = time();
 

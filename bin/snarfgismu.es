@@ -5,7 +5,9 @@ use IPC::Open2;
 use utf8;
 
 
-my $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji", "jbovlaste", "makfa");
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use db;
 
 my $time = time();
 

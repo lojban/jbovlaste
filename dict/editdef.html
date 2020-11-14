@@ -218,8 +218,7 @@ if( $editbitsret )
     {
 	# Update valsibestguesses
 	my $jbovlastedir = $m->base_comp->attr('jbovlaste_dir');
-	system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang
-	    $valsiid $session{'userid'} $definition \&" );
+	system( "$jbovlastedir/bin/updatevbg $jbovlastedir $lang $valsiid $session{'userid'} $definition \&" );
     }
 
     my @result = $dbh->selectrow_array("SELECT word FROM convenientdefinitions WHERE definitionid=?",{},$definition);

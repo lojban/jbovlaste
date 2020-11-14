@@ -155,8 +155,12 @@ what happened leading up to this. Just in case.
     };
 
  my $lang = "en";
- our $dbh = DBI->connect("dbi:Pg:dbname=jbovlaste;host=morji",
- "jbovlaste", "makfa", { RaiseError => 1 } );
+
+ use FindBin;
+ use lib "$FindBin::Bin/../lib";
+ use db;
+
+ $dbh->{RaiseError} = 1;
 
  my $cookie = $r->headers_in->{'Cookie'};
  my @cookies = split(/\s*;\s*/, $cookie);

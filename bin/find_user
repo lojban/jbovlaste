@@ -1,7 +1,8 @@
 #!/bin/sh
 
-export PGPASSWORD='makfa'
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+. $DIR/db.sh
 
-psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(email) like lower('%$1%');"
-psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(username) like lower('%$1%');"
-psql -h morji -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(realname) like lower('%$1%');"
+psql -h $PGHOST -p $PGPORT -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(email) like lower('%$1%');"
+psql -h $PGHOST -p $PGPORT -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(username) like lower('%$1%');"
+psql -h $PGHOST -p $PGPORT -U jbovlaste -c "select userid, username, password, email, realname, votesize from users where lower(realname) like lower('%$1%');"

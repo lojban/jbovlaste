@@ -3,3 +3,5 @@ needed/
 python/
 lookup/dict.cache.pl
 lib/crypt.secret
+bin/db.sh
+lib/db.pm
