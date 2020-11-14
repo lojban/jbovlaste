@@ -162,6 +162,7 @@ sub sendemail {
   use Email::Sender::Simple qw(sendmail);
   use Email::Simple;
   use Email::Simple::Creator;
+  use Try::Tiny;
 
   my $email = Email::MIME->create(
     attributes => {
@@ -177,12 +178,27 @@ sub sendemail {
     body => $contents,
   );
 
-  # send to explicit Bcc address
-  sendmail($email, { to => 'jbovlaste-admin@lojban.org', from => 'webmaster@lojban.org' });
-  # and then send as normal
-  sendmail($email);
-
   use Data::Dumper;
+
+  print "<pre>Sending mail</pre>\n";
+  try {
+	  # send to explicit Bcc address
+	  return sendmail($email, { to => 'jbovlaste-admin@lojban.org', from => 'webmaster@lojban.org' });
+  } catch {
+	  my $error = $_ || 'unknown error';
+	  print "<pre> Email send failed.  This won't stop what you did from working.  Error: ".Dumper($error->message)."</pre>\n";
+  };
+
+  try {
+	  # and then send as normal
+	  return sendmail($email);
+  } catch {
+	  my $error = $_ || 'unknown error';
+	  print "<pre> Email send failed.  This won't stop what you did from working.  Error: ".Dumper($error->message)."</pre>\n";
+  };
+
+  print "<pre>Done sending mail</pre>\n";
+
   my $text=$email->as_string;
 # print "<pre>".Dumper($text)."</pre>\n";
 }
