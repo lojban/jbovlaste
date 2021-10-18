@@ -15,10 +15,6 @@ use Crypt::CBC;
 
 my $util_dir = dirname(__FILE__);
 my $secret_file = File::Spec->catfile($util_dir, "crypt.secret");
-my $python_dir = File::Spec->catdir($util_dir, "..", "python");
-my $vlatai_path = File::Spec->catfile($python_dir, "camxes-py", "vlatai.py");
-
-my $VLATAI = File::Spec->rel2abs($vlatai_path);
 
 my $cipher = Crypt::CBC->new( -key    => read_file($secret_file),
                               -cipher => 'Blowfish'
@@ -89,7 +85,7 @@ sub run_vlatai {
     my $safevalsi = $valsi;
     $safevalsi =~ s/[^\'\w, ]//g; # NOTE: spaces are significant
     $safevalsi =~ s/\'/\\\'/g;
-    if (open(VLATAI, "$VLATAI $safevalsi|")) {
+    if (open(VLATAI, "/usr/local/bin/vlatai.py $safevalsi|")) {
       my $type = <VLATAI>;
       close(VLATAI);
       $/ = $tmp;
@@ -97,7 +93,7 @@ sub run_vlatai {
       return $type || "nalvla";
     }
     $/ = $tmp;
-    warn "Failed to run vlatai($VLATAI): $!";
+    warn "Failed to run vlatai(/usr/local/bin/vlatai.py): $!";
     return "nalvla";
 }
 
