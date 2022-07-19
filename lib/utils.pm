@@ -80,19 +80,16 @@ sub vlatai {
 
 sub run_vlatai {
     my $valsi = shift;
-    my $tmp = $/;
-    undef $/; # slurp mode
     my $safevalsi = $valsi;
     $safevalsi =~ s/[^\'\w, ]//g; # NOTE: spaces are significant
     $safevalsi =~ s/\'/\\\'/g;
     if (open(VLATAI, "/usr/local/bin/vlatai.py $safevalsi|")) {
+      local $/ = undef; # slurp mode
       my $type = <VLATAI>;
       close(VLATAI);
-      $/ = $tmp;
       chomp $type;
       return $type || "nalvla";
     }
-    $/ = $tmp;
     warn "Failed to run vlatai(/usr/local/bin/vlatai.py): $!";
     return "nalvla";
 }
