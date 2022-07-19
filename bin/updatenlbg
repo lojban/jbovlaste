@@ -95,11 +95,12 @@ Definitions And Votes Needed in $langrealname
 </%method>
 ";
     $dbh->begin_work;
-
     $dbh->do("DELETE FROM pages WHERE pagename='NatLang Word Definitions Or Votes Needed' AND langid=?",
         undef,
         $langid );
+    $dbh->commit;
 
+    $dbh->begin_work;
     $dbh->do("INSERT INTO pages (pagename, langid, version, time, userid, compressed, latest, content)
         VALUES ('NatLang Word Definitions Or Votes Needed', ?, 1, $time, $userid, 'f', 't', ? )",
         undef,
