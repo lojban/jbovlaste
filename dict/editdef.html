@@ -210,8 +210,6 @@ if( $editbitsret )
     # Deal with the voting
     $m->comp( 'votebits', %ARGS, definition => $definition );
 
-    $dbh->commit;
-
     my $errstr = $dbh->errstr;
 
     if( ! $errstr )
