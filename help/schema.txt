@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.6
--- Dumped by pg_dump version 10.6
+-- Dumped from database version 13.7 (Debian 13.7-1.pgdg110+1)
+-- Dumped by pg_dump version 13.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -12,22 +12,9 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
+SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
 
 --
 -- Name: refresh_natlangwordbestplaces_for_delete(); Type: FUNCTION; Schema: public; Owner: jbovlaste
@@ -217,7 +204,7 @@ ALTER FUNCTION public.reset_valsibestdefinition(_valsiid integer, _langid intege
 
 SET default_tablespace = '';
 
-SET default_with_oids = false;
+SET default_table_access_method = heap;
 
 --
 -- Name: comments; Type: TABLE; Schema: public; Owner: jbovlaste
@@ -1153,42 +1140,42 @@ CREATE INDEX valsibestdefinitions_definitionid_key ON public.valsibestdefinition
 -- Name: definitionvotes on_definitionvotes_delete; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_definitionvotes_delete AFTER DELETE ON public.definitionvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_valsibestdefinitions_for_delete();
+CREATE TRIGGER on_definitionvotes_delete AFTER DELETE ON public.definitionvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_valsibestdefinitions_for_delete();
 
 
 --
 -- Name: definitionvotes on_definitionvotes_insert; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_definitionvotes_insert AFTER INSERT ON public.definitionvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_valsibestdefinitions_for_upsert();
+CREATE TRIGGER on_definitionvotes_insert AFTER INSERT ON public.definitionvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_valsibestdefinitions_for_upsert();
 
 
 --
 -- Name: definitionvotes on_definitionvotes_update; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_definitionvotes_update AFTER UPDATE ON public.definitionvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_valsibestdefinitions_for_upsert();
+CREATE TRIGGER on_definitionvotes_update AFTER UPDATE ON public.definitionvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_valsibestdefinitions_for_upsert();
 
 
 --
 -- Name: natlangwordvotes on_natlangwordvotes_delete; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_natlangwordvotes_delete AFTER DELETE ON public.natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_natlangwordbestplaces_for_delete();
+CREATE TRIGGER on_natlangwordvotes_delete AFTER DELETE ON public.natlangwordvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_natlangwordbestplaces_for_delete();
 
 
 --
 -- Name: natlangwordvotes on_natlangwordvotes_insert; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_natlangwordvotes_insert AFTER INSERT ON public.natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_natlangwordbestplaces_for_upsert();
+CREATE TRIGGER on_natlangwordvotes_insert AFTER INSERT ON public.natlangwordvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_natlangwordbestplaces_for_upsert();
 
 
 --
 -- Name: natlangwordvotes on_natlangwordvotes_update; Type: TRIGGER; Schema: public; Owner: jbovlaste
 --
 
-CREATE TRIGGER on_natlangwordvotes_update AFTER UPDATE ON public.natlangwordvotes FOR EACH ROW EXECUTE PROCEDURE public.refresh_natlangwordbestplaces_for_upsert();
+CREATE TRIGGER on_natlangwordvotes_update AFTER UPDATE ON public.natlangwordvotes FOR EACH ROW EXECUTE FUNCTION public.refresh_natlangwordbestplaces_for_upsert();
 
 
 --
