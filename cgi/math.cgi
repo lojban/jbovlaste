@@ -1,7 +1,10 @@
 #!/usr/bin/perl -I/srv/jbovlaste/current/lib
 
+use strict;
+use warnings;
 use urlbase64;
 use Compress::Zlib;
+use File::Spec;
 
 my $cache = "/tmp/mathimage/";
 
@@ -9,21 +12,27 @@ $ARGV[0] =~ s@\./@@g;
 
 print "Content-Type: image/png\n";
 
-if(-f $cache.$ARGV[0]) {
- undef $/;
- open(FILE,$cache.$ARGV[0]);
- my $image = <FILE>;
- print "Content-Length: ".length($image)."\n\n";
- print $image;
- close(FILE);
- exit;
+sub send_image {
+  my $file = shift;
+  local $/ = undef;
+  open(my $fh, "<", $file);
+  my $image = <$fh>;
+  print "Content-Length: ".length($image)."\n\n";
+  print $image;
+}
+
+my $cache_file = File::Spec->catfile($cache, $ARGV[0]);
+
+if (-f $cache_file) {
+  send_image($cache_file);
+  exit;
 }
 
 my $latexcode = uncompress(decode_base64($ARGV[0]));
 
-open(LATEX,">/tmp/$$.tex");
+open(my $tex, ">", "/tmp/$$.tex");
 
-printf(LATEX '
+printf($tex '
 \documentclass[12pt]{article}
 \pagestyle{empty}
 \begin{document}
@@ -34,30 +43,24 @@ printf(LATEX '
 \end{document}
 ', $latexcode);
 
-my @commands =
-("lambda $$.tex",
- "dvips $$.dvi -o $$.ps",
- "pstopnm < $$.ps | pnmtopng > $$.png",
- "convert -trim $$.png $cache".$ARGV[0],
- "rm -f $$.*");
+close($tex);
 
+my @commands = (
+  "lambda $$.tex",
+  "dvips $$.dvi -o $$.ps",
+  "pstopnm < $$.ps | pnmtopng > $$.png",
+  "convert -trim $$.png $cache_file",
+  "rm -f $$.*",
+);
+
+chdir("/tmp");
 foreach my $command (@commands) {
-    print "$command\n";
-    system("cd /tmp ; ".$command." 2> /dev/null");
+  print "$command\n";
+  system($command." 2> /dev/null");
 }
 
-if(-f $cache.$ARGV[0]) {
-  undef $/;
-  open(FILE,$cache.$ARGV[0]);
-  my $image = <FILE>;
-  print "Content-Length: ".length($image)."\n\n";
-  print $image;
-  close(FILE);
+if (-f $cache_file) {
+  send_image($cache_file);
 } else {
-  undef $/;
-  open(FILE,$cache."error");
-  my $image = <FILE>;
-  print "Content-Length: ".length($image)."\n\n";
-  print $image;
-  close(FILE);
+  send_image(File::Spec->catfile($cache, "error"));
 }
