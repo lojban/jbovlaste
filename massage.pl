@@ -31,10 +31,10 @@
 # Shell script to affix_insert 
 #
 
-($infile, $outfile) = @ARGV;
+my ($infile, $outfile) = @ARGV;
 
-$date = `date`;
-chomp $date;
+use POSIX 'strftime';
+my $date = strftime( '%a %b %d %H:%M:%S %Z %Y', localtime );
 
 #$version = $origversion;
 #$version =~ s/\.[A-Z].*//;
@@ -43,9 +43,9 @@ chomp $date;
 
 #print "$origversion, $version, $infile, $outfile\n";
 
-open( INFILE, "<$infile" );
-open( OUTFILE, ">$outfile" );
-while( <INFILE> )
+open( my $inf, '<', $infile );
+open( my $out, '>', $outfile );
+while( <$inf> )
 {
     if( /<!-- #JVS#DATE# -->/  )
     {
@@ -56,12 +56,7 @@ while( <INFILE> )
 #	s/<!-- #JVS#VERSION# -->/$version/;
 #    }
     
-    print OUTFILE $_;
+    print $out $_;
 }
 
-close( INFILE );
-close( OUTFILE );
-
-`chmod 444 $outfile`;
-
-exit 0
+chmod 0444, $outfile;
