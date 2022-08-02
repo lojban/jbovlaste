@@ -119,6 +119,7 @@ if( $editbitsret )
 	<p>Ok, I'm adding the word to the database.</p>
 
 	<%perl>
+	$type =~ s/\s+$//;
 	$dbh->do("INSERT INTO valsi (word, typeid, userid, time)
 	    VALUES (?, (SELECT typeid FROM valsitypes WHERE descriptor=?), ?, ?)",
 	    {}, $valsiword, $type, $session{'userid'}, time()) or $dbh->errstr;
