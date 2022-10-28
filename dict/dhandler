@@ -307,9 +307,11 @@ Return to <a href="<% $r->headers_in->{'Referer'} %>">the page you came from</a>
       <td><% $defrow->{'selmaho'} %></td>
      </tr>
 % }
+% my $definitiontxt = SimpleLaTeX::interpret($defrow->{'definition'});
+% utf8::decode($definitiontxt);
      <tr>
       <td>definition</td>
-      <td><% SimpleLaTeX::interpret($defrow->{'definition'}) %></td>
+      <td><% $definitiontxt %></td>
      </tr>
 % if(defined($defrow->{'notes'}) && length($defrow->{'notes'})) {
      <tr>
@@ -597,6 +599,7 @@ $bg => undef
 <%init>
  $r->content_type("text/html; charset=utf-8");
  use utils;
+ use utf8;
  use SimpleLaTeX;
  use Data::Dumper;
  use Wiki;
