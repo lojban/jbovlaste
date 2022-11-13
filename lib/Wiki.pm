@@ -429,10 +429,13 @@ sub mini {
     my $dollarcount = tr/$//;
     if( $dollarcount >= 2 )
     {
+        # Save word references (i.e. {klama}) from LaTeX interpretation
+        s%(?<!\{)\{([^\{\}]*)?\}%\\{\1\\}%g;
+
 	$_ = SimpleLaTeX::interpret($_);
     }
 
-# {word}
+    # Handle word references (i.e. {klama})
     s%(?<!\{)\{([^\{\}]*)?\}%&wordreferencegenerate( $1, undef, $lang, undef)%ge;
 
     return $_;

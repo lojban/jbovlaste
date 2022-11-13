@@ -206,6 +206,9 @@ if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~
 	If you're confused, please <a
 	href="../help/definitions.html">read the instructions</a>.
     </p>
+    <p>Here's what I see after stripping:</p>
+    <p><% $stripped %></p>
+    </p>
 % }
 <%perl>
 # Same thing, but with $notes.  Yay for code re-use.
@@ -229,6 +232,9 @@ if( defined( $check ) && ( $stripped =~ /\$/ || $stripped =~ /_/ || $stripped =~
 	If you're confused, please <a
 	href="../help/definitions.html">read the instructions</a>.
     </p>
+    <p>Here's what I see after stripping:</p>
+    <p><% $stripped %></p>
+    </p>
 % }
 <%perl>
 # Slightly different thing: {...} in notes.
@@ -247,6 +253,9 @@ if( defined( $check ) && ( $stripped =~ /{/ || $stripped =~ /}/ || $stripped =~ 
     LaTeX.  Please fix it. Please check dictionary export when
     you're done. If you're confused, please <a
 	href="../help/definitions.html">read the instructions</a>.
+    </p>
+    <p>Here's what I see after stripping:</p>
+    <p><% $stripped %></p>
     </p>
 % }
    </td>
