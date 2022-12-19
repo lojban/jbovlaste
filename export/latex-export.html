@@ -38,7 +38,7 @@
     sub generate_pdf_file {
         my ($dir, $filename) = @_;
         chdir $dir;
-        my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex $filename 2>&1};
+        my $output = qx{cd $dir ; HOME=/tmp/jbovlaste_export/ xelatex -halt-on-error $filename 2>&1};
 	return $output;
     }
 
