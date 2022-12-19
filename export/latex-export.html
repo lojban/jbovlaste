@@ -51,7 +51,19 @@
 <%perl>
 	my @output_lines = split(/\n/, $pdf_output);
 	use List::MoreUtils qw(uniq);
-	my @bad_lines = uniq(grep(/^l\./, @output_lines));
+
+        # The intent here is to match LaTeX errors; from
+        # http://latex.silmaril.ie/formattinginformation/errmsg.html#errs
+        # "Error messages begin with an exclamation mark at the
+        # start of the line, and give a description of the error,
+        # followed by another line starting with the number".  We're
+        # matching on the number, which actually is prepended with
+        # "l.".  Example:
+        #
+        #    ! Undefined control sequence.
+        #    l.6 \tableofcotnetns
+	my @bad_lines = uniq(grep(/^l\.[0-9]/, @output_lines));
+
 	if( @bad_lines ) {
 		print "<p>PDF GENERATION PROBABLY FAILED.</p>\n";
 		my $short_output = join("\n", @output_lines[-40..-1]);
