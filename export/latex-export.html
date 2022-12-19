@@ -69,15 +69,17 @@
 		my $short_output = join("\n", @output_lines[-40..-1]);
 		print "<!-- <pre>In dir $dir, ran xelatex $filename with output: $pdf_output\n\n****</pre> -->\n";
 		print "<p>Here's several lines of context for each line that appears to have an error:<p>\n";
-		foreach my $bad_line (@bad_lines) {
+                print "<p>Note that the real issue is often at the end of the last line of real data *before* the problem line; you should check there first.</p>\n";
+                foreach my $bad_line (@bad_lines) {
 			my $bad_line_number = $bad_line;
-			$bad_line_number =~ s/^l\.//;
+			$bad_line_number =~ s/^l\.([0-9]+).*/$1/;
 			my @latex_lines = split(/\n/, $latex_output);
-			print "<p>Line $bad_line_number: $latex_lines[$bad_line_number]</p>";
-			print "<p>Note that the real issue is often at the end of the last line of real data *before* the line number I just reported; you should check there first.</p>\n";
 			print "<p>Line $bad_line_number, +/- 5:</p>\n";
 			print "<hr/>\n";
-			my $latex_badness = join("\n", @latex_lines[($bad_line_number-5)..($bad_line_number+5)]);
+			my $latex_badness = "";
+			$latex_badness .= "    " . join("\n    ", @latex_lines[($bad_line_number-5)..$bad_line_number]) . "\n";
+			$latex_badness .= "^^^ " .  $latex_lines[$bad_line_number+1] . "\n";
+			$latex_badness .= "    " . join("\n    ", @latex_lines[($bad_line_number+2)..($bad_line_number+6)]) . "\n";
 			print "<pre>$latex_badness</pre>\n";
 			print "<hr/>\n";
 		}
