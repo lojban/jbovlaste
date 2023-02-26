@@ -104,8 +104,8 @@ SWITCH:
 	my $langreal;
 	if( $row->{'langid'} )
 	{
-	    $langreal = " in language " .
-		$dbh->selectrow_array("SELECT realname from languages where langid=?", undef, $row->{'langid'});
+            $langreal = " in language " .
+                $dbh->selectrow_array("SELECT realname from languages where langid=?", undef, $row->{'langid'});
 	} else {
 	    $langreal = "";
 	}
@@ -114,21 +114,29 @@ SWITCH:
 		$row->{'type'} eq 'definition' ||
 		$row->{'type'} eq 'etymology')
 	{
-	    $m->out(sprintf('%s - %s originally entered by <a href="personal/%s">%s</a> was updated; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
+	    my $output = sprintf('%s - %s originally entered by <a href="personal/%s">%s</a> was updated; see <a href="dict/%s">%s</a>%s<br />' . "\n", $timestr, $row->{'type'},
 			$row->{'username'}, $row->{'username'},
 			$row->{'word'}, $row->{'word'}, $langreal
-			));
+			);
+
+            utf8::encode($output);
+            $m->out($output);
+
 	    last SWITCH;
 	}
 	if($row->{'type'} eq 'comment') {
-	    $m->out(sprintf('%s - new comment <a href="%s">%s</a> by <a
+	    my $output = sprintf('%s - new comment <a href="%s">%s</a> by <a
 			href="personal/%s">%s</a>; see <a
 			href="%s/%s">%s</a>%s<br
 			/>'."\n", $timestr,
 			&commentlink($row), $row->{'word'},
 			$row->{'username'}, $row->{'username'},
 			&wordlink($row,$vq,$nlwq), $langreal
-			));
+			);
+
+            utf8::encode($output);
+            $m->out($output);
+
 	    last SWITCH;
 	}
 	if(1) {
@@ -170,6 +178,7 @@ sub wordlink
 
 <%init>
 our($dbh);
+use utf8;
 </%init>
 
 <%method title>
