@@ -3,24 +3,33 @@
  my @langs = map { $_->[0] } @{ $langs };
  my %mapping = map { $_->[0] => $_->[1] } @{ $langs };
  my @langshtml;
-
- my $format = '<a href="xml-export.html?lang=%s">%s</a>';
- foreach my $curlang (@langs) {
-   my $vislang = $mapping{$curlang};
-   $vislang =~ s/\s+/&nbsp;/g;
-   my $html = sprintf($format,
-                      &utils::armorurl($curlang),
-                      $vislang);
-   push @langshtml, $html;
- }
 </%perl>
 
-<font size="+3">Generate An XML Dump To/From Lojban And:</font>
-<ul>
-<li>
-<% join("</li><li>",@langshtml) %>
-</li>
-</ul>
+<font size="+2">Generate An XML Dump To/From Lojban And:</font>
+<form method="get" action="xml-export.html">
+ <select name="lang">
+<%perl>
+  my $langquery =
+    $dbh->prepare("SELECT realname,tag FROM languages ".
+                         "WHERE langid>0 ORDER BY realname");
+  $langquery->execute;
+  while(defined(my $langrow=$langquery->fetchrow_hashref)) {
+    my $selected="";
+    if($langrow->{'tag'} eq 'en') {
+       $selected = "selected ";
+    }
+</%perl>
+    <option <% $selected %>value="<%$langrow->{'tag'}%>"><% $langrow->{'realname'} %></option><%perl>
+<%perl>
+ }
+</%perl>
+ </select>
+ <br/>
+ <label for="positive_scores_only">Allow Voting Scores Of 0 Or Lower: </label>
+ <input type="checkbox" id="positive_scores_only" name="positive_scores_only" value="0" />
+ <br/>
+ <input type="submit" value="Generate">
+</form>
 
 <%shared>
 our $titlestr;

@@ -9,6 +9,7 @@ Lojban XML Dictionary Generation
 <%args>
 $lang => undef
 $bot_key => undef
+$positive_scores_only => 1
 </%args>
 
 <%init>
@@ -78,8 +79,14 @@ if( ! defined($session{'userid'}) ) {
 
       my $keywords = fetchkeywords($dbh, $langid);
 
+      my $limit_score = " AND (vbd.score > 0) ";
+
+      if ( $positive_scores_only == 0 ) {
+          $limit_score = "";
+      }
+
       # Print the lojban -> foo section
-      my $sth = selectvalsi($dbh, $langid);
+      my $sth = selectvalsi($dbh, $langid, $limit_score);
       print qq{<direction from="lojban" to="$langrealname">};
       while(defined(my $valsirow=$sth->fetchrow_hashref))
       {
@@ -90,7 +97,7 @@ if( ! defined($session{'userid'}) ) {
 
       # Print the foo -> lojban section
       print qq{<direction from="$langrealname" to="lojban">};
-      $sth = selectwords($dbh, $langid);
+      $sth = selectwords($dbh, $langid, $limit_score);
       while(defined(my $nlwordrow = $sth->fetchrow_hashref)) {
           my $tag = nlwordtag($nlwordrow);
           print "$tag\n";
@@ -102,9 +109,9 @@ if( ! defined($session{'userid'}) ) {
       ####
 
       sub fetchkeywords {
-          my ($dbh, $langid) = @_;
+          my ($dbh, $langid, $limit_score) = @_;
 
-          my $sth = selectkeywords($dbh, $langid);
+          my $sth = selectkeywords($dbh, $langid, $limit_score);
           my %keywords;
           while(defined(my $kwrow = $sth->fetchrow_hashref)) {
               my $definitionid = $kwrow->{'definitionid'};
@@ -115,17 +122,18 @@ if( ! defined($session{'userid'}) ) {
       }
 
       sub selectkeywords {
-          my ($dbh, $langid) = @_;
+          my ($dbh, $langid, $limit_score) = @_;
 
           my $sth = $dbh->prepare("
-            SELECT vbg.definitionid, nlw.word, nlw.meaning, km.place
-            FROM valsibestguesses vbg
+            SELECT vbd.definitionid, nlw.word, nlw.meaning, km.place
+            FROM valsibestdefinitions vbd
             JOIN keywordmapping km
-              ON km.definitionid = vbg.definitionid
+              ON km.definitionid = vbd.definitionid
             JOIN natlangwords nlw
               ON nlw.wordid = km.natlangwordid
-            WHERE vbg.langid=$langid
-            ORDER BY vbg.definitionid, km.place, nlw.word, nlw.meaning
+            WHERE vbd.langid=$langid
+              $limit_score
+            ORDER BY vbd.definitionid, km.place, nlw.word, nlw.meaning
             ");
           $sth->execute();
 
@@ -134,21 +142,22 @@ if( ! defined($session{'userid'}) ) {
 
       # Get the valsi best guesses list.
       sub selectvalsi {
-        my ($dbh, $langid) = @_;
+        my ($dbh, $langid, $limit_score) = @_;
 
         # Get the valsi best guesses list.
         my $sth = $dbh->prepare("
-            SELECT v.word, vbg.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
-            FROM valsibestguesses vbg
+            SELECT v.word, vbd.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
+            FROM valsibestdefinitions vbd
             JOIN valsi v
-              ON v.valsiid = vbg.valsiid
+              ON v.valsiid = vbd.valsiid
             JOIN convenientdefinitions c
-              ON c.definitionid = vbg.definitionid
+              ON c.definitionid = vbd.definitionid
             JOIN valsitypes t
               ON t.typeid = v.typeid
             JOIN users u
               ON u.userid = c.userid
-            WHERE vbg.langid=$langid
+            WHERE vbd.langid=$langid
+              $limit_score
             ORDER BY v.word");
         $sth->execute();
 
@@ -156,18 +165,19 @@ if( ! defined($session{'userid'}) ) {
       }
 
       sub selectwords {
-          my ($dbh, $langid) = @_;
+          my ($dbh, $langid, $limit_score) = @_;
 
           my $sth = $dbh->prepare("
             SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
-            FROM valsibestguesses vbg
+            FROM valsibestdefinitions vbd
             JOIN valsi v
-              ON v.valsiid = vbg.valsiid
+              ON v.valsiid = vbd.valsiid
             JOIN natlangwordbestguesses nlwbg
-              ON nlwbg.definitionid = vbg.definitionid
+              ON nlwbg.definitionid = vbd.definitionid
             JOIN natlangwords nlw
               ON nlw.wordid = nlwbg.natlangwordid
-            WHERE vbg.langid=$langid
+            WHERE vbd.langid=$langid
+              $limit_score
             ORDER BY valsi, nlw.word, nlw.meaning, nlwbg.place
             ");
           $sth->execute();
