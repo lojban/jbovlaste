@@ -8,6 +8,7 @@ I'm not going to let you add a valsi unless you log in.
 %   return;
 % }
 
+% utf8::decode($valsi);
 % $valsi =~ s/^\s+|\s+$//g;
 
 % unless(defined($confirm)) {
@@ -17,6 +18,22 @@ I'm not going to let you add a valsi unless you log in.
 <%shared>
 our $valsi;
 </%shared>
+
+<%init>
+ use utf8;
+ $r->content_type("text/html; charset=utf-8");
+ our($dbh,%session);
+ sub produce_verifier {
+   my $valsi = shift;
+   my $verifier = md5_hex(pack("f*",map { ord } (split//, $valsi)));
+   return $verifier;
+ }
+</%init>
+
+<%args>
+$valsi => undef
+$confirm => undef
+</%args>
 
 <%method title>
 Adding valsi <% $valsi %>
@@ -117,17 +134,3 @@ It should no longer be possible to get here.  If you got here,
 please mail lojban@lojban.org with how you did it.
 
 % }
-
-<%init>
- our($dbh,%session);
- sub produce_verifier {
-   my $valsi = shift;
-   my $verifier = md5_hex(pack("f*",map { ord } (split//, $valsi)));
-   return $verifier;
- }
-</%init>
-
-<%args>
-$valsi => undef
-$confirm => undef
-</%args>

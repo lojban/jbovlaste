@@ -25,6 +25,8 @@ Adding definition: <% $titlestr %>
 </%method>
 
 <%init>
+use utf8;
+$r->content_type("text/html; charset=utf-8");
 our($dbh,%session);
 use utils;
 use Unicode::String;
@@ -41,6 +43,8 @@ my $editbitsret;
 # Either the user got here through addvalsi, in which case
 # valsiword will be set, or they got here through dict/dhandler,
 # and/or editdef.html, in which case valsiid will be set.
+
+utf8::decode($valsiword);
 
 my($langrealname);
 
