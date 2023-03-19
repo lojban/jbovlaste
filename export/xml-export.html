@@ -68,7 +68,7 @@ if( ! defined($session{'userid'}) ) {
       }
 
       $r->content_type('application/xml; charset=utf-8');
-      $r->header_out('Content-Disposition' => "attachment; filename=\"jbovlaste-$lang.xml\"");
+      $r->headers_out->add('Content-Disposition' => "attachment; filename=\"jbovlaste-$lang.xml\"");
 
       our $unofficialwarning = 'unofficial="true" ';
       my $langrealname = $dbh->selectrow_array("SELECT realname FROM
