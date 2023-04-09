@@ -10,6 +10,7 @@ package SimpleLaTeX;
 
 sub interpret {
     use File::Temp qw/ tempfile tempdir /;
+    use utf8;
 
     my $InputText = shift();
     my $OrigInputText = $InputText;
@@ -60,7 +61,8 @@ sub interpret {
 	my $dir = tempdir( DIR => "/tmp/jbovlaste_export/", CLEANUP => 1 );
 	my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => ".tex" );
 
-	open(TMP, ">:utf8", $filename) or return "Couldn't open temporary file $filename for writing.\n";
+	open(TMP, ">", $filename) or return "Couldn't open temporary file $filename for writing.\n";
+        binmode TMP, ':utf8';
 	
 	print TMP "\\documentclass{letter}\n\\begin{document}\n";
 	# Write the input text out.
@@ -77,6 +79,7 @@ sub interpret {
 	$htmlfilename =~ s/.tex$/.html/;
 
 	open(TMP2, "<$htmlfilename") or return "Couldn't open temporary html file $htmlfilename; this is supposed to hold output from latex2html, so probably that failed; check your definition for unbalanced dollar signs or other wierd characters.\n";
+        binmode TMP2, ':utf8';
 
 	# Snarf the data.
 	my $tmpout=join( "", <TMP2>);
