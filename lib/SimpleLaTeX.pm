@@ -43,8 +43,6 @@ sub interpret {
 	    }
 
 	}
-    } else {
-	return $InputText;
     }
 
     # See if we need to do anything more by counting $s.
@@ -93,6 +91,11 @@ sub interpret {
 	$tmpout =~ s/SRC="/SRC="$dir\//gs;
 
 	$InputText=$tmpout;
+    } else {
+        # If we *didn't* run latex2html, strip out escapes we might
+        # have added in mini() in lib/Wiki.pm
+        $InputText =~ s/\\{/{/g;
+        $InputText =~ s/\\}/}/g;
     }
 
     return $InputText;

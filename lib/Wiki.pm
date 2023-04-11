@@ -37,6 +37,7 @@ use Compress::Zlib;
 use HTML::Mason;
 use Data::Dumper;
 use SimpleLaTeX;
+use utf8;
 
 use utils;
 
@@ -426,17 +427,90 @@ sub mini {
 
     $_=$text;
 
+    # What we're trying to do here is fairly complicated, because
+    # sometimes {...} is a math thing in LaTeX, and sometimes it's a
+    # link to a dictionary word.
+    #
+    # Consider this text that actually appeared in a Notes field in
+    # real life:
+    #
+    #     Equivalent to "$x_1 \, x_2$ fo $x_4 \, x_5$ .{utkaro} fi
+    #     $x_3$ gi'e se .utkaro fi $x_{3}^{-1}$", where $x_{3}^{-1}$
+    #     is binary relation/predicate $x_3$ with the order of its
+    #     two arguments exchanged (basically: "{se}"-converted).
+    #
+    # Note that {...} is used in both senses in that block.  One way
+    # to handle this would be to only do word links to actual words,
+    # but, in fact, "3" is a word:
+    # https://jbovlaste.lojban.org/natlang/en/3
+    #
+    # So what we do instead is walk the entire string.  If we see a
+    # $, we note that, and when we see the next one, we un-note it.
+    # While we're *not* in a $, if we see a {, we put a \ before it
+    # (and same for }).
+    #
+    # This causes { (and }) that are *not* inside $...$ to be passed
+    # over by the LaTeX phase (or, rather, the LaTeX phase turns \{
+    # into {), and then after the LaTeX phase we do the word link
+    # substitutions.
+
+    use HTML::Entities;
+
+    # print "<pre>mini start" . encode_entities($_) . "</pre>";
+
     my $dollarcount = tr/$//;
     if( $dollarcount >= 2 )
     {
-        # Save word references (i.e. {klama}) from LaTeX interpretation
-        s%(?<!\{)\{([^\{\}]*)?\}%\\{\1\\}%g;
+        my $indollar = 0;
+        my $i=0;
 
-	$_ = SimpleLaTeX::interpret($_);
+        # We need to loop manually because we keep changing the
+        # length
+        while( 1 ) {
+            my $char = substr($_, $i, 1);
+            # print "<pre>$char</pre>";
+            my $prevchar = substr($_, $i-1, 1);
+            # print "<pre>$prevchar</pre>";
+
+            if( $char eq "\$" && $prevchar ne "\\" ) {
+                # Switch the sense of indollar
+                if( $indollar ) {
+                    $indollar = 0;
+                } else {
+                    $indollar = 1;
+                }
+            }
+
+            # print "<pre>id: $indollar</pre>";
+
+            if( $char eq "{" && $prevchar ne "\\" && ! $indollar ) {
+                # print "<pre>curly</pre>";
+                substr($_, $i, 1, "\\{");
+            }
+            if( $char eq "}" && $prevchar ne "\\" && ! $indollar ) {
+                # print "<pre>curly</pre>";
+                substr($_, $i, 1, "\\}");
+            }
+
+            # This can't be the loop counter because it won't get
+            # re-evaluated when the length changes
+            if( $i >= (length($_)-1) ) {
+                last;
+            }
+
+            $i++;
+        }
+
+        # print "<pre>mini before latex: " . encode_entities($_) . "</pre>";
+        $_ = SimpleLaTeX::interpret($_);
+        # print "<pre>mini after latex: " . encode_entities($_) . "</pre>";
     }
 
     # Handle word references (i.e. {klama})
+
+    # print "<pre>mini before word references: " . encode_entities($_) . "</pre>";
     s%(?<!\{)\{([^\{\}]*)?\}%&wordreferencegenerate( $1, undef, $lang, undef)%ge;
+    # print "<pre>mini after word references: " . encode_entities($_) . "</pre>";
 
     return $_;
 }
