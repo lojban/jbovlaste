@@ -47,6 +47,8 @@ my @result = $dbh->selectrow_array("SELECT word FROM valsi WHERE replace(word, '
 
 use Digest::MD5 qw(md5_hex);
 my $typestr = utils::vlatai($valsi);
+# Trim whitespace
+$typestr =~ s/^\s+|\s+$//g;
 my $verifier = &produce_verifier($valsi.$typestr);
 </%perl>
 
@@ -114,6 +116,8 @@ Initial Definition In:
  } else {
 
    my $typestr = utils::vlatai($valsi);
+   # Trim whitespace
+   $typestr =~ s/^\s+|\s+$//g;
    unless(produce_verifier($valsi.$typestr) eq $confirm) {
 </%perl>
 
