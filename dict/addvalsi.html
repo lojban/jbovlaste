@@ -47,8 +47,6 @@ my @result = $dbh->selectrow_array("SELECT word FROM valsi WHERE replace(word, '
 
 use Digest::MD5 qw(md5_hex);
 my $typestr = utils::vlatai($valsi);
-# Trim whitespace
-$typestr =~ s/^\s+|\s+$//g;
 my $verifier = &produce_verifier($valsi.$typestr);
 </%perl>
 
@@ -80,7 +78,7 @@ my $verifier = &produce_verifier($valsi.$typestr);
 </ol>
 
 <p>I've automatically checked the valsi myself, and have decided
-that it is of type: <i><% $typestr %></i>. If this is correct, and
+that it is of type: <font size="+2"><b><% $typestr %></b></font>. If this is correct, and
 you are very sure that you want to add this word, pick a language and then hit
 the button below:</p>
 
@@ -116,8 +114,6 @@ Initial Definition In:
  } else {
 
    my $typestr = utils::vlatai($valsi);
-   # Trim whitespace
-   $typestr =~ s/^\s+|\s+$//g;
    unless(produce_verifier($valsi.$typestr) eq $confirm) {
 </%perl>
 

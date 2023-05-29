@@ -84,9 +84,12 @@ sub run_vlatai {
     $safevalsi =~ s/[^\'\w, ]//g; # NOTE: spaces are significant
     $safevalsi =~ s/\'/\\\'/g;
     if (open(VLATAI, "/usr/local/bin/vlatai.py $safevalsi|")) {
-      local $/ = undef; # slurp mode
-      my $type = <VLATAI>;
-      close(VLATAI);
+      my $type;
+      {
+        local $/ = undef; # slurp mode
+        $type = <VLATAI>;
+        close(VLATAI);
+      }
       chomp $type;
       return $type || "nalvla";
     }
