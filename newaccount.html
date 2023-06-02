@@ -76,6 +76,14 @@ After your account is created, you will be added to the Jbovlaste mailing list a
     $realname =~ s/[^a-zA-Z0-9 _-]//g;
     $email =~ s/[^a-zA-Z0-9@._+-]//g;
 
+    my $bademail='';
+
+    use Email::Valid;
+    if( ! Email::Valid->address($email) ) {
+        $bademail = $email;
+        $email = '';
+    }
+
     #print "<pre>".Dumper(\$result)."</pre>";
     #print "<pre> $username, $realname, $email.\n</pre>";
 
@@ -131,8 +139,13 @@ If this means nothing to you, please discard this e-mail.
 
 
     } else {
-	if( $result->{is_valid} )
-	{
+	if( ! $email ) {
+	    </%perl>
+	    <font size="+3">
+            Invalid email address <% $bademail %>!
+	    </font>
+	    <%perl>
+        } elsif( $result->{is_valid} ) {
 	    </%perl>
 	    <font size="+3">
 	    ReCaptcha correct, but input invalid, sorry.  Try again.  <pre><% Dumper($result) %>, <% $recaptcha_response %></pre>
