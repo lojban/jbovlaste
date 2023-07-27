@@ -147,7 +147,7 @@ if( ! defined($session{'userid'}) ) {
 
         # Get the valsi best guesses list.
         my $sth = $dbh->prepare("
-            SELECT v.word, vbd.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
+            SELECT v.word, vbd.definitionid, vbd.score, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
             FROM valsibestdefinitions vbd
             JOIN valsi v
               ON v.valsiid = vbd.valsiid
@@ -230,6 +230,8 @@ if( ! defined($session{'userid'}) ) {
             massage("$valsirow->{'definition'}") .
             "</definition>".
             "\n  <definitionid>$definitionid</definitionid>";
+
+          $tag .= "\n  <score>" . $valsirow->{'score'} . "</score>";
 
           if( $valsirow->{'notes'} ) {
               $tag .= "\n  <notes>".
