@@ -177,13 +177,13 @@ sub format_definition {
 sub escapetex {
     my ($term, $escape_carets) = @_;
 
+    $term =~ s/\\/\\textbackslash{}/g;
+
     $term =~ s/>/\\textgreater{}/g;
     $term =~ s/</\\textless{}/g;
 
     $term =~ s/–/\\textendash{}/g;
     $term =~ s/—/\\textemdash{}/g;
-
-    $term =~ s/\\/\\textbackslash{}/g;
 
     $term =~ s/\~/\\textasciitilde{}/g;
 
