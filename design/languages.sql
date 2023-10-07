@@ -154,6 +154,8 @@ INSERT INTO languages (tag, englishname, lojbanname, realname, url, forlojban)
  VALUES ('eo', 'Esperanto', 'spe\'atybau', 'Esperanto', 'http://www.esperanto.net/', 'Loĵbano');
 INSERT INTO languages (tag, englishname, lojbanname, realname, url)
  VALUES ('art-guaspi', 'Gua\spi', 'gaspo', 'gua\spi', 'http://www.loglan.net/');
+INSERT INTO languages (tag, englishname, lojbanname, realname, forlojban, url)
+ VALUES ('tok', 'Toki Pona', 'tokpona', 'toki pona', 'toki losupan', 'http://www.loglan.net/');
 
 -- Simple
 INSERT INTO languages (tag, englishname, lojbanname, realname)
