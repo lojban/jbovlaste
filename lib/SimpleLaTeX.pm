@@ -68,9 +68,12 @@ sub interpret {
 	print TMP "\\end{document}\n";
 
 	close( TMP );
-
+        
 	# Run latex2html.
-	`/usr/bin/latex2html -no_navigation -info 0 -addres 0 -dir $dir -html_version 4.0,math -no_subdir $filename 2>&1 >/dev/null`;
+        my $latexout = `/usr/bin/latex2html -no_navigation -info 0 -addres 0 -dir $dir -html_version 4.0,math -no_subdir $filename 2>&1`;
+
+        # Debugging
+        # print STDERR "lo: $latexout";
 
 	# Get the latex2html generated file's name.
 	$htmlfilename=$filename;
