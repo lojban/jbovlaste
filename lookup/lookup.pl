@@ -482,7 +482,7 @@ sub SendListing {
   my $user_agent = "";
   if( defined $ENV{'HTTP_USER_AGENT'} ) {
     $user_agent = $ENV{'HTTP_USER_AGENT'};
-    if ($user_agent =~ /^([:+,\(\);\/-\@0-9\s\w.]+)$/) {
+    if ($user_agent =~ /^([:+,\(\);\/-\@0-9\s\w~+.]+)$/) {
       $user_agent = "$1";
     } else {
       warn ("TAINTED DATA for user_agent SENT BY $ENV{'REMOTE_ADDR'}: $user_agent: $!");
