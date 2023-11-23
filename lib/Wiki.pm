@@ -255,6 +255,9 @@ sub inline {
     s/&/\&amp;/g;
     s/</\&lt;/g;
 
+    # Escape LaTeX comment characters or this'll get weird
+    s/(?<!\\)%/\\%/g;
+
     $dollarcount = tr/$//;
     if( $dollarcount >= 2 )
     {
@@ -303,11 +306,11 @@ sub inline {
     s#\[\[([^[])#\[$1#g;
     s#\]\]([^]])#\]$1#g;
     s#\{\{([^{])#\{$1#g;
-	s#\}\}([^}])#\}$1#g;
+    s#\}\}([^}])#\}$1#g;
 
-	s#%%%#<br />#g;
+    s#%%%#<br />#g;
 
-	return $_;
+    return $_;
 }
 
 # Answer the appropriate string to change from $omode of depth $odepth
