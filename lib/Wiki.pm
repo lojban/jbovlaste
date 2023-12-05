@@ -255,14 +255,27 @@ sub inline {
     s/&/\&amp;/g;
     s/</\&lt;/g;
 
-    # Escape LaTeX comment characters or this'll get weird
-    s/(?<!\\)%/\\%/g;
+    # Can't do it this way because this works correctly on % inside
+    # LaTeX blocks, but ones that *aren't* will end up escaped and
+    # ignored later.
+    #
+    # # Escape LaTeX comment characters or this'll get weird
+    # s/(?<!\\)%/\\%/g;
+
+    # Replace LaTeX comment characters ("%") for later
+    # re-replacement.
+    #
+    # This makes me feel dirty, but this should at least be a unique
+    # string. -_-;
+    s/(?<!\\)%/PERCENTBEFORELATEX/g; 
 
     $dollarcount = tr/$//;
     if( $dollarcount >= 2 )
     {
 	$_ = SimpleLaTeX::interpret($_);
     }
+
+    s/PERCENTBEFORELATEX/%/g;
 
     s%'''(.*?)'''%<b><i>$1</i></b>%g;
     s%''(.*?)''%<i>$1</i>%g;
