@@ -162,3 +162,5 @@ close( HTMLOUT );
 #print $indexString;
 
 $dbh->disconnect;
+
+print "update all natlang best guesses completed\n";

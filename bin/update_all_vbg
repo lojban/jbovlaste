@@ -80,10 +80,12 @@ my $langSearch = $dbh->prepare("SELECT langid, tag, realname FROM languages WHER
 
 $langSearch->execute( );
 
+binmode(STDOUT, ":utf8");
+
 while ( my @lang = $langSearch->fetchrow_array )
 {
 
-	print "Next step.\n";
+	print "Working on lang @lang\n";
 	my $htmlString="";
 
 	# Add index entry.
@@ -94,7 +96,7 @@ while ( my @lang = $langSearch->fetchrow_array )
 	$valsiSearch->execute( $lang[0] );
 	while ( my @valsiid = $valsiSearch->fetchrow_array )
 	{
-		print "valsi id needs votes: $valsiid[0] in language $lang[0]\n";
+                # print "valsi id needs votes: $valsiid[0] in language $lang[0]\n";
 
 		$htmlString .= "\n<li> <a href=\"../../dict/";
 
@@ -150,3 +152,5 @@ close( HTMLOUT );
 $dbh->disconnect;
 
 exit;
+
+print "update all valsi best guesses completed\n";
