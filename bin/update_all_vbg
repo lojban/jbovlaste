@@ -151,6 +151,6 @@ close( HTMLOUT );
 
 $dbh->disconnect;
 
-exit;
-
 print "update all valsi best guesses completed\n";
+
+exit;
