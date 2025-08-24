@@ -10,6 +10,7 @@ Lojban XML Dictionary Generation
 $lang => undef
 $bot_key => undef
 $positive_scores_only => 1
+$all_defs => 0
 </%args>
 
 <%init>
@@ -42,7 +43,7 @@ if( ! defined($session{'userid'}) ) {
 </html>
 
 <%perl>
- } else {
+} else {
     my $result;
 
     # Verify submission
@@ -71,37 +72,74 @@ if( ! defined($session{'userid'}) ) {
       $r->headers_out->add('Content-Disposition' => "attachment; filename=\"jbovlaste-$lang.xml\"");
 
       our $unofficialwarning = 'unofficial="true" ';
-      my $langrealname = $dbh->selectrow_array("SELECT realname FROM
-          languages WHERE tag=?", undef, $lang);
+      my $langrealname = $dbh->selectrow_array("SELECT realname FROM languages WHERE tag=?", undef, $lang);
 
       print qq{<?xml version="1.0" encoding="UTF-8"?>\n};
       print qq{<?xml-stylesheet type="text/xsl" href="jbovlaste.xsl"?>\n};
       print qq{<dictionary>\n};
 
-      my $keywords = fetchkeywords($dbh, $langid);
+      my $all_votes = $dbh->selectall_hashref("SELECT definitionid, userid, value FROM definitionvotes WHERE langid=?",
+              ['definitionid', 'userid', 'value'], undef, $langid);
 
-      my $limit_score = " AND (vbd.score > 0) ";
-
-      if ( $positive_scores_only == 0 ) {
-          $limit_score = "";
-      }
+      my $keywords = fetchkeywords($dbh, $langid, $all_defs);
 
       # Print the lojban -> foo section
-      my $sth = selectvalsi($dbh, $langid, $limit_score);
+      my $sth = selectvalsi($dbh, $langid, $all_defs);
       print qq{<direction from="lojban" to="$langrealname">};
-      while(defined(my $valsirow=$sth->fetchrow_hashref))
-      {
-          my $tag = valsitag($valsirow, $keywords);
-          print "$tag\n";
+
+      if( $all_defs ) {
+        # In the all_defs case we need to gather multiple results
+        # into one thing for valsitag, which gets a bit complicated
+        my $valsirows = [];
+        my $lastrow = {};
+
+        while(defined(my $valsirow=$sth->fetchrow_hashref)) {
+            # If this one is the same as the previous one,
+            # add it to the list, otherwise print out what
+            # we gathered.
+            if( $valsirow->{word} eq $lastrow->{word} ) {
+                push @$valsirows, $valsirow;
+            } else {
+                # This if is just to stop us from printing an empty word at the beginning
+                if( scalar @{$valsirows} > 0 ) {
+                    my $tag = valsitag($valsirows, $keywords, $positive_scores_only, $all_votes, $all_defs);
+                    if( $tag ) {
+                        print "$tag\n";
+                    }
+                }
+
+                # Set up the next one
+                $valsirows = [$valsirow];
+            }
+
+            $lastrow = $valsirow;
+        }
+
+        # Finish the last one
+        my $tag = valsitag($valsirows, $keywords, $positive_scores_only, $all_votes, $all_defs);
+        if( $tag ) {
+            print "$tag\n";
+        }
+
+      } else {
+        while(defined(my $valsirow=$sth->fetchrow_hashref))
+        {
+            my $tag = valsitag([$valsirow], $keywords, $positive_scores_only, $all_votes, $all_defs);
+            if( $tag ) {
+                print "$tag\n";
+            }
+        }
       }
       print qq{</direction>};
 
       # Print the foo -> lojban section
       print qq{<direction from="$langrealname" to="lojban">};
-      $sth = selectwords($dbh, $langid, $limit_score);
+      $sth = selectwords($dbh, $langid, $all_defs);
       while(defined(my $nlwordrow = $sth->fetchrow_hashref)) {
-          my $tag = nlwordtag($nlwordrow);
-          print "$tag\n";
+          my $tag = nlwordtag($nlwordrow, $positive_scores_only, $all_votes);
+          if( $tag ) {
+              print "$tag\n";
+          }
       }
       print qq{</direction>};
 
@@ -110,9 +148,9 @@ if( ! defined($session{'userid'}) ) {
       ####
 
       sub fetchkeywords {
-          my ($dbh, $langid, $limit_score) = @_;
+          my ($dbh, $langid, $all_defs) = @_;
 
-          my $sth = selectkeywords($dbh, $langid, $limit_score);
+          my $sth = selectkeywords($dbh, $langid, $all_defs);
           my %keywords;
           while(defined(my $kwrow = $sth->fetchrow_hashref)) {
               my $definitionid = $kwrow->{'definitionid'};
@@ -122,72 +160,100 @@ if( ! defined($session{'userid'}) ) {
           return \%keywords;
       }
 
+      # We could theoretically use bestguesses to pull scores
+      # in the all_defs=0 case and only use this for the
+      # all_defs=1 case, but it's not actually that slow
+      # so it's not worth all the conditional code
+      sub get_score {
+          my ($defid, $all_votes) = @_;
+
+          use List::Util qw/sum/;
+
+          if( defined( $all_votes->{$defid} ) ) {
+              return sum (map { keys %{$_} } values %{$all_votes->{$defid}});
+          } else {
+              return 0;
+          }
+      }
+
       sub selectkeywords {
-          my ($dbh, $langid, $limit_score) = @_;
+          my ($dbh, $langid, $all_defs) = @_;
+
+          my $defs_table="valsibestdefinitions def";
+          if( $all_defs ) {
+              $defs_table="definitions def";
+          }
 
           my $sth = $dbh->prepare("
-            SELECT vbd.definitionid, nlw.word, nlw.meaning, km.place
-            FROM valsibestdefinitions vbd
-            JOIN keywordmapping km
-              ON km.definitionid = vbd.definitionid
-            JOIN natlangwords nlw
-              ON nlw.wordid = km.natlangwordid
-            WHERE vbd.langid=$langid
-              $limit_score
-            ORDER BY vbd.definitionid, km.place, nlw.word, nlw.meaning
-            ");
+                  SELECT def.definitionid, nlw.word, nlw.meaning, km.place
+                  FROM $defs_table
+                  JOIN keywordmapping km
+                  ON km.definitionid = def.definitionid
+                  JOIN natlangwords nlw
+                  ON nlw.wordid = km.natlangwordid
+                  WHERE def.langid=$langid
+                  ORDER BY def.definitionid, km.place, nlw.word, nlw.meaning
+                  ");
           $sth->execute();
 
           return $sth;
       }
 
-      # Get the valsi best guesses list.
+      # Get the valsi list.
       sub selectvalsi {
-        my ($dbh, $langid, $limit_score) = @_;
+        my ($dbh, $langid, $all_defs) = @_;
 
-        # Get the valsi best guesses list.
+        my $defs_table="valsibestdefinitions def";
+        if( $all_defs ) {
+            $defs_table="definitions def";
+        }
+
         my $sth = $dbh->prepare("
-            SELECT v.word, vbd.definitionid, vbd.score, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
-            FROM valsibestdefinitions vbd
-            JOIN valsi v
-              ON v.valsiid = vbd.valsiid
-            JOIN convenientdefinitions c
-              ON c.definitionid = vbd.definitionid
-            JOIN valsitypes t
-              ON t.typeid = v.typeid
-            JOIN users u
-              ON u.userid = c.userid
-            WHERE vbd.langid=$langid
-              $limit_score
-            ORDER BY v.word");
+                SELECT v.word, def.definitionid, c.rafsi, c.selmaho, c.definition, c.notes, t.descriptor, u.username, u.realname
+                FROM $defs_table
+                JOIN valsi v
+                ON v.valsiid = def.valsiid
+                JOIN convenientdefinitions c
+                ON c.definitionid = def.definitionid
+                JOIN valsitypes t
+                ON t.typeid = v.typeid
+                JOIN users u
+                ON u.userid = c.userid
+                WHERE def.langid=$langid
+                ORDER BY v.word");
         $sth->execute();
 
         return $sth;
       }
 
       sub selectwords {
-          my ($dbh, $langid, $limit_score) = @_;
+          my ($dbh, $langid, $all_defs) = @_;
+
+          my $defs_table="valsibestdefinitions def";
+          if( $all_defs ) {
+              $defs_table="definitions def";
+          }
 
           my $sth = $dbh->prepare("
-            SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place
-            FROM valsibestdefinitions vbd
-            JOIN valsi v
-              ON v.valsiid = vbd.valsiid
-            JOIN natlangwordbestguesses nlwbg
-              ON nlwbg.definitionid = vbd.definitionid
-            JOIN natlangwords nlw
-              ON nlw.wordid = nlwbg.natlangwordid
-            WHERE vbd.langid=$langid
-              $limit_score
-            ORDER BY valsi, nlw.word, nlw.meaning, nlwbg.place
-            ");
+                  SELECT nlw.word, nlw.meaning, v.word AS valsi, nlwbg.place, def.definitionid
+                  FROM $defs_table
+                  JOIN valsi v
+                  ON v.valsiid = def.valsiid
+                  JOIN natlangwordbestguesses nlwbg
+                  ON nlwbg.definitionid = def.definitionid
+                  JOIN natlangwords nlw
+                  ON nlw.wordid = nlwbg.natlangwordid
+                  WHERE def.langid=$langid
+                  ORDER BY valsi, nlw.word, nlw.meaning, nlwbg.place
+                  ");
           $sth->execute();
 
           return $sth;
       }
 
       sub valsitag {
-          my ($valsirow, $keywords) = @_;
+          my ($valsirows, $keywords, $positive_scores_only, $all_votes, $all_defs) = @_;
+          my $valsirow = @$valsirows[0];
 
           my $tag .= "<valsi ";
           my $valsitype = $valsirow->{'descriptor'};
@@ -207,49 +273,90 @@ if( ! defined($session{'userid'}) ) {
               }
           }
 
-          if( $valsirow->{'selmaho'} ) {
-              $tag .= "\n  <selmaho>" .
-                massage($valsirow->{'selmaho'})
-                . "</selmaho>";
+          if( $all_defs ) {
+              $tag .= "\n  <definitions>";
           }
 
-          $tag .= "\n  <user>" .
-            "\n    <username>" .
-            massage("$valsirow->{'username'}") .
-            "</username>";
-          if( $valsirow->{'realname'} )
-          {
-              $tag .= "\n    <realname>" .
-                massage("$valsirow->{'realname'}") .
-                "</realname>";
-          }
-          $tag .= "\n  </user>";
+          # Save state to check for the case where no definitions are shown
+          my $before_tag = $tag;
 
-          my $definitionid = $valsirow->{'definitionid'};
-          $tag .= "\n  <definition>" .
-            massage("$valsirow->{'definition'}") .
-            "</definition>".
-            "\n  <definitionid>$definitionid</definitionid>";
+          foreach my $drow (@$valsirows) {
 
-          $tag .= "\n  <score>" . $valsirow->{'score'} . "</score>";
+              my $definitionid = $drow->{'definitionid'};
+              my $score = get_score($definitionid, $all_votes);
 
-          if( $valsirow->{'notes'} ) {
-              $tag .= "\n  <notes>".
-                massage($valsirow->{'notes'})
-                ."</notes>";
-          }
+              if( $positive_scores_only && $score < 1 )
+              {
+                  next;
+              }
 
-          if( exists $keywords->{$definitionid} ) {
-              foreach my $keyword (sort {$a->{'place'} <=> $b->{'place'}} @{$keywords->{$definitionid}}) {
-                  if ($keyword->{'place'} == 0) {
-                      my $gwtag = glosswordtag($keyword);
-                      $tag .= "\n  $gwtag";
-                  }
-                  else {
-                      my $kwtag = keywordtag($keyword);
-                      $tag .= "\n  $kwtag";
+              if( $all_defs ) {
+                  $tag .= "\n    <definition>";
+              }
+
+              if( $drow->{'selmaho'} ) {
+                  $tag .= "\n  <selmaho>" .
+                    massage($drow->{'selmaho'})
+                    . "</selmaho>";
+              }
+
+              $tag .= "\n  <user>" .
+                  "\n    <username>" .
+                  massage("$drow->{'username'}") .
+                  "</username>";
+              if( $drow->{'realname'} )
+              {
+                  $tag .= "\n    <realname>" .
+                      massage("$drow->{'realname'}") .
+                      "</realname>";
+              }
+              $tag .= "\n  </user>";
+
+              my $def_tag;
+              if( $all_defs ) {
+                  $def_tag="text";
+              } else {
+                  $def_tag="definition";
+              }
+
+              $tag .= "\n      <$def_tag>" .
+                  massage("$drow->{'definition'}") .
+                  "</$def_tag>".
+                  "\n      <definitionid>$definitionid</definitionid>";
+
+              $tag .= "\n      <score>" . $score . "</score>";
+
+              if( $drow->{'notes'} ) {
+                  $tag .= "\n      <notes>".
+                      massage($drow->{'notes'})
+                      ."</notes>";
+              }
+
+              if( exists $keywords->{$definitionid} ) {
+                  foreach my $keyword (sort {$a->{'place'} <=> $b->{'place'}} @{$keywords->{$definitionid}}) {
+                      if ($keyword->{'place'} == 0) {
+                          my $gwtag = glosswordtag($keyword);
+                          $tag .= "\n      $gwtag";
+                      }
+                      else {
+                          my $kwtag = keywordtag($keyword);
+                          $tag .= "\n      $kwtag";
+                      }
                   }
               }
+              if( $all_defs ) {
+                  $tag .= "\n    </definition>";
+              }
+          }
+
+          if( $tag eq $before_tag )
+          {
+              # If no definitions were made visible, bail
+              return "";
+          }
+
+          if( $all_defs ) {
+              $tag .= "\n  </definitions>";
           }
 
           $tag .= "\n</valsi>";
@@ -258,7 +365,15 @@ if( ! defined($session{'userid'}) ) {
       }
 
       sub nlwordtag {
-          my $nlwrow = shift;
+          my ($nlwrow, $positive_scores_only, $all_votes) = @_;
+
+          # Check score
+          my $score = get_score($nlwrow->{'definitionid'}, $all_votes);
+
+          if( $positive_scores_only && $score < 1 )
+          {
+              return "";
+          }
 
           my $tag .= "<nlword word=\"".
             massage($nlwrow->{'word'}) ."\"";
