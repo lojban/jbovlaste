@@ -133,6 +133,30 @@ what happened leading up to this. Just in case.
 </%once>
 
 <%init>
+ # Reject malformed query strings before any page logic runs. Bots
+ # periodically probe with HTTP parameter pollution (repeating a param
+ # name, e.g. "type=cmavo;type=lujvo") or with huge percent-encoded
+ # blobs smuggled inside a single value (encoding ";" and "=" as %3b
+ # and %3d so they survive as literal text instead of being parsed as
+ # more params). The former makes ApacheHandler bind the arg as an
+ # arrayref instead of a scalar, which pages then happily stringify
+ # into "ARRAY(0x...)" inside a generated link if not guarded; the
+ # latter just produces ever-growing garbage links. No legitimate page
+ # on this site ever sends the same param twice, and the busiest
+ # legitimate query string (bg=1;langarg=..;type=..;initial=..) has at
+ # most a handful of ";" and "%" - so reject anything wildly past that.
+ my $qs = defined($r->args) ? $r->args : '';
+ my $has_multivalued = grep { ref($_) eq 'ARRAY' } values %{ $m->caller_args(0) };
+ my $semicolons = () = $qs =~ /;/g;
+ my $percents   = () = $qs =~ /%/g;
+
+ if ($has_multivalued || $semicolons > 10 || $percents > 10) {
+   $r->status(400);
+   $r->content_type("text/plain");
+   $m->print("400 Bad Request: malformed or repeated query parameters.\n");
+   $m->abort(400);
+ }
+
  my $menu =
   [ [ "Home", "/" ],
     [ "Get A Printable Dictionary", "/export/latex.html" ],

@@ -214,6 +214,25 @@ $listingrow->{'definitionnum'} %>
 <%init>
  our($dbh, %session);
  use POSIX;
+
+ # Tighter, page-specific version of the sitewide backstop in
+ # autohandler.in. Every legitimate link this page ever generates to
+ # itself is "bg=1;langarg=X;type=Y;initial=Z" at most (3 ";"s), with
+ # the only armored value being a type descriptor like "obsolete
+ # fu'ivla" (2 "%"s, from the space and the apostrophe) - dictionary
+ # words never appear in this page's own query string, only in the
+ # path of the (separate) word-detail pages it links to. So anything
+ # past that on a request *to this page* is not a link we generated.
+ my $qs = defined($r->args) ? $r->args : '';
+ my $semicolons = () = $qs =~ /;/g;
+ my $percents   = () = $qs =~ /%/g;
+
+ if ($semicolons > 4 || $percents > 4) {
+   $r->status(400);
+   $r->content_type("text/plain");
+   $m->print("400 Bad Request: malformed query parameters.\n");
+   $m->abort(400);
+ }
 </%init>
 
 <%args>
