@@ -58,6 +58,7 @@
 
 use Data::Dumper;
 use File::Temp qw/ tempfile /;
+use HTML::Entities qw(encode_entities);
 
 mkdir "/tmp/lookup", 0755;
 
@@ -180,7 +181,7 @@ elsif (defined($in{"Form"}) && $in{"Form"} eq ($Pgm . '4')) {
 else {
     print &PrintHeader();
     &SendBeginning;
-    print "<br><hr>Error, invalid syntax: $in<hr><br>\n";
+    print "<br><hr>Error, invalid syntax: " . encode_entities($in, q{<>&"'}) . "<hr><br>\n";
     &SendForm1;			# wtfo? send form anyway.
     &SendEnding;
 }	
@@ -307,7 +308,6 @@ sub UpdateCounter {
 sub StripFields {
   foreach my $x (@Fields) {
     if( defined $in{$x} ) {
-      $in{$x} =~ y/{};/() /;        #  ensure no {, },",", or ";".
         $in{$x} =~ y/\n\r\f\t\e/     /s;  # ensure newlines or cr's.
         #$in{$x} =~ s/\'/\'\'/g;	
         # Shell meta-chars:
@@ -345,6 +345,7 @@ sub SendForm1 {
 # ----- send the header
 #
     my($q) = $in{"Query"} || '';
+    my $q_esc = encode_entities($q, q{<>&"'});
 
 #<!-- hidden counter -->
 #$Counter1
@@ -360,7 +361,7 @@ sub SendForm1 {
     <center>
 	<table><tr><td align="right">
 	<b>Query string:</b></td><td>
-	<input type="text" name="Query" size="40" value="$q">
+	<input type="text" name="Query" size="40" value="$q_esc">
         <br></td></tr><tr><td align="right">
         <b>Search type:</b></td><td align="left">
         <select name="Strategy">
@@ -683,7 +684,7 @@ sub SendBeginning {
     
     $title = $Heading1;
     if ($in{'Query'}) {
-	$title .= "- $in{'Query'}";
+	$title .= "- " . encode_entities($in{'Query'}, q{<>&"'});
     }
     
     print <<EOF;
